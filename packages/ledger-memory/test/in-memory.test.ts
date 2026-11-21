@@ -66,3 +66,32 @@ describe('InMemoryLedger specifics', () => {
     expect(Object.keys((await l.checkInvariants()).totals.currency).sort()).toEqual(['HLX', 'TTH', 'VRD']);
   });
 });
+
+describe('InMemoryLedger.clone', () => {
+  it('copies all state and evolves independently, keeping invariants', async () => {
+    const l = await open();
+    await l.placeOrders([{ agentId: 'a1', planet: 'helion', good: 'iron', side: 'sell', qty: 3, limitPrice: 5 }], 1);
+    await l.depart({ owner: 'a1', from: 'helion', to: 'verdan', cargo: [{ good: 'iron', qty: 2 }], cycle: 1, arriveCycle: 3 });
+    await l.borrow({ borrower: 'a2', planet: 'helion', amount: 50, termCycles: 5, cycle: 1 });
+    await l.applyPolicy({ kind: 'set_tariff', planet: 'verdan', good: 'iron', rateBp: 1_000 });
+
+    const c = l.clone();
+    expect(await c.getPolicy('verdan')).toEqual(await l.getPolicy('verdan'));
+    expect(await c.checkInvariants()).toEqual(await l.checkInvariants());
+
+    // Evolve only the clone: arrive (duty, stock moves), a new order and loan (counters continue where the original left off).
+    await c.arrive('s1', 3);
+    await c.applyPolicy({ kind: 'set_embargo', planet: 'helion', target: 'verdan', active: true });
+    expect((await c.borrow({ borrower: 'a2', planet: 'helion', amount: 5, termCycles: 1, cycle: 4 })).id).toBe('l2');
+    await c.repay({ loanId: 'l1', amount: 10, cycle: 4 });
+    expect(await c.getInventory('a1', 'verdan', 'iron')).toBe(2);
+    expect(await l.getInventory('a1', 'verdan', 'iron')).toBe(0);
+    expect((await l.getPolicy('helion')).embargoes).toEqual([]);
+    expect((await l.borrow({ borrower: 'a2', planet: 'helion', amount: 5, termCycles: 1, cycle: 4 })).id).toBe('l2');
+    expect((await l.arrive('s1', 3)).delivered).toEqual([{ good: 'iron', qty: 2 }]);
+
+    expect((await c.checkInvariants()).ok).toBe(true);
+    expect((await l.checkInvariants()).ok).toBe(true);
+    expect((await c.clearLocalAuction('helion', 'iron', 4)).volume).toBe(0);
+  });
+});

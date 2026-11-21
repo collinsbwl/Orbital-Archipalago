@@ -46,7 +46,7 @@ export class InMemoryLedger implements Ledger {
   private shipmentCounter = 0;
   private loanCounter = 0;
 
-  constructor(world: WorldConfig) {
+  constructor(private readonly world: WorldConfig) {
     for (const p of world.planets) {
       this.currencyOf.set(p.id, p.currency);
       this.planetOfCurrency.set(p.currency, p.id);
@@ -57,6 +57,23 @@ export class InMemoryLedger implements Ledger {
       this.basePrice.set(g.id, g.basePrice);
       this.expectedGoods.set(g.id, 0);
     }
+  }
+
+  /** Independent deep copy of all state (including id counters). Not part of the `Ledger` interface. */
+  clone(): InMemoryLedger {
+    const c = new InMemoryLedger(this.world);
+    const copy = <K, V>(to: Map<K, V>, from: Map<K, V>) => {
+      to.clear();
+      for (const [k, v] of from) to.set(k, structuredClone(v));
+    };
+    for (const a of this.accounts) c.accounts.add(a);
+    copy(c.purses, this.purses); copy(c.inv, this.inv); copy(c.orders, this.orders); copy(c.fxOrders, this.fxOrders);
+    copy(c.shipments, this.shipments); copy(c.loans, this.loans); copy(c.policies, this.policies); copy(c.lastPrice, this.lastPrice);
+    copy(c.quotaUsed, this.quotaUsed); copy(c.expectedCurrency, this.expectedCurrency); copy(c.expectedGoods, this.expectedGoods);
+    c.orderCounter = this.orderCounter;
+    c.shipmentCounter = this.shipmentCounter;
+    c.loanCounter = this.loanCounter;
+    return c;
   }
 
   // ---- validation / balance helpers -----------------------------------
