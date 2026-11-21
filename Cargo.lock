@@ -1948,7 +1948,10 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "bytemuck",
  "litesvm",
+ "sha2 0.10.9",
+ "solana-account",
  "solana-keypair",
  "solana-message",
  "solana-signer",
