@@ -9,6 +9,169 @@ export const IDL = {
   },
   "instructions": [
     {
+      "name": "apply_policy",
+      "docs": [
+        "Applies one government decision (tariff, quota, embargo, policy rate) or sets a base price."
+      ],
+      "discriminator": [
+        255,
+        235,
+        232,
+        54,
+        183,
+        33,
+        131,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "policy",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "op",
+          "type": {
+            "defined": {
+              "name": "PolicyOp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "arrive",
+      "docs": [
+        "Delivers a shipment under the destination's embargo, quota and tariff rules."
+      ],
+      "discriminator": [
+        159,
+        20,
+        107,
+        220,
+        104,
+        138,
+        246,
+        222
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "shipment_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "from_ledger",
+          "docs": [
+            "Origin planet ledger: withheld cargo goes back here."
+          ],
+          "writable": true
+        },
+        {
+          "name": "to_ledger",
+          "docs": [
+            "Destination planet ledger: delivered cargo goes here."
+          ],
+          "writable": true
+        },
+        {
+          "name": "policy",
+          "docs": [
+            "Destination planet policy: embargoes, quotas, tariffs and prices."
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "shipment_id",
+          "type": "u64"
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        },
+        {
+          "name": "treasury",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "cancel_fx_order",
       "docs": [
         "Cancels an FX order and refunds its escrow."
@@ -461,6 +624,13 @@ export const IDL = {
         },
         {
           "name": "ledger",
+          "writable": true
+        },
+        {
+          "name": "policy",
+          "docs": [
+            "The planet's policy keeps the last clearing price per good (tariffs are charged against it)."
+          ],
           "writable": true
         },
         {
@@ -933,6 +1103,85 @@ export const IDL = {
       ]
     },
     {
+      "name": "create_policy",
+      "docs": [
+        "Creates a planet's policy account."
+      ],
+      "discriminator": [
+        27,
+        81,
+        33,
+        27,
+        196,
+        103,
+        246,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "policy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  108,
+                  105,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "planet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "planet",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "create_vault",
       "docs": [
         "Creates the escrow vault for one currency."
@@ -1031,6 +1280,123 @@ export const IDL = {
               3
             ]
           }
+        }
+      ]
+    },
+    {
+      "name": "depart",
+      "docs": [
+        "Sends cargo from the owner's inventory on the origin planet into a new shipment."
+      ],
+      "discriminator": [
+        233,
+        32,
+        8,
+        215,
+        234,
+        242,
+        222,
+        124
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_shipment",
+                "account": "Config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "from_ledger",
+          "docs": [
+            "The origin planet's ledger: the cargo leaves the owner's inventory here."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "to",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "cargo",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "Cargo"
+              }
+            }
+          }
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        },
+        {
+          "name": "arrive_cycle",
+          "type": "u64"
         }
       ]
     },
@@ -1953,6 +2319,32 @@ export const IDL = {
         163,
         181
       ]
+    },
+    {
+      "name": "PlanetPolicy",
+      "discriminator": [
+        229,
+        28,
+        184,
+        89,
+        64,
+        212,
+        255,
+        147
+      ]
+    },
+    {
+      "name": "Shipment",
+      "discriminator": [
+        3,
+        65,
+        195,
+        72,
+        154,
+        63,
+        211,
+        213
+      ]
     }
   ],
   "errors": [
@@ -2020,6 +2412,31 @@ export const IDL = {
       "code": 6012,
       "name": "BadSortOrder",
       "msg": "The supplied sort order is not valid for this book"
+    },
+    {
+      "code": 6013,
+      "name": "UnknownShipment",
+      "msg": "Unknown shipment"
+    },
+    {
+      "code": 6014,
+      "name": "ShipmentNotInFlight",
+      "msg": "Shipment has already arrived"
+    },
+    {
+      "code": 6015,
+      "name": "ArrivedTooEarly",
+      "msg": "Shipment has not reached its arrival cycle"
+    },
+    {
+      "code": 6016,
+      "name": "PolicyFull",
+      "msg": "Policy table is full"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidRate",
+      "msg": "Rate must be 0..=10000 basis points"
     }
   ],
   "types": [
@@ -2027,6 +2444,30 @@ export const IDL = {
       "name": "Cargo",
       "docs": [
         "One line of cargo in an instruction: `good` is sha256(goodId), computed client-side."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "good",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "qty",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CargoLine",
+      "docs": [
+        "One cargo line inside a shipment."
       ],
       "type": {
         "kind": "struct",
@@ -2065,6 +2506,90 @@ export const IDL = {
               "Next order sequence number (local and FX orders share it). Ids are \"o<seq>\", starting at 1."
             ],
             "type": "u64"
+          },
+          {
+            "name": "next_shipment",
+            "docs": [
+              "Next shipment id; ids are \"s<n>\", starting at 1."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GoodPolicy",
+      "docs": [
+        "Everything a planet's government decides about one good, plus the prices tariffs are charged against."
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "good",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "tariff_bp",
+            "docs": [
+              "Tariff in basis points on imports of this good; 0 = none."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "quota_max",
+            "type": "u64"
+          },
+          {
+            "name": "quota_used",
+            "docs": [
+              "Units imported so far in `quota_cycle` (resets when a new cycle arrives)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "quota_cycle",
+            "type": "u64"
+          },
+          {
+            "name": "last_price",
+            "docs": [
+              "Last non-null local clearing price on this planet."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "base_price",
+            "docs": [
+              "The good's base price, the tariff price until the first auction clears."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "has_quota",
+            "type": "u8"
+          },
+          {
+            "name": "has_price",
+            "type": "u8"
+          },
+          {
+            "name": "_pad",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
           }
         ]
       }
@@ -2283,6 +2808,231 @@ export const IDL = {
           }
         ]
       }
+    },
+    {
+      "name": "PlanetPolicy",
+      "docs": [
+        "One planet's trade policy: tariffs, quotas, embargoes, the central-bank rate, and last prices."
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "planet",
+            "docs": [
+              "sha256(planetId)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "policy_rate_bp",
+            "type": "u64"
+          },
+          {
+            "name": "n_goods",
+            "type": "u64"
+          },
+          {
+            "name": "n_embargoes",
+            "type": "u64"
+          },
+          {
+            "name": "embargoes",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                16
+              ]
+            }
+          },
+          {
+            "name": "goods",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "GoodPolicy"
+                  }
+                },
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PolicyOp",
+      "docs": [
+        "One government decision. Goods and planets are sha256 keys, like everywhere else on-chain."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "SetTariff",
+            "fields": [
+              {
+                "name": "good",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "rate_bp",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "SetQuota",
+            "fields": [
+              {
+                "name": "good",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "max",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "SetEmbargo",
+            "fields": [
+              {
+                "name": "target",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "active",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "SetPolicyRate",
+            "fields": [
+              {
+                "name": "rate_bp",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "SetBasePrice",
+            "fields": [
+              {
+                "name": "good",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "price",
+                "type": "u64"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Shipment",
+      "docs": [
+        "Goods in flight between planets. Kept after arrival (arrived = true) so a second arrive is rejected."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "to",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "lines",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "CargoLine"
+                  }
+                },
+                8
+              ]
+            }
+          },
+          {
+            "name": "n_lines",
+            "type": "u8"
+          },
+          {
+            "name": "depart_cycle",
+            "type": "u64"
+          },
+          {
+            "name": "arrive_cycle",
+            "type": "u64"
+          },
+          {
+            "name": "arrived",
+            "type": "bool"
+          }
+        ]
+      }
     }
   ],
   "constants": [
@@ -2329,12 +3079,28 @@ export const IDL = {
       "value": "[109, 105, 110, 116]"
     },
     {
+      "name": "POLICY_SEED",
+      "docs": [
+        "Seed of each planet's policy account: [\"policy\", sha256(planet)]."
+      ],
+      "type": "bytes",
+      "value": "[112, 111, 108, 105, 99, 121]"
+    },
+    {
       "name": "PURSE_SEED",
       "docs": [
         "Seed prefix of each purse (an SPL token account): [\"purse\", owner, currency_code]."
       ],
       "type": "bytes",
       "value": "[112, 117, 114, 115, 101]"
+    },
+    {
+      "name": "SHIPMENT_SEED",
+      "docs": [
+        "Seed of each shipment account: [\"shipment\", id as u64 little-endian]."
+      ],
+      "type": "bytes",
+      "value": "[115, 104, 105, 112, 109, 101, 110, 116]"
     },
     {
       "name": "VAULT_SEED",

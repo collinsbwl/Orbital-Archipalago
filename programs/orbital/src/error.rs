@@ -28,4 +28,14 @@ pub enum ErrorCode {
     InvalidSide,
     #[msg("The supplied sort order is not valid for this book")]
     BadSortOrder,
+    #[msg("Unknown shipment")]
+    UnknownShipment,
+    #[msg("Shipment has already arrived")]
+    ShipmentNotInFlight,
+    #[msg("Shipment has not reached its arrival cycle")]
+    ArrivedTooEarly,
+    #[msg("Policy table is full")]
+    PolicyFull,
+    #[msg("Rate must be 0..=10000 basis points")]
+    InvalidRate,
 }

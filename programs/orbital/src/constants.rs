@@ -48,3 +48,16 @@ pub const SIDE_SELL: u8 = 1;
 /// with the codes in alphabetical order.
 #[constant]
 pub const FX_BOOK_SEED: &[u8] = b"fxbook";
+
+/// Seed of each planet's policy account: ["policy", sha256(planet)].
+#[constant]
+pub const POLICY_SEED: &[u8] = b"policy";
+
+/// Seed of each shipment account: ["shipment", id as u64 little-endian].
+#[constant]
+pub const SHIPMENT_SEED: &[u8] = b"shipment";
+
+/// Distinct goods a planet's policy can hold rules and prices for.
+pub const MAX_POLICY_GOODS: usize = 32;
+/// Planets one planet can embargo at once.
+pub const MAX_EMBARGOES: usize = 16;

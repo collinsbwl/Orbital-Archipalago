@@ -159,6 +159,9 @@ pub struct ClearLocalAuction<'info> {
     pub book: AccountLoader<'info, OrderBook>,
     #[account(mut)]
     pub ledger: AccountLoader<'info, PlanetLedger>,
+    /// The planet's policy keeps the last clearing price per good (tariffs are charged against it).
+    #[account(mut)]
+    pub policy: AccountLoader<'info, PlanetPolicy>,
     #[account(mut, seeds = [VAULT_SEED, code.as_ref()], bump)]
     pub vault: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
@@ -201,6 +204,13 @@ pub fn handle_clear_local_auction<'info>(ctx: Context<'info, ClearLocalAuction<'
     let outcome = auction::clear_sorted(&bids, &buys, &sells).map_err(|_| error!(ErrorCode::BadSortOrder))?;
     let Some(price) = outcome.price else { return Ok(()) };
     require!(ctx.remaining_accounts.len() == outcome.fills.len(), ErrorCode::AccountMismatch);
+    {
+        let mut policy = ctx.accounts.policy.load_mut()?;
+        require!(policy.planet == ledger.planet, ErrorCode::AccountMismatch);
+        let entry = policy.entry(&book.good)?;
+        entry.last_price = price;
+        entry.has_price = 1;
+    }
 
     let good = book.good;
     for (k, &(i, q)) in outcome.fills.iter().enumerate() {

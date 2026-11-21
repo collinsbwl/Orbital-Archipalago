@@ -11,6 +11,8 @@ const PURSE_SEED = enc('purse');
 const VAULT_SEED = enc('vault');
 const BOOK_SEED = enc('book');
 const FX_BOOK_SEED = enc('fxbook');
+const POLICY_SEED = enc('policy');
+const SHIPMENT_SEED = enc('shipment');
 
 /** Owners and goods are stored on-chain as sha256(id): fixed size, any id length. */
 export function idKey(id: string): number[] {
@@ -40,6 +42,14 @@ export class Addresses {
   /** FX book for an unordered currency pair; the codes must be in alphabetical order (a < b). */
   fxBook = (a: string, b: string) =>
     PublicKey.findProgramAddressSync([FX_BOOK_SEED, Buffer.from(codeBytes(a)), Buffer.from(codeBytes(b))], this.programId)[0];
+  /** A planet's policy account: tariffs, quotas, embargoes, policy rate and last clearing prices. */
+  policy = (planet: string) => PublicKey.findProgramAddressSync([POLICY_SEED, Buffer.from(idKey(planet))], this.programId)[0];
+  /** Shipment "s<n>" lives at the PDA ["shipment", n as u64 little-endian]. */
+  shipment = (n: number) => {
+    const le = Buffer.alloc(8);
+    le.writeBigUInt64LE(BigInt(n));
+    return PublicKey.findProgramAddressSync([SHIPMENT_SEED, le], this.programId)[0];
+  };
   book = (planet: string, good: string) =>
     PublicKey.findProgramAddressSync([BOOK_SEED, Buffer.from(idKey(planet)), Buffer.from(idKey(good))], this.programId)[0];
 

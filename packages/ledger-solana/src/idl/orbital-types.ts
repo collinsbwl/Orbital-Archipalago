@@ -14,6 +14,169 @@ export type Orbital = {
   },
   "instructions": [
     {
+      "name": "applyPolicy",
+      "docs": [
+        "Applies one government decision (tariff, quota, embargo, policy rate) or sets a base price."
+      ],
+      "discriminator": [
+        255,
+        235,
+        232,
+        54,
+        183,
+        33,
+        131,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "policy",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "op",
+          "type": {
+            "defined": {
+              "name": "policyOp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "arrive",
+      "docs": [
+        "Delivers a shipment under the destination's embargo, quota and tariff rules."
+      ],
+      "discriminator": [
+        159,
+        20,
+        107,
+        220,
+        104,
+        138,
+        246,
+        222
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "shipmentId"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fromLedger",
+          "docs": [
+            "Origin planet ledger: withheld cargo goes back here."
+          ],
+          "writable": true
+        },
+        {
+          "name": "toLedger",
+          "docs": [
+            "Destination planet ledger: delivered cargo goes here."
+          ],
+          "writable": true
+        },
+        {
+          "name": "policy",
+          "docs": [
+            "Destination planet policy: embargoes, quotas, tariffs and prices."
+          ],
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "shipmentId",
+          "type": "u64"
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        },
+        {
+          "name": "treasury",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "cancelFxOrder",
       "docs": [
         "Cancels an FX order and refunds its escrow."
@@ -466,6 +629,13 @@ export type Orbital = {
         },
         {
           "name": "ledger",
+          "writable": true
+        },
+        {
+          "name": "policy",
+          "docs": [
+            "The planet's policy keeps the last clearing price per good (tariffs are charged against it)."
+          ],
           "writable": true
         },
         {
@@ -938,6 +1108,85 @@ export type Orbital = {
       ]
     },
     {
+      "name": "createPolicy",
+      "docs": [
+        "Creates a planet's policy account."
+      ],
+      "discriminator": [
+        27,
+        81,
+        33,
+        27,
+        196,
+        103,
+        246,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "policy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  108,
+                  105,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "planet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "planet",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "createVault",
       "docs": [
         "Creates the escrow vault for one currency."
@@ -1036,6 +1285,123 @@ export type Orbital = {
               3
             ]
           }
+        }
+      ]
+    },
+    {
+      "name": "depart",
+      "docs": [
+        "Sends cargo from the owner's inventory on the origin planet into a new shipment."
+      ],
+      "discriminator": [
+        233,
+        32,
+        8,
+        215,
+        234,
+        242,
+        222,
+        124
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "shipment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  105,
+                  112,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.nextShipment",
+                "account": "config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fromLedger",
+          "docs": [
+            "The origin planet's ledger: the cargo leaves the owner's inventory here."
+          ],
+          "writable": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "to",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "cargo",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "cargo"
+              }
+            }
+          }
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        },
+        {
+          "name": "arriveCycle",
+          "type": "u64"
         }
       ]
     },
@@ -1958,6 +2324,32 @@ export type Orbital = {
         163,
         181
       ]
+    },
+    {
+      "name": "planetPolicy",
+      "discriminator": [
+        229,
+        28,
+        184,
+        89,
+        64,
+        212,
+        255,
+        147
+      ]
+    },
+    {
+      "name": "shipment",
+      "discriminator": [
+        3,
+        65,
+        195,
+        72,
+        154,
+        63,
+        211,
+        213
+      ]
     }
   ],
   "errors": [
@@ -2025,6 +2417,31 @@ export type Orbital = {
       "code": 6012,
       "name": "badSortOrder",
       "msg": "The supplied sort order is not valid for this book"
+    },
+    {
+      "code": 6013,
+      "name": "unknownShipment",
+      "msg": "Unknown shipment"
+    },
+    {
+      "code": 6014,
+      "name": "shipmentNotInFlight",
+      "msg": "Shipment has already arrived"
+    },
+    {
+      "code": 6015,
+      "name": "arrivedTooEarly",
+      "msg": "Shipment has not reached its arrival cycle"
+    },
+    {
+      "code": 6016,
+      "name": "policyFull",
+      "msg": "Policy table is full"
+    },
+    {
+      "code": 6017,
+      "name": "invalidRate",
+      "msg": "Rate must be 0..=10000 basis points"
     }
   ],
   "types": [
@@ -2032,6 +2449,30 @@ export type Orbital = {
       "name": "cargo",
       "docs": [
         "One line of cargo in an instruction: `good` is sha256(goodId), computed client-side."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "good",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "qty",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cargoLine",
+      "docs": [
+        "One cargo line inside a shipment."
       ],
       "type": {
         "kind": "struct",
@@ -2070,6 +2511,90 @@ export type Orbital = {
               "Next order sequence number (local and FX orders share it). Ids are \"o<seq>\", starting at 1."
             ],
             "type": "u64"
+          },
+          {
+            "name": "nextShipment",
+            "docs": [
+              "Next shipment id; ids are \"s<n>\", starting at 1."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "goodPolicy",
+      "docs": [
+        "Everything a planet's government decides about one good, plus the prices tariffs are charged against."
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "good",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "tariffBp",
+            "docs": [
+              "Tariff in basis points on imports of this good; 0 = none."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "quotaMax",
+            "type": "u64"
+          },
+          {
+            "name": "quotaUsed",
+            "docs": [
+              "Units imported so far in `quota_cycle` (resets when a new cycle arrives)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "quotaCycle",
+            "type": "u64"
+          },
+          {
+            "name": "lastPrice",
+            "docs": [
+              "Last non-null local clearing price on this planet."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "basePrice",
+            "docs": [
+              "The good's base price, the tariff price until the first auction clears."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "hasQuota",
+            "type": "u8"
+          },
+          {
+            "name": "hasPrice",
+            "type": "u8"
+          },
+          {
+            "name": "pad",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
           }
         ]
       }
@@ -2288,6 +2813,231 @@ export type Orbital = {
           }
         ]
       }
+    },
+    {
+      "name": "planetPolicy",
+      "docs": [
+        "One planet's trade policy: tariffs, quotas, embargoes, the central-bank rate, and last prices."
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "planet",
+            "docs": [
+              "sha256(planetId)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "policyRateBp",
+            "type": "u64"
+          },
+          {
+            "name": "nGoods",
+            "type": "u64"
+          },
+          {
+            "name": "nEmbargoes",
+            "type": "u64"
+          },
+          {
+            "name": "embargoes",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                16
+              ]
+            }
+          },
+          {
+            "name": "goods",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "goodPolicy"
+                  }
+                },
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "policyOp",
+      "docs": [
+        "One government decision. Goods and planets are sha256 keys, like everywhere else on-chain."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "setTariff",
+            "fields": [
+              {
+                "name": "good",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "rateBp",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "setQuota",
+            "fields": [
+              {
+                "name": "good",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "max",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "setEmbargo",
+            "fields": [
+              {
+                "name": "target",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "active",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "setPolicyRate",
+            "fields": [
+              {
+                "name": "rateBp",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "setBasePrice",
+            "fields": [
+              {
+                "name": "good",
+                "type": {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                }
+              },
+              {
+                "name": "price",
+                "type": "u64"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "shipment",
+      "docs": [
+        "Goods in flight between planets. Kept after arrival (arrived = true) so a second arrive is rejected."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "to",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "lines",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "cargoLine"
+                  }
+                },
+                8
+              ]
+            }
+          },
+          {
+            "name": "nLines",
+            "type": "u8"
+          },
+          {
+            "name": "departCycle",
+            "type": "u64"
+          },
+          {
+            "name": "arriveCycle",
+            "type": "u64"
+          },
+          {
+            "name": "arrived",
+            "type": "bool"
+          }
+        ]
+      }
     }
   ],
   "constants": [
@@ -2334,12 +3084,28 @@ export type Orbital = {
       "value": "[109, 105, 110, 116]"
     },
     {
+      "name": "policySeed",
+      "docs": [
+        "Seed of each planet's policy account: [\"policy\", sha256(planet)]."
+      ],
+      "type": "bytes",
+      "value": "[112, 111, 108, 105, 99, 121]"
+    },
+    {
       "name": "purseSeed",
       "docs": [
         "Seed prefix of each purse (an SPL token account): [\"purse\", owner, currency_code]."
       ],
       "type": "bytes",
       "value": "[112, 117, 114, 115, 101]"
+    },
+    {
+      "name": "shipmentSeed",
+      "docs": [
+        "Seed of each shipment account: [\"shipment\", id as u64 little-endian]."
+      ],
+      "type": "bytes",
+      "value": "[115, 104, 105, 112, 109, 101, 110, 116]"
     },
     {
       "name": "vaultSeed",

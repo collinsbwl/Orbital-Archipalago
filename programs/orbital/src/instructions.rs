@@ -4,6 +4,8 @@ pub mod fx_orders;
 pub mod initialize;
 pub mod inventory;
 pub mod orders;
+pub mod policy;
+pub mod shipping;
 pub mod purse;
 
 pub use create_currency::*;
@@ -12,4 +14,6 @@ pub use fx_orders::*;
 pub use initialize::*;
 pub use inventory::*;
 pub use orders::*;
+pub use policy::*;
+pub use shipping::*;
 pub use purse::*;

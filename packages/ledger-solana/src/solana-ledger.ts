@@ -3,7 +3,8 @@ import { ComputeBudgetProgram, Connection, type Keypair, type PublicKey, Transac
 import {
   AgentIdSchema, LedgerError, type AuctionResult, type BorrowRequest, type Cargo, type CurrencyId, type DepartRequest, type GoodId,
   type FxAuctionResult, type FxOrder, type InvariantReport, type Ledger, type MinorUnits, type OpenAccountRequest, type Order, type OrderId, type OrderRecord, type OwnerId,
-  type PlaceOrdersResult, type PlanetId, type PolicyInstruction, type RepayRequest, type WorldConfig,
+  type ArriveResult, type PlaceOrdersResult, type PlanetId, type PolicyInstruction, type PolicyState, type RepayRequest, type Shipment,
+  type ShipmentId, type WorldConfig,
 } from '@orbital/contracts';
 import { clearAuction, sortBook } from './auction.js';
 import { clearFx } from './fx.js';
@@ -35,6 +36,43 @@ const TOKEN_AMOUNT_OFFSET = 64;
 const INVENTORY_COMPUTE_UNITS = 600_000;
 // Config account (after the discriminator): admin[32], next_order u64.
 const CONFIG_NEXT_ORDER_OFFSET = 8 + 32;
+const CONFIG_NEXT_SHIPMENT_OFFSET = 8 + 40;
+// PlanetPolicy (after the discriminator): planet[32] policy_rate u64 n_goods u64 n_embargoes u64, 16 embargo keys[32],
+// then goods of 88 bytes: good[32] tariff u64 quota_max u64 quota_used u64 quota_cycle u64 last_price u64 base_price u64 has_quota u8 has_price u8 pad[6].
+const POLICY_RATE_OFFSET = 8 + 32;
+const POLICY_N_GOODS_OFFSET = POLICY_RATE_OFFSET + 8;
+const POLICY_N_EMBARGOES_OFFSET = POLICY_N_GOODS_OFFSET + 8;
+const POLICY_EMBARGOES_OFFSET = POLICY_N_EMBARGOES_OFFSET + 8;
+const POLICY_GOODS_OFFSET = POLICY_EMBARGOES_OFFSET + 16 * 32;
+const GOOD_POLICY_SIZE = 88;
+// Shipment (after the discriminator): owner[32] from[32] to[32], 8 cargo lines of good[32]+qty u64, n_lines u8,
+// depart_cycle u64, arrive_cycle u64, arrived u8.
+const SHIPMENT_LINES_OFFSET = 8 + 96;
+const SHIPMENT_N_OFFSET = SHIPMENT_LINES_OFFSET + 8 * 40;
+
+interface GoodRules {
+  good: string;
+  tariffBp: number;
+  hasQuota: boolean;
+  quotaMax: bigint;
+  quotaUsed: bigint;
+  quotaCycle: bigint;
+  hasPrice: boolean;
+  lastPrice: bigint;
+  basePrice: bigint;
+}
+
+interface ShipmentData {
+  id: ShipmentId;
+  n: number;
+  ownerKey: Buffer;
+  from: PlanetId;
+  to: PlanetId;
+  cargo: Cargo[];
+  departCycle: number;
+  arriveCycle: number;
+  arrived: boolean;
+}
 // OrderBook account (after the discriminator): planet[32] good[32] len u64, then `len` order slots of
 // seq u64, owner[32], qty u64, limit u64, cycle u64, side u8 + 7 pad.
 const BOOK_LEN_OFFSET = 8 + 64;
@@ -218,6 +256,13 @@ export class SolanaLedger implements Ledger {
       if (BigInt(vault) !== buyEscrow[code]) violations.push({ code: 'escrow_mismatch', message: `${code}: vault ${vault} != buy orders ${buyEscrow[code]}` });
     }
 
+    // Cargo still in flight belongs to the goods supply.
+    const nextShipment = await this.nextShipmentId().catch(() => 1);
+    for (let n = 1; n < nextShipment; n++) {
+      const sh = await this.readShipment(`s${n}`);
+      if (sh && !sh.arrived) for (const c of sh.cargo) if (c.good in goods) goods[c.good]! += c.qty;
+    }
+
     for (const p of this.world.planets) {
       for (const [key, qty] of await this.readLedger(p.id)) {
         const good = key.slice(key.indexOf('|') + 1);
@@ -356,6 +401,7 @@ export class SolanaLedger implements Ledger {
         config: this.addr.config(),
         book: this.addr.book(planet, good),
         ledger: await this.addr.ledger(planet),
+        policy: this.addr.policy(planet),
         vault: this.addr.vault(code),
       })
       // One purse per fill, in fill order: the program checks each against the order it settles.
@@ -477,15 +523,153 @@ export class SolanaLedger implements Ledger {
 
   // ---- Later milestones ---------------------------------------------------------------------
 
-  depart = async (_req: DepartRequest) => notYet('depart'); // C3
-  arrive: Ledger['arrive'] = async () => notYet('arrive'); // C3
+  // ---- C3: policy and shipping -------------------------------------------------------------------
+
+  async applyPolicy(i: PolicyInstruction): Promise<void> {
+    this.checkPlanet(i.planet);
+    const rate = (n: number) => {
+      if (!Number.isSafeInteger(n) || n < 0 || n > 10_000) throw new LedgerError('invalid_amount', `rateBp must be 0..10000, got ${n}`);
+      return new BN(n);
+    };
+    let op: Parameters<typeof this.program.methods.applyPolicy>[0];
+    switch (i.kind) {
+      case 'set_tariff':
+        this.checkGood(i.good);
+        op = { setTariff: { good: idKey(i.good), rateBp: rate(i.rateBp) } };
+        break;
+      case 'set_quota':
+        this.checkGood(i.good);
+        this.checkAmount(i.maxPerCycle, 'maxPerCycle', true);
+        op = { setQuota: { good: idKey(i.good), max: new BN(i.maxPerCycle) } };
+        break;
+      case 'set_embargo':
+        this.checkPlanet(i.target);
+        if (i.target === i.planet) throw new LedgerError('invalid_amount', 'a planet cannot embargo itself');
+        op = { setEmbargo: { target: idKey(i.target), active: i.active } };
+        break;
+      case 'set_policy_rate':
+        op = { setPolicyRate: { rateBp: rate(i.rateBp) } };
+        break;
+    }
+    const ix = await this.program.methods
+      .applyPolicy(op)
+      .accountsPartial({ admin: this.admin.publicKey, config: this.addr.config(), policy: this.addr.policy(i.planet) })
+      .instruction();
+    await this.send([ix]);
+  }
+
+  async getPolicy(planet: PlanetId): Promise<PolicyState> {
+    this.checkPlanet(planet);
+    const { data, goods } = await this.readPolicy(planet);
+    const planetByHash = new Map(this.world.planets.map((p) => [Buffer.from(idKey(p.id)).toString('hex'), p.id]));
+    const embargoes: string[] = [];
+    const n = Number(data.readBigUInt64LE(POLICY_N_EMBARGOES_OFFSET));
+    for (let k = 0; k < n; k++) {
+      const at = POLICY_EMBARGOES_OFFSET + k * 32;
+      const id = planetByHash.get(data.subarray(at, at + 32).toString('hex'));
+      if (id) embargoes.push(id);
+    }
+    const tariffsBp: Record<string, number> = {};
+    const quotas: Record<string, number> = {};
+    for (const g of goods) {
+      if (g.tariffBp > 0) tariffsBp[g.good] = g.tariffBp;
+      if (g.hasQuota) quotas[g.good] = toSafeNumber(g.quotaMax);
+    }
+    return { tariffsBp, quotas, embargoes: embargoes.sort(), policyRateBp: toSafeNumber(data.readBigUInt64LE(POLICY_RATE_OFFSET)) };
+  }
+
+  async depart(req: DepartRequest): Promise<Shipment> {
+    this.checkOwner(req.owner);
+    this.checkPlanet(req.from);
+    this.checkPlanet(req.to);
+    if (req.from === req.to) throw new LedgerError('invalid_amount', 'from and to must differ');
+    if (req.cargo.length === 0) throw new LedgerError('invalid_amount', 'cargo is empty');
+    for (const c of req.cargo) this.checkCargo(c);
+    if (!Number.isSafeInteger(req.cycle) || req.cycle < 0 || !Number.isSafeInteger(req.arriveCycle) || req.arriveCycle <= req.cycle) {
+      throw new LedgerError('invalid_amount', 'arriveCycle must be after cycle');
+    }
+    // Duplicate goods merge into one line, in order of first appearance.
+    const merged = new Map<GoodId, number>();
+    for (const c of req.cargo) merged.set(c.good, (merged.get(c.good) ?? 0) + c.qty);
+    const cargo = [...merged].map(([good, qty]) => ({ good, qty }));
+    for (const c of cargo) this.checkAmount(c.qty, `cargo ${c.good}`, false);
+    await this.requireOpen(req.owner);
+
+    const n = await this.nextShipmentId();
+    const ix = await this.program.methods
+      .depart(idKey(req.owner), idKey(req.to), toCargo(cargo), new BN(req.cycle), new BN(req.arriveCycle))
+      .accountsPartial({
+        admin: this.admin.publicKey,
+        config: this.addr.config(),
+        shipment: this.addr.shipment(n),
+        fromLedger: await this.addr.ledger(req.from),
+      })
+      .instruction();
+    await this.send([ix], INVENTORY_COMPUTE_UNITS);
+    return { id: `s${n}`, owner: req.owner, from: req.from, to: req.to, cargo, departCycle: req.cycle, arriveCycle: req.arriveCycle, status: 'in_flight' };
+  }
+
+  async arrive(shipmentId: ShipmentId, cycle: number): Promise<ArriveResult> {
+    if (!Number.isSafeInteger(cycle) || cycle < 0) throw new LedgerError('invalid_amount', `bad cycle ${cycle}`);
+    const sh = await this.readShipment(shipmentId);
+    if (!sh) throw new LedgerError('unknown_shipment', `unknown shipment ${shipmentId}`);
+    if (sh.arrived) throw new LedgerError('invalid_state', `shipment ${shipmentId} already arrived`);
+    if (cycle < sh.arriveCycle) throw new LedgerError('invalid_state', `shipment ${shipmentId} arrives in cycle ${sh.arriveCycle}`);
+
+    // Work out the outcome with the same rules as the program (it enforces them; this tells us which accounts it needs).
+    const { data, goods } = await this.readPolicy(sh.to);
+    const rules = new Map(goods.map((g) => [g.good, g]));
+    const embargoed = this.embargoedBy(data, sh.from);
+    const delivered: Cargo[] = [];
+    const withheld: Cargo[] = [];
+    let owed = 0n;
+    for (const line of sh.cargo) {
+      const g = rules.get(line.good);
+      let ok = embargoed ? 0n : BigInt(line.qty);
+      if (!embargoed && g?.hasQuota) {
+        const used = g.quotaCycle === BigInt(cycle) ? g.quotaUsed : 0n;
+        const allowed = g.quotaMax > used ? g.quotaMax - used : 0n;
+        if (ok > allowed) ok = allowed;
+      }
+      if (ok > 0n && g && g.tariffBp > 0) owed += (ok * (g.hasPrice ? g.lastPrice : g.basePrice) * BigInt(g.tariffBp)) / 10_000n;
+      if (ok > 0n) delivered.push({ good: line.good, qty: Number(ok) });
+      if (BigInt(line.qty) > ok) withheld.push({ good: line.good, qty: Number(BigInt(line.qty) - ok) });
+    }
+
+    const currency = this.currencyOf(sh.to);
+    let collected = 0n;
+    const remaining: { pubkey: PublicKey; isSigner: boolean; isWritable: boolean }[] = [];
+    if (owed > 0n) {
+      await this.requireOpen(sh.to); // the destination treasury must exist to receive the duty
+      const purse = this.addr.purseOfKey(sh.ownerKey, currency);
+      const held = (await this.chain.getAccountData(purse))!.readBigUInt64LE(TOKEN_AMOUNT_OFFSET);
+      collected = owed < held ? owed : held;
+      remaining.push({ pubkey: purse, isSigner: false, isWritable: true }, { pubkey: this.addr.purse(sh.to, currency), isSigner: false, isWritable: true });
+    }
+
+    const ix = await this.program.methods
+      .arrive(new BN(sh.n), new BN(cycle), idKey(sh.to))
+      .accountsPartial({
+        admin: this.admin.publicKey,
+        config: this.addr.config(),
+        shipment: this.addr.shipment(sh.n),
+        fromLedger: await this.addr.ledger(sh.from),
+        toLedger: await this.addr.ledger(sh.to),
+        policy: this.addr.policy(sh.to),
+      })
+      .remainingAccounts(remaining)
+      .instruction();
+    await this.send([ix], INVENTORY_COMPUTE_UNITS);
+
+    const owner = this.ownerByHash.get(sh.ownerKey.toString('hex')) ?? sh.ownerKey.toString('hex');
+    return {
+      shipment: { id: sh.id, owner, from: sh.from, to: sh.to, cargo: sh.cargo, departCycle: sh.departCycle, arriveCycle: sh.arriveCycle, status: 'arrived' },
+      delivered, withheld, duty: { currency, amount: toSafeNumber(collected) },
+    };
+  }
+
   borrow = async (_req: BorrowRequest) => notYet('borrow'); // C4
   repay = async (_req: RepayRequest) => notYet('repay'); // C4
-  applyPolicy = async (_i: PolicyInstruction) => notYet('applyPolicy'); // C3/C4
-  getPolicy: Ledger['getPolicy'] = async (planet) => {
-    this.checkPlanet(planet);
-    return notYet('getPolicy'); // C3/C4
-  };
 
   // ---- Instruction builders (also used by bootstrap) -------------------------------------------
 
@@ -574,6 +758,72 @@ export class SolanaLedger implements Ledger {
       out.set(`${data.subarray(at, at + 32).toString('hex')}|${good}`, toSafeNumber(data.readBigUInt64LE(at + 64)));
     }
     return out;
+  }
+
+  private async readPolicy(planet: PlanetId): Promise<{ data: Buffer; goods: GoodRules[] }> {
+    const data = await this.chain.getAccountData(this.addr.policy(planet));
+    if (!data) throw new LedgerError('unknown_account', `planet ${planet} has no policy account (run bootstrapLedger)`);
+    const goodByHash = new Map(this.world.goods.map((g) => [Buffer.from(idKey(g.id)).toString('hex'), g.id]));
+    const goods: GoodRules[] = [];
+    const n = Number(data.readBigUInt64LE(POLICY_N_GOODS_OFFSET));
+    for (let i = 0; i < n; i++) {
+      const at = POLICY_GOODS_OFFSET + i * GOOD_POLICY_SIZE;
+      const good = goodByHash.get(data.subarray(at, at + 32).toString('hex'));
+      if (!good) continue;
+      goods.push({
+        good,
+        tariffBp: Number(data.readBigUInt64LE(at + 32)),
+        quotaMax: data.readBigUInt64LE(at + 40),
+        quotaUsed: data.readBigUInt64LE(at + 48),
+        quotaCycle: data.readBigUInt64LE(at + 56),
+        lastPrice: data.readBigUInt64LE(at + 64),
+        basePrice: data.readBigUInt64LE(at + 72),
+        hasQuota: data.readUInt8(at + 80) === 1,
+        hasPrice: data.readUInt8(at + 81) === 1,
+      });
+    }
+    return { data, goods };
+  }
+
+  private embargoedBy(policy: Buffer, origin: PlanetId): boolean {
+    const key = Buffer.from(idKey(origin));
+    const n = Number(policy.readBigUInt64LE(POLICY_N_EMBARGOES_OFFSET));
+    for (let k = 0; k < n; k++) {
+      const at = POLICY_EMBARGOES_OFFSET + k * 32;
+      if (policy.subarray(at, at + 32).equals(key)) return true;
+    }
+    return false;
+  }
+
+  private async nextShipmentId(): Promise<number> {
+    const data = await this.chain.getAccountData(this.addr.config());
+    if (!data) throw new LedgerError('invalid_state', 'ledger is not bootstrapped (no config account)');
+    return toSafeNumber(data.readBigUInt64LE(CONFIG_NEXT_SHIPMENT_OFFSET));
+  }
+
+  /** A shipment by id ("s<n>"), or null if there is none. */
+  private async readShipment(id: ShipmentId): Promise<ShipmentData | null> {
+    const m = /^s(\d+)$/.exec(id);
+    if (!m) return null;
+    const n = Number(m[1]);
+    const data = await this.chain.getAccountData(this.addr.shipment(n));
+    if (!data) return null;
+    const goodByHash = new Map(this.world.goods.map((g) => [Buffer.from(idKey(g.id)).toString('hex'), g.id]));
+    const planetByHash = new Map(this.world.planets.map((p) => [Buffer.from(idKey(p.id)).toString('hex'), p.id]));
+    const lines = data.readUInt8(SHIPMENT_N_OFFSET);
+    const cargo: Cargo[] = [];
+    for (let i = 0; i < lines; i++) {
+      const at = SHIPMENT_LINES_OFFSET + i * 40;
+      cargo.push({ good: goodByHash.get(data.subarray(at, at + 32).toString('hex'))!, qty: toSafeNumber(data.readBigUInt64LE(at + 32)) });
+    }
+    return {
+      id, n, ownerKey: Buffer.from(data.subarray(8, 40)),
+      from: planetByHash.get(data.subarray(40, 72).toString('hex'))!, to: planetByHash.get(data.subarray(72, 104).toString('hex'))!,
+      cargo,
+      departCycle: toSafeNumber(data.readBigUInt64LE(SHIPMENT_N_OFFSET + 1)),
+      arriveCycle: toSafeNumber(data.readBigUInt64LE(SHIPMENT_N_OFFSET + 9)),
+      arrived: data.readUInt8(SHIPMENT_N_OFFSET + 17) === 1,
+    };
   }
 
   /** Every unordered currency pair, alphabetical inside the pair. */

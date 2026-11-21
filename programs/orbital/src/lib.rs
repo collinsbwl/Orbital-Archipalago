@@ -109,4 +109,24 @@ pub mod orbital {
     pub fn clear_fx_auction<'info>(ctx: Context<'info, ClearFxAuction<'info>>, base: [u8; 3], quote: [u8; 3], treasury: [u8; 32]) -> Result<()> {
         crate::instructions::fx_orders::handle_clear_fx_auction(ctx, base, quote, treasury)
     }
+
+    /// Creates a planet's policy account.
+    pub fn create_policy(ctx: Context<CreatePolicy>, planet: [u8; 32]) -> Result<()> {
+        crate::instructions::policy::handle_create_policy(ctx, planet)
+    }
+
+    /// Applies one government decision (tariff, quota, embargo, policy rate) or sets a base price.
+    pub fn apply_policy(ctx: Context<ApplyPolicy>, op: PolicyOp) -> Result<()> {
+        crate::instructions::policy::handle_apply_policy(ctx, op)
+    }
+
+    /// Sends cargo from the owner's inventory on the origin planet into a new shipment.
+    pub fn depart(ctx: Context<Depart>, owner: [u8; 32], to: [u8; 32], cargo: Vec<Cargo>, cycle: u64, arrive_cycle: u64) -> Result<()> {
+        crate::instructions::shipping::handle_depart(ctx, owner, to, cargo, cycle, arrive_cycle)
+    }
+
+    /// Delivers a shipment under the destination's embargo, quota and tariff rules.
+    pub fn arrive<'info>(ctx: Context<'info, Arrive<'info>>, shipment_id: u64, cycle: u64, treasury: [u8; 32]) -> Result<()> {
+        crate::instructions::shipping::handle_arrive(ctx, shipment_id, cycle, treasury)
+    }
 }
