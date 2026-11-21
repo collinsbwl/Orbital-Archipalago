@@ -6,34 +6,77 @@ Companion to [orbital-economy-sim-build-plan.md](orbital-economy-sim-build-plan.
 
 - **Three tracks, one hub.** Track A builds the sim engine (the hub). Track B builds agents and the model gateway. Track C builds the Solana program. B and C never call each other: both plug into A through interfaces frozen on day 0.
 - **Agents never touch models or the chain directly.** An agent is a pure function `(observation) → decision`. The engine decides who acts, the gateway decides which model answers, and the engine validates and settles the result.
-- **No LiteLLM for v1.** A ~300-line in-process TypeScript gateway on the Anthropic SDK covers tier routing, caching, concurrency, deadlines and cost tracking. LiteLLM only earns its place if we go multi-provider or split universes across processes, and the gateway interface lets us add it later without touching agents. Reasoning is in [Do we need LiteLLM?](#do-we-need-litellm).
+- **No LiteLLM for v1.** A ~300-line in-process TypeScript gateway on the Gemini SDK (`@google/genai`) covers tier routing, context caching, concurrency, deadlines and cost tracking. LiteLLM only earns its place if we go multi-provider or split universes across processes, and the gateway interface lets us add it later without touching agents. Reasoning is in [Do we need LiteLLM?](#do-we-need-litellm).
+- **Hackathon stack, one job each.** Gemini decides and explains. Solana settles. Tiger Data stores the economy's history and serves the charts. Auth0 decides who may watch and who may touch god mode. Vercel serves the web app. Vultr runs the sim. Map is in [Hackathon stack](#hackathon-stack).
 
 ---
+
+## Hackathon stack
+
+Each sponsor owns a layer we already needed. None of them is a demo route bolted on beside the sim.
+
+| Technology | Lives in | What it does in this project |
+| --- | --- | --- |
+| **Gemini API** | `packages/gateway` (`GeminiGateway`) and the spectator advisor in `apps/web` | Colonists, traders, and governments decide in natural language. The news agent writes the cycle's headlines. The economist reads Tiger aggregates and writes the end-of-run report. A logged-in spectator can ask the advisor for advice grounded in the live snapshot ("what happens if I tariff iron on Helion?"). |
+| **Solana** | `programs/orbital`, `packages/ledger-solana` | Every auction, shipment, loan, and tariff settles on-chain. Local batch auctions and FX books are the DEX. `borrow` / `repay` is the lending market. Shipments, customs, and embargoes are the supply chain. Agent and planet PDAs are the identity. A cycle can clear dozens of transfers because confirmation is fast and fees are near zero. |
+| **Tiger Data** | Engine metrics writer, read back into `Snapshot` chart series | PostgreSQL, so the SQL we already know. One database holds relational rows (Auth0 users, universes, world config) beside hypertables of cycle metrics (GDP, CPI, prices, FX, trade balance, gateway cost). Continuous aggregates feed the dashboard charts. Compression is what makes 8 universes × 200 cycles of ticks cheap to keep. |
+| **Auth0** | `apps/web`, enforced again on the Vultr engine | Social login, passwordless, and MFA come from Auth0. Roles are `spectator` and `operator`. Spectators watch and talk to the advisor. Operators send `GodModeCommand`. The advisor is the Auth0-for-AI-Agents surface: the endpoint checks the caller's token before Gemini sees the question. |
+| **Vercel** | `apps/web` | The React and Three.js app. It opens a WebSocket outward and renders snapshots. It does not run the cycle loop. |
+| **Vultr** | Cloud Compute VM | The Node process: engine, WebSocket server, Gemini gateway, Solana client, and a local `solana-test-validator` for the demo. This is the long-running workload. |
+
+### Can we host on Vercel and Vultr?
+
+Yes. That split is the deployment.
+
+```
+Browser
+  │  Auth0 login (SPA on Vercel)
+  ▼
+apps/web  ── Vercel ── HTTPS + WSS ──►  Vultr Cloud Compute
+                                          ├─ packages/engine  (cycle loop, WS server)
+                                          ├─ packages/gateway (Gemini API)
+                                          ├─ Solana test-validator + SolanaLedger
+                                          └─ writes/reads Tiger Data Cloud
+```
+
+- **Vercel** builds and serves `apps/web`. Auth0's SPA SDK runs there. `ENGINE_WS_URL` points at the Vultr box. The app sends the Auth0 access token on the socket handshake and on advisor requests.
+- **Vultr** runs one Cloud Compute instance (Docker Compose: engine, Caddy, `solana-test-validator`). The process is alive for the whole demo, holds the gateway limiter, and keeps the 5–8 s cycle deadline. A serverless function cannot own that loop.
+- **Tiger Data Cloud** (free tier) is the database. The connection string lives on Vultr. The Vercel app never talks to Postgres. Chart series ride along in `Snapshot`, filled from continuous aggregates when the engine builds the frame. A `god_mode_audit` table records which Auth0 `sub` fired which command.
+- **Auth0** is the only identity provider. Vultr validates the JWT (issuer, audience, `operator` role for god mode). Spectators who open the advisor get a Gemini answer scoped to universes they can see.
+
+Vultr Cloud GPUs stay off for v1. Inference is the Gemini API. The Vultr box is CPU for the sim, the validator, and the socket server. A GPU is an open decision only if we later host a local model.
+
+Local dev matches the demo shape: Docker Compose on a laptop runs the engine and a Timescale-compatible Postgres (Tiger's extension). Vercel is only the hosted frontend.
 
 ## 1. System shape
 
 ```
-                       ┌──────────────────────────────┐
-                       │  apps/web (React, Three.js)  │
-                       └──────────────▲───────────────┘
-                                      │ WebSocket: Snapshot out, GodModeCommand in
-┌─────────────────────────────────────┴──────────────────────────────────────┐
-│ packages/engine  (TRACK A: the hub)                                        │
-│                                                                            │
-│  CycleClock ─► Events ─► Production ─► Consumption ─► Markets ─► Trade     │
-│                                       ─► FX ─► Credit/Policy ─► Snapshot   │
-│                                                                            │
-│  Scheduler + TriggerFilter ──AgentTask[]──►  AgentRuntime (Track B)        │
-│  Validator  ◄──AgentDecision[]────────────┘                                │
-│  Settlement ──Ledger ops──► Ledger interface                               │
-└──────────────┬─────────────────────────────────────────┬───────────────────┘
-               │                                         │
-     ┌─────────▼──────────┐                   ┌──────────▼─────────────────┐
-     │ packages/agents    │                   │ Ledger implementations     │
-     │ (TRACK B)          │                   │  • InMemoryLedger (A)      │
-     │  policies, prompts │                   │  • SolanaLedger (C) ──► Anchor
-     │  ModelGateway ─────┼──► Anthropic API  │    program on test-validator
-     └────────────────────┘                   └────────────────────────────┘
+ Auth0 ──JWT──► ┌────────────────────────────────┐
+                │ apps/web on Vercel             │
+                │ React, Three.js, advisor chat  │
+                └───────────────▲────────────────┘
+                                │ WSS: Snapshot out, GodModeCommand in
+                                │ HTTPS: advisor question in, answer out
+┌───────────────────────────────┴────────────────────────────────────────┐
+│ Vultr Cloud Compute                                                    │
+│ packages/engine  (TRACK A: the hub)                                    │
+│                                                                        │
+│  CycleClock ─► Events ─► Production ─► Consumption ─► Markets ─► Trade │
+│                                       ─► FX ─► Credit/Policy ─► Snapshot│
+│                                                                        │
+│  Scheduler + TriggerFilter ──AgentTask[]──►  AgentRuntime (Track B)    │
+│  Validator  ◄──AgentDecision[]────────────┘                            │
+│  Settlement ──Ledger ops──► Ledger interface                           │
+│  metrics row / chart series ──────────► Tiger Data                     │
+└──────────────┬─────────────────────────────────────┬───────────────────┘
+               │                                     │
+     ┌─────────▼──────────┐               ┌──────────▼─────────────────┐
+     │ packages/agents    │               │ Ledger implementations     │
+     │ (TRACK B)          │               │  • InMemoryLedger (A)      │
+     │  policies, prompts │               │  • SolanaLedger (C) ──► Anchor
+     │  GeminiGateway ────┼──► Gemini API │    program on the Vultr    │
+     └────────────────────┘               │    test-validator          │
+                                          └────────────────────────────┘
 ```
 
 The rule from the build plan holds: **only the engine talks to agents and the ledger.** That rule is what lets the three tracks run in parallel.
@@ -43,15 +86,15 @@ The rule from the build plan holds: **only the engine talks to agents and the le
 ```
 packages/
   contracts/        # day-0 frozen types + zod schemas: Ledger, AgentTask, AgentDecision, Snapshot, GodModeCommand, WorldConfig
-  engine/           # Track A: cycle loop, markets, shipping, FX, credit, reserve-bank rules, metrics, detectors, forks, WS server
+  engine/           # Track A: cycle loop, markets, shipping, FX, credit, reserve-bank rules, metrics, detectors, forks, WS server, Tiger writer
   ledger-memory/    # Track A: InMemoryLedger (the reference implementation and the test oracle)
-  agents/           # Track B: AgentRuntime, policies (stub + LLM), prompts, briefings, surveys
-  gateway/          # Track B: ModelGateway, tier router, limiter, cache layout, recorder/replay
+  agents/           # Track B: AgentRuntime, policies (stub + LLM), prompts, briefings, surveys, advisor
+  gateway/          # Track B: ModelGateway, GeminiGateway, tier router, limiter, cache layout, recorder/replay
   ledger-solana/    # Track C: SolanaLedger adapter (TS client for the program)
 programs/
-  orbital/          # Track C: Anchor program (Rust)
+  orbital/          # Track C: Anchor program (Rust). Auctions, credit, shipments, policy — the on-chain economy
 apps/
-  web/              # dashboard + 3D view (Track A from milestone M3; see §2)
+  web/              # Vercel. Dashboard, 3D view, Auth0, advisor chat (Track A from A5; see §2)
 ```
 
 ---
@@ -79,9 +122,9 @@ Owns the deterministic core and the critical path. Every other track's milestone
 | --- | --- | --- |
 | A1 | `InMemoryLedger`, cycle loop, 3 planets, production, consumption, local batch auctions | 200 cycles with `RandomValidPolicy`, goods and credits conserved |
 | A2 | Orbits, shipping and travel times, customs, FX pair auctions | Freighters move and FX clears with stub traders |
-| A3 | Credit, rule-based reserve banks, metrics (GDP, CPI, trade balance…), SQLite snapshots, WS server | Build-plan Phase 0 exit test passes. Snapshot stream is live |
-| A4 | God-mode event handlers, fork (copy ledger + RNG state), detectors (trade war, currency crisis, recession, diversion) | Each event changes the metric it should under stub agents |
-| A5 | `apps/web`: metric panels, event feed, god-mode panel, then the 3D view | Dashboard runs against recorded snapshots and against a live run |
+| A3 | Credit, rule-based reserve banks, metrics (GDP, CPI, trade balance…), Tiger Data hypertables + continuous aggregates, WS server | Build-plan Phase 0 exit test passes. Snapshot stream is live and chart series come from continuous aggregates |
+| A4 | God-mode event handlers, fork (copy ledger + RNG state), detectors (trade war, currency crisis, recession, diversion) | Each event changes the metric it should under stub agents. Operator commands land in `god_mode_audit` |
+| A5 | `apps/web` on Vercel: Auth0 login, metric panels, event feed, god-mode panel (operators only), then the 3D view | Dashboard runs against recorded snapshots and against a live run on Vultr |
 
 Frontend starts at A5 because the engine is the critical path. It builds against **recorded `Snapshot` fixtures**, so it never blocks on a live run. If a fourth person joins, `apps/web` becomes Track D and starts on day 1 against fixtures.
 
@@ -92,14 +135,23 @@ Owns everything between "agent X is due this cycle" and "here is a validated dec
 | Milestone | Scope | Done when |
 | --- | --- | --- |
 | B1 | `AgentRuntime`, `StubGateway`, rule-based stub policies for colonists and traders (smarter than random: follow prices, respect comparative advantage) | Plugs into A1 with no engine changes |
-| B2 | `AnthropicGateway`: tier router, prompt cache layout, concurrency limiter, deadlines, recorder/replay, cost meter | 50-cycle LLM run under budget, `cache_read_input_tokens` > 0 on most calls |
+| B2 | `GeminiGateway`: tier router, explicit context-cache layout, concurrency limiter, deadlines, recorder/replay, cost meter | 50-cycle LLM run under budget, cached-token hits on most calls |
 | B3 | Colonist and trader prompts, triggers (with A), standing orders, confidence surveys | Build-plan Phase 1 exit test: plausible prices and FX, trade follows comparative advantage |
 | B4 | Governments: briefings (balanced), approval, petitions, elections, policy tools. LLM mode for reserve banks | Phase 3 exit test: a tariff episode in ≥ 1 of 8 seeds, no god mode |
-| B5 | News agent, agent inspector data, economist report, multi-universe cost controls | Phase 4/5 storytelling features work off recorded runs |
+| B5 | News agent (cycle headlines), agent inspector data, economist report grounded in Tiger aggregates, spectator advisor, multi-universe cost controls | Phase 4/5 storytelling features work off recorded runs. Advisor answers a logged-in user from the live snapshot |
 
 ### Track C: Solana program
 
 Owns the on-chain mirror of `InMemoryLedger`. The riskiest track, so it gets the most isolation.
+
+This is the Solana prize surface, and it is the same work as the ledger port:
+
+- **High-frequency settlement.** A cycle can settle production, a local auction, an FX book, and every freighter that docks. Fees stay negligible, so we settle the economy instead of batching it into one blob.
+- **Trading and lending.** Local batch auctions and FX pair books are the exchange. `borrow` mints and `repay` burns are the credit market, with treasuries, bonds, and FX reserves beside them.
+- **Supply chain.** Shipments, travel time, customs vaults, tariffs, quotas, and embargoes are goods moving between planets with rules enforced on-chain.
+- **Identity.** Planet ledgers and agent purses are PDAs. A balance is an account, not a row we assert in the UI.
+
+Dev and the live demo run `solana-test-validator` on the Vultr box so C5 can diff against `InMemoryLedger` without devnet airdrop flakiness. A public devnet deploy is a follow-up if we want an explorer link in the submission.
 
 | Milestone | Scope | Done when |
 | --- | --- | --- |
@@ -158,8 +210,8 @@ interface AgentDecision {
 ### 3.2 The life of one cycle's agent calls
 
 ```
- engine (Track A)                         agents + gateway (Track B)                    Anthropic API
- ────────────────                         ──────────────────────────                    ─────────────
+ engine (Track A, on Vultr)              agents + gateway (Track B)                    Gemini API
+ ──────────────────────────              ──────────────────────────                    ──────────
  1. Scheduler: who is due?
     • colonists: TriggerFilter
       (price moved >5%, unfilled order,
@@ -172,13 +224,13 @@ interface AgentDecision {
                                               for each task:
                                               a. pick Policy (stub | llm | replay)
                                               b. PromptBuilder → cached prefix + suffix
-                                              c. ModelGateway.invoke(request)  ──────────► Messages API
+                                              c. ModelGateway.invoke(request)  ──────────► generateContent
                                                  • TierRouter: role → tier → model         (parallel, rate-
                                                  • Limiter: per-tier semaphore +             limited)
-                                                   token bucket (RPM / ITPM / OTPM)
+                                                   token bucket (RPM / TPM)
                                                  • deadline via AbortController
                                                  • ≤ N tool turns (colonist 1, trader 3, gov 4)
-                                              d. parse + zod-validate submit_turn  ◄────── tool_use / JSON
+                                              d. parse + zod-validate submit_turn  ◄────── function call / JSON
                                               e. on timeout / 429 / invalid / refusal
                                                  → StandingOrdersPolicy
                                               f. Recorder writes request + response
@@ -205,72 +257,72 @@ const ROUTES: Record<Role, Route> = {
 };
 
 const TIERS: Record<Profile, Record<Tier, ModelId | 'stub'>> = {
-  stub:  { small: 'stub',             mid: 'stub',              frontier: 'stub' },
-  cheap: { small: 'claude-haiku-5-5', mid: 'claude-haiku-5-5',  frontier: 'claude-sonnet-5-5' }, // tuning runs
-  full:  { small: 'claude-haiku-5-5', mid: 'claude-sonnet-5-5', frontier: 'claude-opus-5-5' },   // demo runs
+  stub:  { small: 'stub',         mid: 'stub',         frontier: 'stub' },
+  cheap: { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-flash' }, // tuning runs
+  full:  { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-pro' },   // demo runs
 };
 ```
 
+`gemini-flash` and `gemini-pro` are tier names. The routing table pins the current Gemini model ids (the Flash and Pro SKUs available that weekend) in one place.
+
 - **Role → tier → model.** Agents only name their role. Each universe picks a profile (`stub`, `cheap`, `full`), which is how "stub universes for tuning, frontier governments only for final runs" from the risk table becomes one flag.
-- **Traders default to `small`.** The build plan has traders on a mid model. With thinking tokens billed as output, a mid-tier trader at about 2,400 calls per run is the largest line in the budget (see §3.6). Start traders on Haiku 5.5, run an A/B against Sonnet 5.5 on the same seed, and promote only if trade quality clearly improves.
+- **Traders default to `small`.** The build plan has traders on a mid model. Thinking tokens are billed as output, so a Pro trader at about 2,400 calls per run is the line that blows the budget (see §3.6). Start traders on Flash, run an A/B against Pro on the same seed, and promote only if trade quality clearly improves.
+- **Three Gemini jobs, matching how the model is actually good at language.** Flash and Pro *decide* (colonists, traders, governments). Pro *reads* the Tiger aggregate series and writes the economist report. Flash *writes* the news headlines. The spectator advisor is a separate, user-triggered call: personalized advice from the live snapshot plus that user's god-mode history, gated by Auth0. It is not inside the cycle loop.
 - **Overrides** in god mode or config: `route.override(agentId | role | planet, tier)`, for example to give one government a different model in an experiment.
-- **One model per role for the whole run.** Prompt caches are scoped to a model, so switching a role's model mid-run throws away its cache. Downgrades happen only in the fallback path (standing orders), never by hopping models.
+- **One model per role for the whole run.** Explicit caches are scoped to a model, so switching a role's model mid-run throws away its cache. Downgrades happen only in the fallback path (standing orders), never by hopping models.
 
 ### 3.4 Three call modes
 
 | Mode | Used by | Shape | Why |
 | --- | --- | --- | --- |
-| `structured` | Colonists, news | One request, `output_config.format` JSON schema built from the zod `AgentDecision` schema. No tools | Cheapest and fastest. Everything a colonist needs is already in the observation |
-| `tools` | Traders, governments | Read tools (`quote_route`, `fx_quote`, `book_depth`, `briefing_detail`) plus one terminal tool `submit_turn` with `strict: true`. Loop until `submit_turn` or `maxTurns` | Traders need to price routes; governments drill into briefings. The terminal tool keeps the output schema-valid |
-| `text` | Economist report | One streamed request, plain prose | Long output, end of run only |
+| `structured` | Colonists, news | One `generateContent`, `responseMimeType: application/json` and a `responseSchema` built from the zod `AgentDecision` schema. No tools | Cheapest and fastest. Everything a colonist needs is already in the observation. News uses the same shape with a short headline schema |
+| `tools` | Traders, governments, advisor | Function declarations (`quote_route`, `fx_quote`, `book_depth`, `briefing_detail`, and for the advisor `metric_history`) plus one terminal function `submit_turn`. Loop until `submit_turn` or `maxTurns` | Traders price routes; governments drill into briefings; the advisor pulls a continuous aggregate before it answers. The terminal function keeps the output schema-valid |
+| `text` | Economist report | One streamed request, plain prose, with the Tiger aggregate series already in the prompt | Long output, end of run only |
 
-Notes for current Claude models, which the gateway must respect:
+Notes the gateway must respect for Gemini:
 
-- Forced `tool_choice` (`any` / a named tool) is rejected on Opus 5.5 and Sonnet 5.5. Use `tool_choice: auto`, tell the model to finish with `submit_turn`, and treat "no `submit_turn` by the last turn" as a fallback to standing orders.
-- Thinking can't be turned off on Opus 5.5. Cost and latency are controlled with `output_config.effort` (`low` for colonists, `medium` for traders and governments).
-- Check `stop_reason` before reading content. A `refusal` resolves to standing orders, the same as a timeout.
-- Read tools are pure functions over the engine's read-only view for the current cycle. They can't change state, so a tool loop can't break determinism.
+- Per-role thinking budget (`thinkingConfig.thinkingBudget`) is the cost and latency knob: small for colonists and news, larger for traders and governments, largest for the economist.
+- A safety block, a missing `submit_turn` by the last turn, or invalid JSON resolves to standing orders, the same as a timeout. The advisor surfaces an error to the user instead, because there is no sim action to fall back to.
+- Read tools are pure functions over the engine's read-only view for the current cycle (or over Tiger aggregates for `metric_history`). They can't change state, so a tool loop can't break determinism.
 
 ### 3.5 Prompt layout for caching
 
-Requests are laid out so the expensive parts are shared and the per-agent part is last:
+Requests are laid out so the expensive parts are shared and the per-agent part is last. Gemini explicit context caching (`caches.create`, then `cachedContent` on `generateContent`) stores the prefix:
 
 ```
-┌─ tools ─────────────────────────────┐  role's tool list, sorted by name, byte-identical all run
+┌─ tools ─────────────────────────────┐  role's function declarations, sorted by name, byte-identical all run
 ├─ system: world rules + role rules ──┤  frozen text: economics, goods, recipes, how to act
-│                    ◄── breakpoint 1 │  shared by every agent of this role on every planet
+│                    ◄── cached prefix │  one cache per (role, planet, cycle), TTL ~5 minutes
 ├─ user: planet/cycle context ────────┤  this planet's market summary, news, policy, confidence indexes
-│                    ◄── breakpoint 2 │  shared by every agent of this role on this planet this cycle
 ├─ user: agent's own state ───────────┤  purse, inventory, open orders, skills, personality, memo
 └─────────────────────────────────────┘  uncached, kept to a few hundred tokens
 ```
 
-- With about 30 colonists per planet hitting the same prefix within seconds, breakpoint 2 is written once per planet per cycle and read about 10–20 times. Breakpoint 1 is read on every call of that role.
-- Calls with a shared prefix land seconds apart, so the default 5-minute TTL stays warm on its own. The 1-hour TTL would only double write costs.
-- The current models cache prefixes from 512 tokens, so even the colonist system prompt clears the minimum. Verify it anyway: the gateway logs `usage.cache_read_input_tokens` per role, and a cycle where it reads zero for a role trips a warning.
+- One cache object per `(role, planet, cycle)` holds tools, system rules, and that planet's cycle context. About 30 colonists on a planet then reference it. The role-level rules also sit in a longer-lived cache reused across planets and cycles, since that text never changes during a run.
+- Cache TTL is 5 minutes. Calls for a planet land in the same cycle, seconds apart, so the TTL stays warm on its own.
+- The prefix has to clear Gemini's minimum cache size. The gateway logs cached-token counts per role, and a cycle where a role never hits trips a warning.
 - Silent cache killers to keep out of the prefix: timestamps, cycle numbers in the system block, unsorted JSON, per-agent names, a tool list that changes between calls. The cycle number belongs in the planet-context block.
-- **Warm before fan-out.** Send the first request of each (role, planet) group alone, then release the rest of the group. Otherwise 30 parallel requests all miss and all pay for the write.
+- **Create the cache, then fan out.** Write the `(role, planet)` cache once, then release the rest of the group against `cachedContent`. Otherwise 30 parallel requests all miss and all pay to send the prefix.
 
 ### 3.6 Concurrency, deadlines and cost
 
-**Concurrency.** One `Limiter` per model, sized from the account's rate limits: a semaphore for in-flight requests plus token buckets for requests, input tokens and output tokens per minute. The per-cycle peak is about 70 calls, mostly Haiku, so a single process handles it. For 8 universes, run them all in **one Node process sharing one gateway** (or worker threads with the gateway on the main thread). The limiter then throttles across universes for free.
+**Concurrency.** One `Limiter` per model, sized from the account's rate limits: a semaphore for in-flight requests plus token buckets for requests, input tokens and output tokens per minute. The per-cycle peak is about 70 calls, mostly Flash, so a single process handles it. For 8 universes, run them all in **one Node process sharing one gateway** (or worker threads with the gateway on the main thread). The limiter then throttles across universes for free.
 
 **Deadlines.** Each `AgentTask` carries `deadlineMs`. The gateway retries a 429 or 5xx only if the remaining deadline covers it, otherwise it returns `standing_orders`. The engine never waits past the cycle deadline.
 
-**Cost meter.** Every response's `usage` is priced from a table in `gateway/pricing.ts` and summed per run, role and model. A hard per-run budget (default $15) switches remaining calls to stub with a feed event, so a bug can't burn money overnight.
+**Cost meter.** Every response's `usage` is priced from a table in `gateway/pricing.ts` (Gemini's published rates for the pinned model ids) and summed per run, role and model. The same rows are inserted into Tiger's `call_usage` hypertable so the dashboard can chart spend. A hard per-run budget (default $15) switches remaining calls to stub with a feed event, so a bug can't burn money overnight. Advisor calls count against a separate per-user cap so a chatty spectator cannot drain the sim budget.
 
-Rough per-run estimate at the build plan's call counts (`full` profile). Recompute from the cost meter after B2. Thinking tokens dominate, which is why effort and `maxTokens` are set per role:
+Call volume is unchanged from the build plan. Recompute dollars from the cost meter after B2. Thinking tokens dominate, which is why the thinking budget and `maxTokens` are set per role:
 
-| Role | Calls / run | Model | Est. cost |
-| --- | --- | --- | --- |
-| Colonists | ~11,000 | Haiku 5.5 | ~$2–3 |
-| Traders | ~2,400 (×1–3 turns) | Haiku 5.5 | ~$2–4 |
-| Traders, if promoted | same | Sonnet 5.5 | ~$12–20 |
-| Governments | ~120–150 | Opus 5.5 | ~$7–14 |
-| News + economist | ~120 + 1 | Haiku / Opus | < $1 |
-| **Total (traders on Haiku)** | | | **~$12–22** |
+| Role | Calls / run | Model tier |
+| --- | --- | --- |
+| Colonists | ~11,000 | Flash |
+| Traders | ~2,400 (×1–3 turns) | Flash, A/B against Pro |
+| Governments | ~120–150 | Pro |
+| News + economist | ~120 + 1 | Flash / Pro |
+| Advisor | user-triggered, outside the cycle | Flash, Pro if the question needs `metric_history` |
 
-The government line is what to watch against the $15 target. Levers in order: effort `low` on routine reviews and `medium` only after shocks, a tighter briefing, then `cheap` profile (Sonnet 5.5) for governments in tuning runs.
+The government line is what to watch against the $15 target. Levers in order: a smaller thinking budget on routine reviews and a larger one only after shocks, a tighter briefing, then the `cheap` profile (Flash for governments) in tuning runs.
 
 **Batch API: not for the loop.** Batches are cheaper but asynchronous, and each cycle depends on the last. It doesn't fit the live sim.
 
@@ -300,18 +352,18 @@ Every gateway call is written to `runs/<universe>/calls.jsonl` keyed by `(cycle,
 
 **No, not for v1.** Here is what we need from the routing layer and who covers it:
 
-| Need | In-process gateway on the Anthropic SDK | LiteLLM proxy |
+| Need | In-process gateway on the Gemini SDK | LiteLLM proxy |
 | --- | --- | --- |
 | Role → tier → model routing | A config table (§3.3) | Model aliases in YAML |
-| Prompt caching with exact breakpoint placement | Native `cache_control`, exactly as laid out in §3.5 | Passes through, but via an OpenAI-shaped translation layer. Breakpoint placement is harder to control and to verify |
-| `effort`, structured outputs, `strict` tools, `refusal` stop reason | Native | Depends on how well the translation keeps up with new Anthropic parameters |
+| Explicit context caching, prefix placed where §3.5 says | Native `caches.create` / `cachedContent` | Passes through an OpenAI-shaped translation layer. Cache placement is harder to control and to verify |
+| Thinking budget, JSON schema responses, function calling, safety blocks | Native | Depends on how well the translation keeps up with Gemini parameters |
 | Concurrency and rate limits | `Limiter` (§3.6), shared by all universes in one process | Built in, and shared across processes |
 | Per-cycle deadline with standing-orders fallback | Has to live in our code either way | Has to live in our code either way |
-| Cost tracking and a hard budget | `usage` × price table | Built-in spend tracking and budgets |
+| Cost tracking and a hard budget | `usage` × price table, mirrored into Tiger | Built-in spend tracking and budgets |
 | Stub and replay modes | Just other `ModelGateway` implementations | Not its job. We'd build these anyway |
-| Ops | Nothing extra | A Python sidecar (Docker) next to a Node stack, one more network hop inside a 5–8 s deadline, one more process to fail in a live demo |
+| Ops | Nothing extra on the Vultr box | A Python sidecar (Docker) next to a Node stack, one more network hop inside a 5–8 s deadline, one more process to fail in a live demo |
 
-LiteLLM's real strengths are multi-provider routing, cross-process rate limiting and spend dashboards. None of those is a v1 requirement if we run one provider and keep all universes in one process.
+LiteLLM's real strengths are multi-provider routing, cross-process rate limiting and spend dashboards. None of those is a v1 requirement if we run Gemini only and keep all universes in one process. Spend charts come from Tiger, not from a proxy UI.
 
 **When to revisit it:**
 
@@ -325,10 +377,10 @@ LiteLLM's real strengths are multi-provider routing, cross-process rate limiting
 interface ModelGateway {
   invoke(req: GatewayRequest, signal: AbortSignal): Promise<GatewayResult>;
 }
-// implementations: StubGateway, ReplayGateway, AnthropicGateway, (later) LiteLlmGateway
+// implementations: StubGateway, ReplayGateway, GeminiGateway, (later) LiteLlmGateway
 ```
 
-If we do add it, pin the exact version or image digest and keep the Anthropic adapter as the default for governments, where caching and effort control matter most.
+If we do add it, pin the exact version or image digest and keep the Gemini adapter as the default for governments, where caching and the thinking budget matter most.
 
 ---
 
@@ -336,8 +388,14 @@ If we do add it, pin the exact version or image digest and keep the Anthropic ad
 
 | Decision | Default in this doc | Owner |
 | --- | --- | --- |
-| Traders on Haiku 5.5 or Sonnet 5.5 | Haiku, A/B in B3 | B |
+| Traders on Gemini Flash or Pro | Flash, A/B in B3 | B |
 | Who builds the frontend | Track A from A5, or Track D if a 4th person joins | Team |
-| Governments' effort level | `low` routine, `medium` after shocks | B |
-| Universes in one process or many | One process, shared gateway | A + B |
+| Governments' thinking budget | Small on routine reviews, larger after shocks | B |
+| Universes in one process or many | One process, shared gateway, on one Vultr VM | A + B |
 | Per-run hard budget | $15, then stub | B |
+| Frontend host | Vercel (`apps/web`, Auth0 SPA) | Web |
+| Engine host | Vultr Cloud Compute, Docker Compose with `solana-test-validator` | A |
+| Database | Tiger Data Cloud free tier. Local Docker Postgres with the Tiger extension for dev | A |
+| Chain for the demo | `solana-test-validator` on the Vultr VM. Devnet only if we want a public explorer | C |
+| Vultr GPU | Off. Inference is Gemini. Revisit only for a local model | Team |
+| God mode | Auth0 role `operator`. Everyone else is `spectator` and can use the advisor | Web |
