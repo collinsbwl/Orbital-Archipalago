@@ -3,3 +3,9 @@ dist
 runs/
 .env*
 *.tsbuildinfo
+.anchor
+target
+test-ledger
+.surfpool
+**/*.rs.bk
+.DS_Store

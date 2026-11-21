@@ -1,0 +1,39 @@
+{
+  "name": "@orbital/ledger-solana",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "idl:sync": "node scripts/sync-idl.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && vitest run -c vitest.contract.config.ts -t \"ledger contract (accounts|transfer, produce, consume|local orders|local auction|fx auction) (?!any method on an unopened)\"",
+    "test:contract": "vitest run -c vitest.contract.config.ts",
+    "test:validator": "vitest run"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "1.2.2",
+    "@orbital/contracts": "workspace:*",
+    "@solana/web3.js": "^1.98.0",
+    "bn.js": "^5.2.3"
+  },
+  "devDependencies": {
+    "@orbital/ledger-memory": "workspace:^",
+    "@types/bn.js": "^5.1.6",
+    "@types/node": "^22.0.0",
+    "litesvm": "0.8.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

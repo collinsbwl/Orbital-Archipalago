@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "installCommand": "cd ../.. && npx pnpm@9.15.9 install --frozen-lockfile",
+  "buildCommand": "cd ../.. && npx pnpm@9.15.9 --filter @orbital/web... build",
+  "outputDirectory": "dist"
+}
