@@ -1,0 +1,44 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      tiger:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_USER: orbital
+          POSTGRES_PASSWORD: orbital
+          POSTGRES_DB: orbital
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U orbital"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # Enables the Tiger Data integration tests (they skip without it).
+      TIGER_DATABASE_URL: postgres://orbital:orbital@localhost:5432/orbital
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: 200-cycle stub run
+        run: pnpm --filter @orbital/engine sim
+      - name: Live server smoke test (Tiger-backed)
+        run: |
+          pnpm --filter @orbital/engine serve -- --port 8787 --interval 50 --cycles 20 &
+          for i in $(seq 1 30); do curl -sf localhost:8787/healthz && break; sleep 1; done
+          sleep 3
+          curl -sf localhost:8787/healthz
+          psql "$TIGER_DATABASE_URL" -tAc "SELECT count(*) FROM planet_metrics" | awk '{ if ($1 < 3) exit 1 }'
