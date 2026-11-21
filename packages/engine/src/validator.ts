@@ -1,8 +1,15 @@
 import { AgentDecisionSchema } from '@orbital/contracts';
-import type { AgentTask, Cargo, FxOrder, Order, OrderId, PlanetId } from '@orbital/contracts';
+import type { AgentTask, Cargo, FxOrder, LoanId, Order, OrderId, PlanetId, SurveyAnswer, WorldConfig } from '@orbital/contracts';
 import type { MarketBook } from './market-book.js';
 
 export const MAX_ACTIONS_PER_AGENT = 10;
+export const MAX_OPEN_LOANS = 3;
+/** A borrow may be at most this many times the role's starting purse. */
+export const BORROW_CAP_MULTIPLE = 2;
+
+/** Max borrow per `${planet}:${role}` (see `borrowCapsOf`). */
+export const borrowCapsOf = (world: WorldConfig): Map<string, number> =>
+  new Map(world.planets.flatMap((p) => [[`${p.id}:colonist`, BORROW_CAP_MULTIPLE * p.purses.colonist], [`${p.id}:trader`, BORROW_CAP_MULTIPLE * p.purses.trader]] as const));
 
 export interface Rejection {
   agentId: string;
@@ -17,6 +24,12 @@ export interface ValidatedDecision {
   fxOrders: FxOrder[];
   /** At most one per decision; `from` is the planet the trader is docked at. */
   ship?: { from: PlanetId; to: PlanetId; cargo: Cargo[] };
+  /** At most one per decision, from the reserve bank of the task planet. */
+  borrow?: { planet: PlanetId; amount: number; termCycles: number };
+  repays: { loanId: LoanId; amount: number }[];
+  /** Planet the agent acted on (docked planet for traders). */
+  planet: PlanetId;
+  survey?: SurveyAnswer;
   memo?: string;
 }
 
@@ -25,6 +38,8 @@ export interface KnownIds {
   goods: ReadonlySet<string>;
   planets: ReadonlySet<string>;
   currencies: ReadonlySet<string>;
+  /** Max borrow per `${planet}:${role}`; a missing key means the role may not borrow. */
+  borrowCaps?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -58,8 +73,13 @@ export function validateDecisions(
       rejections.push({ agentId: d.agentId, action: 'decision', reason: 'duplicate_decision' });
       continue;
     }
-    const out: ValidatedDecision = { agentId: d.agentId, orders: [], cancels: [], fxOrders: [], ...(d.memo !== undefined ? { memo: d.memo } : {}) };
+    const out: ValidatedDecision = {
+      agentId: d.agentId, planet: task.planet, orders: [], cancels: [], fxOrders: [], repays: [],
+      ...(d.survey ? { survey: d.survey } : {}), ...(d.memo !== undefined ? { memo: d.memo } : {}),
+    };
     const cancelled = new Set<string>();
+    const ownLoans = new Set(task.observation.loans.map((l) => l.id));
+    const repaid = new Set<string>();
     d.actions.forEach((a, i) => {
       const reject = (reason: string) => rejections.push({ agentId: d.agentId, action: a.kind, reason });
       if (i >= MAX_ACTIONS_PER_AGENT) return reject('action_cap');
@@ -82,6 +102,16 @@ export function validateDecisions(
         if (a.to === task.planet) return reject('ship_to_self');
         if (a.cargo.some((c) => !known.goods.has(c.good))) return reject('unknown_good');
         out.ship = { from: task.planet, to: a.to, cargo: a.cargo };
+      } else if (a.kind === 'borrow') {
+        if (out.borrow) return reject('duplicate_borrow');
+        if (ownLoans.size >= MAX_OPEN_LOANS) return reject('loan_cap');
+        if (a.amount > (known.borrowCaps?.get(`${task.planet}:${task.role}`) ?? 0)) return reject('borrow_cap');
+        out.borrow = { planet: task.planet, amount: a.amount, termCycles: a.termCycles };
+      } else if (a.kind === 'repay') {
+        if (!ownLoans.has(a.loanId)) return reject('not_own_loan');
+        if (repaid.has(a.loanId)) return reject('duplicate_repay');
+        repaid.add(a.loanId);
+        out.repays.push({ loanId: a.loanId, amount: a.amount });
       }
     });
     seen.set(d.agentId, out);

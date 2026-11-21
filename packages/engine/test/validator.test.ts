@@ -4,7 +4,10 @@ import { AgentTaskSchema } from '@orbital/contracts';
 import { COLONIST_ACTIONS, MarketBook, TRADER_ACTIONS, validateDecisions } from '../src/index.js';
 import { makeUniverse, scripted } from './helpers.js';
 
-const goods = { goods: new Set(['iron', 'grain']), planets: new Set(['helion', 'verdan']), currencies: new Set(['HLX', 'VRD']) };
+const goods = {
+  goods: new Set(['iron', 'grain']), planets: new Set(['helion', 'verdan']), currencies: new Set(['HLX', 'VRD']),
+  borrowCaps: new Map([['helion:colonist', 2000], ['helion:trader', 20_000]]),
+};
 const task = (agentId: string, allowed = COLONIST_ACTIONS): AgentTask => ({
   universeId: 'u0', cycle: 0, agentId, role: 'colonist', planet: 'helion',
   observation: { purse: { HLX: 100 }, inventory: {}, openOrders: [], loans: [], shipments: [], markets: [], fx: [], policy: { tariffsBp: {}, quotas: {}, embargoes: [], policyRateBp: 0 }, headlines: [] },
@@ -28,7 +31,7 @@ describe('validateDecisions', () => {
 
   it('rejects disallowed actions and unknown goods', () => {
     const r = validateDecisions(
-      [dec('a', [{ kind: 'borrow', amount: 5, termCycles: 2 }, { ...buy, good: 'gold' }, buy])],
+      [dec('a', [{ kind: 'set_policy_rate', rateBp: 5 }, { ...buy, good: 'gold' }, buy])],
       tasks, book, goods,
     );
     expect(r.rejections.map((x) => x.reason)).toEqual(['not_allowed', 'unknown_good']);
@@ -115,5 +118,35 @@ describe('validateDecisions: trader actions', () => {
   it('colonists may not ship or trade FX', () => {
     const r = validateDecisions([dec('a', [ship('verdan'), fx('HLX', 'VRD')])], [task('a')], book, goods);
     expect(r.rejections.map((x) => x.reason)).toEqual(['not_allowed', 'not_allowed']);
+  });
+});
+
+describe('validateDecisions: credit', () => {
+  const book = new MarketBook();
+  const loan = (id: string) => ({ id, borrower: 'a', planet: 'helion', currency: 'HLX', principal: 100, outstanding: 100, rateBp: 20, issuedCycle: 0, dueCycle: 9 });
+  const withLoans = (n: number): AgentTask => {
+    const t = task('a');
+    return { ...t, observation: { ...t.observation, loans: Array.from({ length: n }, (_, i) => loan(`l${i + 1}`)) } };
+  };
+  const borrow = (amount: number) => ({ kind: 'borrow', amount, termCycles: 5 }) as const;
+  const repay = (loanId: string) => ({ kind: 'repay', loanId, amount: 10 }) as const;
+
+  it('allows one borrow up to 2x the starting purse, from the task planet', () => {
+    const r = validateDecisions([dec('a', [borrow(2000), borrow(10), borrow(2001)])], [task('a')], book, goods);
+    expect(r.decisions[0]!.borrow).toEqual({ planet: 'helion', amount: 2000, termCycles: 5 });
+    expect(r.rejections.map((x) => x.reason)).toEqual(['duplicate_borrow', 'duplicate_borrow']);
+    expect(validateDecisions([dec('a', [borrow(2001)])], [task('a')], book, goods).rejections[0]!.reason).toBe('borrow_cap');
+    expect(validateDecisions([dec('a', [borrow(1)])], [task('a')], book, { ...goods, borrowCaps: new Map() }).rejections[0]!.reason).toBe('borrow_cap');
+  });
+
+  it('caps open loans at 3', () => {
+    expect(validateDecisions([dec('a', [borrow(10)])], [withLoans(2)], book, goods).decisions[0]!.borrow).toBeDefined();
+    expect(validateDecisions([dec('a', [borrow(10)])], [withLoans(3)], book, goods).rejections[0]!.reason).toBe('loan_cap');
+  });
+
+  it('repays only own loans, once each', () => {
+    const r = validateDecisions([dec('a', [repay('l1'), repay('l1'), repay('l9')])], [withLoans(2)], book, goods);
+    expect(r.decisions[0]!.repays).toEqual([{ loanId: 'l1', amount: 10 }]);
+    expect(r.rejections.map((x) => x.reason)).toEqual(['duplicate_repay', 'not_own_loan']);
   });
 });

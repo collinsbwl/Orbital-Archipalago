@@ -46,6 +46,12 @@ export class MarketBook {
     }
   }
 
+  /** Last clearing price of a market, null if it never cleared. */
+  lastPrice(planet: PlanetId, good: GoodId): number | null {
+    const t = this.trends.get(key(planet, good));
+    return t?.length ? (t[t.length - 1] as number) : null;
+  }
+
   view(planet: PlanetId, good: GoodId): MarketView {
     const levels = (side: Order['side']) => {
       const m = new Map<number, number>();

@@ -1,8 +1,8 @@
 import type { ActionKind, AgentId, PlanetId, Role } from '@orbital/contracts';
 import type { AgentInfo } from './agents.js';
 
-export const COLONIST_ACTIONS: ActionKind[] = ['place_order', 'cancel_order', 'pass'];
-export const TRADER_ACTIONS: ActionKind[] = ['place_order', 'cancel_order', 'place_fx_order', 'ship', 'pass'];
+export const COLONIST_ACTIONS: ActionKind[] = ['place_order', 'cancel_order', 'borrow', 'repay', 'pass'];
+export const TRADER_ACTIONS: ActionKind[] = ['place_order', 'cancel_order', 'place_fx_order', 'ship', 'borrow', 'repay', 'pass'];
 
 export const allowedActionsFor = (role: Role): ActionKind[] => (role === 'trader' ? [...TRADER_ACTIONS] : [...COLONIST_ACTIONS]);
 

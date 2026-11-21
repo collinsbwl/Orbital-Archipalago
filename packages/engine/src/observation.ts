@@ -1,4 +1,4 @@
-import type { AgentTask, Ledger, PlanetId, PolicyState, Shipment, WorldConfig } from '@orbital/contracts';
+import type { AgentTask, Ledger, Loan, PlanetId, PolicyState, Shipment, WorldConfig } from '@orbital/contracts';
 import type { AgentInfo } from './agents.js';
 import type { FxView } from './fx.js';
 import type { MarketBook } from './market-book.js';
@@ -14,11 +14,13 @@ export interface TaskContext {
   fx: readonly FxView[];
   /** Engine-tracked in-flight shipments. */
   flights: readonly Shipment[];
+  /** Engine-tracked open loans (outstanding > 0), in issue order. */
+  loans: readonly Loan[];
 }
 
 /** Builds one cycle's tasks. `agents[].planet` is where the agent acts (docked planet for traders). Policy is read once per planet. */
 export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[]): Promise<AgentTask[]> {
-  const { world, ledger, book, memos, cycle, fx, flights } = ctx;
+  const { world, ledger, book, memos, cycle, fx, flights, loans } = ctx;
   const policies = new Map<PlanetId, PolicyState>();
   const currency = new Map(world.planets.map((p) => [p.id, p.currency]));
   const tasks: AgentTask[] = [];
@@ -45,7 +47,7 @@ export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[])
         purse,
         inventory,
         openOrders: book.ordersOf(a.id).slice(-20).reverse(),
-        loans: [],
+        loans: loans.filter((l) => l.borrower === a.id).slice(0, 10),
         shipments: flights.filter((s) => s.owner === a.id).slice(0, 10),
         markets: world.goods.map((g) => book.view(a.planet, g.id)),
         fx: fx.map((f) => ({ ...f })),

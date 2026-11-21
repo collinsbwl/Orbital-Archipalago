@@ -7,13 +7,15 @@ export type Counts = Record<string, Record<string, number>>;
 
 /**
  * Each planet runs each recipe up to batchesPerCycle. Batches go round-robin to the planet's colonists (start rotates
- * with the cycle). A batch whose owner lacks the inputs on that planet is skipped.
+ * with the cycle). A batch whose owner lacks the inputs on that planet is skipped. `used`, when given, is filled with
+ * the input units consumed per planet/good (for value-added GDP).
  */
-export async function runProduction(world: WorldConfig, ledger: Ledger, cycle: number): Promise<Counts> {
+export async function runProduction(world: WorldConfig, ledger: Ledger, cycle: number, used: Counts = {}): Promise<Counts> {
   const recipes = new Map(world.recipes.map((r) => [r.id, r]));
   const produced: Counts = {};
   for (const p of world.planets) {
     const out: Record<string, number> = (produced[p.id] = {});
+    const inp: Record<string, number> = (used[p.id] = {});
     const n = p.agents.colonist;
     if (n === 0) continue;
     const total = p.recipes.reduce((s, r) => s + r.batchesPerCycle, 0);
@@ -24,6 +26,7 @@ export async function runProduction(world: WorldConfig, ledger: Ledger, cycle: n
         try {
           await ledger.produce({ owner: agentId(p.id, 'colonist', k), planet: p.id, inputs: recipe.inputs, outputs: [recipe.output] });
           out[recipe.output.good] = (out[recipe.output.good] ?? 0) + recipe.output.qty;
+          for (const i of recipe.inputs) inp[i.good] = (inp[i.good] ?? 0) + i.qty;
         } catch (e) {
           if (!(e instanceof LedgerError && e.code === 'insufficient_inventory')) throw e;
         }

@@ -17,7 +17,7 @@ await u.init();
 
 const volume = Object.fromEntries(world.planets.map((p) => [p.id, 0]));
 const fxClears: Record<string, number> = {};
-let unmet = 0, departures = 0, arrivals = 0;
+let unmet = 0, departures = 0, arrivals = 0, defaults = 0;
 for (let i = 1; i <= cycles; i++) {
   const r = await u.step();
   for (const a of r.auctions) volume[a.planet] = (volume[a.planet] ?? 0) + a.volume;
@@ -25,10 +25,13 @@ for (let i = 1; i <= cycles; i++) {
   for (const p of Object.values(r.unmet)) for (const n of Object.values(p)) unmet += n;
   departures += r.departures.length;
   arrivals += r.arrivals.length;
+  defaults += r.defaults;
   if (i % 20 === 0 || i === cycles) {
     const ok = (await ledger.checkInvariants()).ok;
     const vol = Object.entries(volume).map(([p, v]) => `${p}=${v}`).join(' ');
     console.log(`cycle ${r.cycle} volume(last window) ${vol} unmet ${unmet} departures(total) ${departures} arrivals(total) ${arrivals} invariants ${ok ? 'ok' : 'FAIL'}`);
+    const eco = await Promise.all(world.planets.map(async (p) => `${p.id}: gdp ${r.metrics[p.id]!.gdp} cpi ${r.metrics[p.id]!.cpi} rate ${(await ledger.getPolicy(p.id)).policyRateBp}bp`));
+    console.log(`  ${eco.join(' | ')} | defaults(total) ${defaults}`);
     for (const k of Object.keys(volume)) volume[k] = 0;
     unmet = 0;
   }

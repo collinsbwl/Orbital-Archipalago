@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AgentDecisionSchema, AgentTaskSchema } from '@orbital/contracts';
 import type { AgentDecision, AgentTask } from '@orbital/contracts';
 import type { CycleReport } from '../src/index.js';
-import { initialSupply, makeUniverse, scripted } from './helpers.js';
+import { makeUniverse, scripted } from './helpers.js';
 import { RandomValidPolicy } from '../src/index.js';
 
 const CYCLES = 200;
@@ -10,13 +10,11 @@ const CYCLES = 200;
 async function run(seed: number) {
   const { universe, ledger, world } = makeUniverse({ seed, checkInvariants: false });
   await universe.init();
-  const supply = initialSupply(world);
   const reports: CycleReport[] = [];
   for (let c = 0; c < CYCLES; c++) {
     reports.push(await universe.step());
     const inv = await ledger.checkInvariants();
     expect(inv.ok, `cycle ${c}: ${JSON.stringify(inv.violations)}`).toBe(true);
-    expect(inv.totals.currency, `cycle ${c}: no borrowing, so money per currency is constant`).toEqual(supply);
   }
   return { reports, world };
 }
