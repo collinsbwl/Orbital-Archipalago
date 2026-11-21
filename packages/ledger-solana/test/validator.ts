@@ -1,9 +1,10 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { Connection } from '@solana/web3.js';
 import { IDL } from '../src/idl/orbital.js';
+import { hasValidator, PROGRAM_SO, SOLANA_BIN } from './env.js';
 
 /** Vitest global setup: runs a throwaway solana-test-validator with the built program loaded. */
 let validator: ChildProcess | undefined;
@@ -12,12 +13,12 @@ let dir: string | undefined;
 export const RPC_URL = 'http://127.0.0.1:8899';
 
 export async function setup(): Promise<void> {
-  const so = resolve(__dirname, '../../../target/deploy/orbital.so');
-  if (!existsSync(so)) throw new Error(`missing ${so}: run \`anchor build\` first`);
+  if (!hasValidator) return; // no Solana toolchain here: the validator tests skip themselves
+  const so = PROGRAM_SO;
   dir = mkdtempSync(join(tmpdir(), 'orbital-validator-'));
   validator = spawn('solana-test-validator', ['--reset', '--quiet', '--ledger', dir, '--bpf-program', IDL.address, so], {
     stdio: 'ignore',
-    env: { ...process.env, PATH: `${process.env.HOME}/.local/share/solana/install/active_release/bin:${process.env.PATH}` },
+    env: { ...process.env, PATH: `${SOLANA_BIN}:${process.env.PATH}` },
   });
   validator.on('error', (e) => { throw e; });
 

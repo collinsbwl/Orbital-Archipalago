@@ -2,6 +2,7 @@ import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_WORLD, LedgerError } from '@orbital/contracts';
 import { bootstrapLedger, SolanaLedger } from '../src/index.js';
+import { hasValidator } from './env.js';
 import { RPC_URL } from './validator.js';
 
 // The validator is shared by every test in this file, so each test uses its own owner ids.
@@ -16,13 +17,14 @@ const rejects = async (p: Promise<unknown>, code: string) => {
 };
 
 beforeAll(async () => {
+  if (!hasValidator) return;
   const connection = new Connection(RPC_URL, 'confirmed');
   const admin = Keypair.generate();
   await connection.confirmTransaction(await connection.requestAirdrop(admin.publicKey, 100 * LAMPORTS_PER_SOL), 'confirmed');
   ledger = await bootstrapLedger({ connection, admin, world: DEFAULT_WORLD });
 });
 
-describe('purses', () => {
+describe.skipIf(!hasValidator)('purses', () => {
   it('opens an account with a starting purse and reads it back', async () => {
     const a = id('alice');
     await ledger.openAccount({ owner: a, planet: 'helion', purse: { HLX: 1_000 } });
@@ -55,7 +57,7 @@ describe('purses', () => {
   });
 });
 
-describe('inventories', () => {
+describe.skipIf(!hasValidator)('inventories', () => {
   it('places starting goods on the home planet only', async () => {
     const a = id('carol');
     await ledger.openAccount({ owner: a, planet: 'helion', inventory: { iron: 10, water: 3 } });
@@ -89,7 +91,7 @@ describe('inventories', () => {
   });
 });
 
-describe('later milestones', () => {
+describe.skipIf(!hasValidator)('later milestones', () => {
   it('fail loudly instead of pretending', async () => {
     await rejects(ledger.borrow({ borrower: 'x', planet: 'helion', amount: 1, termCycles: 1, cycle: 1 }), 'invalid_state');
   });
