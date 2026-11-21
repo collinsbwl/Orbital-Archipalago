@@ -147,9 +147,13 @@ export class RandomValidPolicy implements DecisionProvider {
     purses.set(give, have - giveAmount);
   }
 
-  /** Price within +-20% of the last clearing price (or base price), at least 1. */
+  /**
+   * Price within +-20% of a reference that leans 75/25 from the last clearing price toward the base price, at least 1.
+   * The pull toward base keeps stub prices from random-walking away (a stub artifact, not economics).
+   */
   private limit(good: string, last: number | null): number {
-    const ref = last ?? this.basePrice.get(good) ?? 1;
+    const base = this.basePrice.get(good) ?? 1;
+    const ref = last === null ? base : (3 * last + base) / 4;
     return Math.max(1, Math.round(ref * (0.8 + 0.4 * this.rng.next())));
   }
 }

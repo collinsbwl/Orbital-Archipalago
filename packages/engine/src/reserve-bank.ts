@@ -10,6 +10,8 @@ export const RESERVE_BANK_CONFIG = {
   maxBp: 500,
   /** Output gap = GDP vs the mean of this many trailing cycles. */
   gdpWindow: 20,
+  /** Build plan: 200 cycles ~ 4 years. Used to turn the (level) output gap into a per-cycle rate term. */
+  cyclesPerYear: 50,
 };
 
 export type ReserveBankConfig = typeof RESERVE_BANK_CONFIG;
@@ -25,8 +27,14 @@ export function outputGapBp(gdpNow: number, trailing: readonly number[]): number
   return mean > 0 ? Math.round(((gdpNow - mean) * 10_000) / mean) : 0;
 }
 
-/** rate = neutral + w_pi * (inflation - target) + w_y * gap, rounded to an integer and clamped to [min, max]. */
+/**
+ * Loan `rateBp` is per cycle, so every term is per cycle: `inflation` (measured over `intervalCycles`) is divided by
+ * the interval, and the output gap (a level, read as annual) by `cyclesPerYear`. `targetBp` is per-cycle inflation.
+ * rate = neutral + w_pi * (inflation/interval - target) + w_y * gap/cyclesPerYear, rounded, clamped to [min, max].
+ */
 export function taylorRateBp(inflation: number, outputGap: number, cfg: ReserveBankConfig = RESERVE_BANK_CONFIG): number {
-  const raw = cfg.neutralBp + cfg.inflationWeight * (inflation - cfg.targetBp) + cfg.outputGapWeight * outputGap;
+  const raw = cfg.neutralBp
+    + cfg.inflationWeight * (inflation / cfg.intervalCycles - cfg.targetBp)
+    + (cfg.outputGapWeight * outputGap) / cfg.cyclesPerYear;
   return Math.min(cfg.maxBp, Math.max(cfg.minBp, Math.round(raw)));
 }

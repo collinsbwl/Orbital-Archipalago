@@ -2696,11 +2696,11 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 748
+     "HLX": 752
     },
     "inventory": {
      "iron": 8,
-     "grain": 1,
+     "grain": 2,
      "water": 0,
      "fuel": 0,
      "tools": 0
@@ -2714,16 +2714,6 @@
       "qty": 2,
       "limitPrice": 19,
       "orderId": "o156",
-      "cycle": 1
-     },
-     {
-      "agentId": "helion:colonist:0",
-      "planet": "helion",
-      "good": "grain",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 52,
-      "orderId": "o155",
       "cycle": 1
      },
      {
@@ -2744,22 +2734,26 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 5
-       },
-       {
         "price": 96,
         "qty": 2
+       },
+       {
+        "price": 86,
+        "qty": 1
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
         "price": 115,
-        "qty": 4
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 1
        }
       ],
       "lastPrice": 106,
@@ -2771,82 +2765,83 @@
       "good": "grain",
       "bids": [
        {
-        "price": 52,
-        "qty": 4
+        "price": 50,
+        "qty": 2
        },
        {
-        "price": 51,
+        "price": 49,
         "qty": 1
        },
        {
-        "price": 50,
-        "qty": 6
+        "price": 48,
+        "qty": 3
        }
       ],
       "asks": [
        {
-        "price": 54,
+        "price": 52,
         "qty": 1
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        46,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 24,
-        "qty": 1
-       },
-       {
         "price": 23,
-        "qty": 12
+        "qty": 10
        },
        {
         "price": 22,
-        "qty": 12
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 24,
+      "lastPrice": 23,
       "trend": [
-       24
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 80,
-        "qty": 1
-       },
-       {
         "price": 78,
-        "qty": 5
+        "qty": 3
        },
        {
         "price": 75,
+        "qty": 5
+       },
+       {
+        "price": 73,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 80,
+      "asks": [
+       {
+        "price": 79,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 78,
       "trend": [
        69,
-       80
+       78
       ]
      },
      {
       "good": "tools",
       "bids": [
-       {
-        "price": 352,
-        "qty": 4
-       },
        {
         "price": 347,
         "qty": 1
@@ -2854,6 +2849,10 @@
        {
         "price": 338,
         "qty": 2
+       },
+       {
+        "price": 326,
+        "qty": 1
        }
       ],
       "asks": [],
@@ -2875,7 +2874,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -2904,7 +2903,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 1075
+     "HLX": 1074
     },
     "inventory": {
      "iron": 4,
@@ -2930,7 +2929,7 @@
       "good": "grain",
       "side": "sell",
       "qty": 1,
-      "limitPrice": 54,
+      "limitPrice": 52,
       "orderId": "o185",
       "cycle": 1
      }
@@ -2954,22 +2953,26 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 5
-       },
-       {
         "price": 96,
         "qty": 2
+       },
+       {
+        "price": 86,
+        "qty": 1
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
         "price": 115,
-        "qty": 4
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 1
        }
       ],
       "lastPrice": 106,
@@ -2981,82 +2984,83 @@
       "good": "grain",
       "bids": [
        {
-        "price": 52,
-        "qty": 4
+        "price": 50,
+        "qty": 2
        },
        {
-        "price": 51,
+        "price": 49,
         "qty": 1
        },
        {
-        "price": 50,
-        "qty": 6
+        "price": 48,
+        "qty": 3
        }
       ],
       "asks": [
        {
-        "price": 54,
+        "price": 52,
         "qty": 1
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        46,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 24,
-        "qty": 1
-       },
-       {
         "price": 23,
-        "qty": 12
+        "qty": 10
        },
        {
         "price": 22,
-        "qty": 12
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 24,
+      "lastPrice": 23,
       "trend": [
-       24
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 80,
-        "qty": 1
-       },
-       {
         "price": 78,
-        "qty": 5
+        "qty": 3
        },
        {
         "price": 75,
+        "qty": 5
+       },
+       {
+        "price": 73,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 80,
+      "asks": [
+       {
+        "price": 79,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 78,
       "trend": [
        69,
-       80
+       78
       ]
      },
      {
       "good": "tools",
       "bids": [
-       {
-        "price": 352,
-        "qty": 4
-       },
        {
         "price": 347,
         "qty": 1
@@ -3064,6 +3068,10 @@
        {
         "price": 338,
         "qty": 2
+       },
+       {
+        "price": 326,
+        "qty": 1
        }
       ],
       "asks": [],
@@ -3085,7 +3093,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -3114,12 +3122,12 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 881
+     "VRD": 793
     },
     "inventory": {
      "iron": 0,
      "grain": 4,
-     "water": 8,
+     "water": 6,
      "fuel": 0,
      "tools": 0
     },
@@ -3129,9 +3137,9 @@
       "planet": "verdan",
       "good": "grain",
       "side": "buy",
-      "qty": 1,
-      "limitPrice": 41,
-      "orderId": "o216",
+      "qty": 4,
+      "limitPrice": 45,
+      "orderId": "o219",
       "cycle": 1
      }
     ],
@@ -3162,51 +3170,51 @@
       "good": "grain",
       "bids": [
        {
+        "price": 49,
+        "qty": 9
+       },
+       {
         "price": 48,
         "qty": 4
        },
        {
         "price": 47,
         "qty": 4
-       },
-       {
-        "price": 46,
-        "qty": 4
        }
       ],
       "asks": [
        {
-        "price": 52,
-        "qty": 1
+        "price": 50,
+        "qty": 2
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        45,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 26,
-        "qty": 4
-       },
-       {
         "price": 25,
         "qty": 4
        },
        {
         "price": 24,
-        "qty": 12
+        "qty": 4
+       },
+       {
+        "price": 23,
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 26,
+      "lastPrice": 27,
       "trend": [
        24,
-       26
+       27
       ]
      },
      {
@@ -3264,7 +3272,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -3293,7 +3301,7 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 346
+     "VRD": 347
     },
     "inventory": {
      "iron": 0,
@@ -3309,8 +3317,8 @@
       "good": "grain",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 47,
-      "orderId": "o248",
+      "limitPrice": 46,
+      "orderId": "o249",
       "cycle": 1
      },
      {
@@ -3351,51 +3359,51 @@
       "good": "grain",
       "bids": [
        {
+        "price": 49,
+        "qty": 9
+       },
+       {
         "price": 48,
         "qty": 4
        },
        {
         "price": 47,
         "qty": 4
-       },
-       {
-        "price": 46,
-        "qty": 4
        }
       ],
       "asks": [
        {
-        "price": 52,
-        "qty": 1
+        "price": 50,
+        "qty": 2
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        45,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 26,
-        "qty": 4
-       },
-       {
         "price": 25,
         "qty": 4
        },
        {
         "price": 24,
-        "qty": 12
+        "qty": 4
+       },
+       {
+        "price": 23,
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 26,
+      "lastPrice": 27,
       "trend": [
        24,
-       26
+       27
       ]
      },
      {
@@ -3453,7 +3461,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -3482,7 +3490,7 @@
    "planet": "tethys",
    "observation": {
     "purse": {
-     "TTH": 257
+     "TTH": 260
     },
     "inventory": {
      "iron": 0,
@@ -3499,7 +3507,7 @@
       "side": "buy",
       "qty": 5,
       "limitPrice": 72,
-      "orderId": "o278",
+      "orderId": "o279",
       "cycle": 1
      },
      {
@@ -3557,46 +3565,46 @@
       "good": "grain",
       "bids": [
        {
-        "price": 51,
+        "price": 49,
         "qty": 6
        },
        {
-        "price": 50,
+        "price": 48,
         "qty": 3
        },
        {
-        "price": 48,
-        "qty": 8
+        "price": 47,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 51,
+      "lastPrice": 50,
       "trend": [
        45,
-       51
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 25,
+        "price": 24,
         "qty": 6
        },
        {
-        "price": 24,
-        "qty": 1
+        "price": 23,
+        "qty": 7
        },
        {
-        "price": 23,
-        "qty": 9
+        "price": 22,
+        "qty": 3
        }
       ],
       "asks": [],
-      "lastPrice": 25,
+      "lastPrice": 24,
       "trend": [
        23,
-       25
+       24
       ]
      },
      {
@@ -3646,7 +3654,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -3675,26 +3683,16 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 9643
+     "HLX": 9484
     },
     "inventory": {
      "iron": 0,
      "grain": 0,
-     "water": 2,
+     "water": 0,
      "fuel": 0,
      "tools": 0
     },
     "openOrders": [
-     {
-      "agentId": "helion:trader:0",
-      "planet": "helion",
-      "good": "fuel",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 74,
-      "orderId": "o206",
-      "cycle": 1
-     },
      {
       "agentId": "helion:trader:0",
       "planet": "helion",
@@ -3708,21 +3706,21 @@
      {
       "agentId": "helion:trader:0",
       "planet": "helion",
-      "good": "water",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 24,
-      "orderId": "o204",
-      "cycle": 1
-     },
-     {
-      "agentId": "helion:trader:0",
-      "planet": "helion",
       "good": "iron",
       "side": "buy",
       "qty": 2,
       "limitPrice": 96,
       "orderId": "o44",
+      "cycle": 0
+     },
+     {
+      "agentId": "helion:trader:0",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 61,
+      "orderId": "o43",
       "cycle": 0
      }
     ],
@@ -3733,22 +3731,26 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 5
-       },
-       {
         "price": 96,
         "qty": 2
+       },
+       {
+        "price": 86,
+        "qty": 1
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
         "price": 115,
-        "qty": 4
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 1
        }
       ],
       "lastPrice": 106,
@@ -3760,82 +3762,83 @@
       "good": "grain",
       "bids": [
        {
-        "price": 52,
-        "qty": 4
+        "price": 50,
+        "qty": 2
        },
        {
-        "price": 51,
+        "price": 49,
         "qty": 1
        },
        {
-        "price": 50,
-        "qty": 6
+        "price": 48,
+        "qty": 3
        }
       ],
       "asks": [
        {
-        "price": 54,
+        "price": 52,
         "qty": 1
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        46,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 24,
-        "qty": 1
-       },
-       {
         "price": 23,
-        "qty": 12
+        "qty": 10
        },
        {
         "price": 22,
-        "qty": 12
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 24,
+      "lastPrice": 23,
       "trend": [
-       24
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 80,
-        "qty": 1
-       },
-       {
         "price": 78,
-        "qty": 5
+        "qty": 3
        },
        {
         "price": 75,
+        "qty": 5
+       },
+       {
+        "price": 73,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 80,
+      "asks": [
+       {
+        "price": 79,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 78,
       "trend": [
        69,
-       80
+       78
       ]
      },
      {
       "good": "tools",
       "bids": [
-       {
-        "price": 352,
-        "qty": 4
-       },
        {
         "price": 347,
         "qty": 1
@@ -3843,6 +3846,10 @@
        {
         "price": 338,
         "qty": 2
+       },
+       {
+        "price": 326,
+        "qty": 1
        }
       ],
       "asks": [],
@@ -3864,7 +3871,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -3895,7 +3902,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 4428,
+     "HLX": 5552,
      "TTH": 3748
     },
     "inventory": {
@@ -3911,9 +3918,29 @@
       "planet": "helion",
       "good": "fuel",
       "side": "buy",
+      "qty": 2,
+      "limitPrice": 78,
+      "orderId": "o208",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
       "qty": 1,
-      "limitPrice": 61,
+      "limitPrice": 59,
       "orderId": "o207",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 65,
+      "orderId": "o206",
       "cycle": 1
      },
      {
@@ -3925,16 +3952,6 @@
       "limitPrice": 22,
       "orderId": "o46",
       "cycle": 0
-     },
-     {
-      "agentId": "helion:trader:1",
-      "planet": "helion",
-      "good": "tools",
-      "side": "buy",
-      "qty": 4,
-      "limitPrice": 352,
-      "orderId": "o45",
-      "cycle": 0
      }
     ],
     "loans": [],
@@ -3944,22 +3961,26 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 5
-       },
-       {
         "price": 96,
         "qty": 2
+       },
+       {
+        "price": 86,
+        "qty": 1
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
         "price": 115,
-        "qty": 4
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 1
        }
       ],
       "lastPrice": 106,
@@ -3971,82 +3992,83 @@
       "good": "grain",
       "bids": [
        {
-        "price": 52,
-        "qty": 4
+        "price": 50,
+        "qty": 2
        },
        {
-        "price": 51,
+        "price": 49,
         "qty": 1
        },
        {
-        "price": 50,
-        "qty": 6
+        "price": 48,
+        "qty": 3
        }
       ],
       "asks": [
        {
-        "price": 54,
+        "price": 52,
         "qty": 1
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        46,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 24,
-        "qty": 1
-       },
-       {
         "price": 23,
-        "qty": 12
+        "qty": 10
        },
        {
         "price": 22,
-        "qty": 12
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 24,
+      "lastPrice": 23,
       "trend": [
-       24
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 80,
-        "qty": 1
-       },
-       {
         "price": 78,
-        "qty": 5
+        "qty": 3
        },
        {
         "price": 75,
+        "qty": 5
+       },
+       {
+        "price": 73,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 80,
+      "asks": [
+       {
+        "price": 79,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 78,
       "trend": [
        69,
-       80
+       78
       ]
      },
      {
       "good": "tools",
       "bids": [
-       {
-        "price": 352,
-        "qty": 4
-       },
        {
         "price": 347,
         "qty": 1
@@ -4054,6 +4076,10 @@
        {
         "price": 338,
         "qty": 2
+       },
+       {
+        "price": 326,
+        "qty": 1
        }
       ],
       "asks": [],
@@ -4075,7 +4101,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -4123,7 +4149,7 @@
       "side": "buy",
       "qty": 1,
       "limitPrice": 56,
-      "orderId": "o249",
+      "orderId": "o250",
       "cycle": 1
      }
     ],
@@ -4154,51 +4180,51 @@
       "good": "grain",
       "bids": [
        {
+        "price": 49,
+        "qty": 9
+       },
+       {
         "price": 48,
         "qty": 4
        },
        {
         "price": 47,
         "qty": 4
-       },
-       {
-        "price": 46,
-        "qty": 4
        }
       ],
       "asks": [
        {
-        "price": 52,
-        "qty": 1
+        "price": 50,
+        "qty": 2
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        45,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 26,
-        "qty": 4
-       },
-       {
         "price": 25,
         "qty": 4
        },
        {
         "price": 24,
-        "qty": 12
+        "qty": 4
+       },
+       {
+        "price": 23,
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 26,
+      "lastPrice": 27,
       "trend": [
        24,
-       26
+       27
       ]
      },
      {
@@ -4256,7 +4282,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -4304,7 +4330,7 @@
       "side": "buy",
       "qty": 3,
       "limitPrice": 293,
-      "orderId": "o252",
+      "orderId": "o253",
       "cycle": 1
      },
      {
@@ -4314,7 +4340,7 @@
       "side": "buy",
       "qty": 2,
       "limitPrice": 244,
-      "orderId": "o251",
+      "orderId": "o252",
       "cycle": 1
      },
      {
@@ -4324,7 +4350,7 @@
       "side": "buy",
       "qty": 5,
       "limitPrice": 52,
-      "orderId": "o250",
+      "orderId": "o251",
       "cycle": 1
      },
      {
@@ -4385,51 +4411,51 @@
       "good": "grain",
       "bids": [
        {
+        "price": 49,
+        "qty": 9
+       },
+       {
         "price": 48,
         "qty": 4
        },
        {
         "price": 47,
         "qty": 4
-       },
-       {
-        "price": 46,
-        "qty": 4
        }
       ],
       "asks": [
        {
-        "price": 52,
-        "qty": 1
+        "price": 50,
+        "qty": 2
        }
       ],
-      "lastPrice": 52,
+      "lastPrice": 50,
       "trend": [
        45,
-       52
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 26,
-        "qty": 4
-       },
-       {
         "price": 25,
         "qty": 4
        },
        {
         "price": 24,
-        "qty": 12
+        "qty": 4
+       },
+       {
+        "price": 23,
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 26,
+      "lastPrice": 27,
       "trend": [
        24,
-       26
+       27
       ]
      },
      {
@@ -4487,7 +4513,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -4519,7 +4545,7 @@
    "observation": {
     "purse": {
      "HLX": 3160,
-     "TTH": 6096
+     "TTH": 6101
     },
     "inventory": {
      "iron": 0,
@@ -4536,7 +4562,7 @@
       "side": "buy",
       "qty": 3,
       "limitPrice": 91,
-      "orderId": "o311",
+      "orderId": "o312",
       "cycle": 1
      },
      {
@@ -4545,8 +4571,8 @@
       "good": "water",
       "side": "buy",
       "qty": 5,
-      "limitPrice": 20,
-      "orderId": "o310",
+      "limitPrice": 19,
+      "orderId": "o311",
       "cycle": 1
      },
      {
@@ -4556,7 +4582,7 @@
       "side": "buy",
       "qty": 1,
       "limitPrice": 268,
-      "orderId": "o309",
+      "orderId": "o310",
       "cycle": 1
      },
      {
@@ -4604,46 +4630,46 @@
       "good": "grain",
       "bids": [
        {
-        "price": 51,
+        "price": 49,
         "qty": 6
        },
        {
-        "price": 50,
+        "price": 48,
         "qty": 3
        },
        {
-        "price": 48,
-        "qty": 8
+        "price": 47,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 51,
+      "lastPrice": 50,
       "trend": [
        45,
-       51
+       50
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 25,
+        "price": 24,
         "qty": 6
        },
        {
-        "price": 24,
-        "qty": 1
+        "price": 23,
+        "qty": 7
        },
        {
-        "price": 23,
-        "qty": 9
+        "price": 22,
+        "qty": 3
        }
       ],
       "asks": [],
-      "lastPrice": 25,
+      "lastPrice": 24,
       "trend": [
        23,
-       25
+       24
       ]
      },
      {
@@ -4693,7 +4719,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -4726,11 +4752,11 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 699
+     "HLX": 717
     },
     "inventory": {
      "iron": 8,
-     "grain": 0,
+     "grain": 1,
      "water": 0,
      "fuel": 0,
      "tools": 0
@@ -4742,7 +4768,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 55,
+      "limitPrice": 50,
       "orderId": "o320",
       "cycle": 2
      },
@@ -4752,7 +4778,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 49,
+      "limitPrice": 45,
       "orderId": "o319",
       "cycle": 2
      },
@@ -4765,16 +4791,6 @@
       "limitPrice": 19,
       "orderId": "o156",
       "cycle": 1
-     },
-     {
-      "agentId": "helion:colonist:0",
-      "planet": "helion",
-      "good": "grain",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 52,
-      "orderId": "o155",
-      "cycle": 1
      }
     ],
     "loans": [],
@@ -4784,106 +4800,106 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 1
+        "price": 97,
+        "qty": 3
        },
        {
-        "price": 98,
-        "qty": 5
+        "price": 96,
+        "qty": 2
        },
        {
-        "price": 91,
+        "price": 90,
         "qty": 2
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
-        "price": 112,
-        "qty": 8
+        "price": 110,
+        "qty": 4
        },
        {
-        "price": 115,
-        "qty": 6
+        "price": 111,
+        "qty": 4
        }
       ],
-      "lastPrice": 101,
+      "lastPrice": 97,
       "trend": [
        106,
-       101
+       97
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 62,
+        "price": 57,
         "qty": 4
        },
        {
-        "price": 59,
+        "price": 54,
         "qty": 2
        },
        {
-        "price": 58,
-        "qty": 6
+        "price": 53,
+        "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 28,
-        "qty": 1
+        "price": 26,
+        "qty": 3
        },
        {
-        "price": 27,
-        "qty": 10
+        "price": 25,
+        "qty": 7
        },
        {
         "price": 24,
-        "qty": 1
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
+        "price": 84,
         "qty": 4
        },
        {
-        "price": 80,
+        "price": 83,
         "qty": 1
        },
        {
         "price": 78,
-        "qty": 5
+        "qty": 3
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -4921,7 +4937,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -4950,7 +4966,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 1312
+     "HLX": 1306
     },
     "inventory": {
      "iron": 8,
@@ -5001,106 +5017,106 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 1
+        "price": 97,
+        "qty": 3
        },
        {
-        "price": 98,
-        "qty": 5
+        "price": 96,
+        "qty": 2
        },
        {
-        "price": 91,
+        "price": 90,
         "qty": 2
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
-        "price": 112,
-        "qty": 8
+        "price": 110,
+        "qty": 4
        },
        {
-        "price": 115,
-        "qty": 6
+        "price": 111,
+        "qty": 4
        }
       ],
-      "lastPrice": 101,
+      "lastPrice": 97,
       "trend": [
        106,
-       101
+       97
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 62,
+        "price": 57,
         "qty": 4
        },
        {
-        "price": 59,
+        "price": 54,
         "qty": 2
        },
        {
-        "price": 58,
-        "qty": 6
+        "price": 53,
+        "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 28,
-        "qty": 1
+        "price": 26,
+        "qty": 3
        },
        {
-        "price": 27,
-        "qty": 10
+        "price": 25,
+        "qty": 7
        },
        {
         "price": 24,
-        "qty": 1
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
+        "price": 84,
         "qty": 4
        },
        {
-        "price": 80,
+        "price": 83,
         "qty": 1
        },
        {
         "price": 78,
-        "qty": 5
+        "qty": 3
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -5138,7 +5154,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -5167,12 +5183,12 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 571
+     "VRD": 295
     },
     "inventory": {
      "iron": 0,
-     "grain": 12,
-     "water": 6,
+     "grain": 7,
+     "water": 5,
      "fuel": 0,
      "tools": 0
     },
@@ -5183,8 +5199,8 @@
       "good": "water",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 21,
-      "orderId": "o373",
+      "limitPrice": 24,
+      "orderId": "o370",
       "cycle": 2
      },
      {
@@ -5192,10 +5208,30 @@
       "planet": "verdan",
       "good": "water",
       "side": "buy",
-      "qty": 1,
-      "limitPrice": 29,
-      "orderId": "o372",
+      "qty": 2,
+      "limitPrice": 30,
+      "orderId": "o369",
       "cycle": 2
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "iron",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 90,
+      "orderId": "o368",
+      "cycle": 2
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "grain",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 45,
+      "orderId": "o219",
+      "cycle": 1
      }
     ],
     "loans": [],
@@ -5225,41 +5261,41 @@
       "good": "grain",
       "bids": [
        {
-        "price": 56,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 55,
-        "qty": 2
+        "price": 50,
+        "qty": 4
        },
        {
-        "price": 54,
-        "qty": 3
+        "price": 49,
+        "qty": 7
        }
       ],
       "asks": [
        {
-        "price": 59,
-        "qty": 3
+        "price": 54,
+        "qty": 2
        },
        {
-        "price": 62,
+        "price": 57,
         "qty": 3
        }
       ],
-      "lastPrice": 56,
+      "lastPrice": 53,
       "trend": [
        45,
-       52,
-       56
+       50,
+       53
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 29,
-        "qty": 3
+        "price": 30,
+        "qty": 7
        },
        {
         "price": 28,
@@ -5270,16 +5306,11 @@
         "qty": 1
        }
       ],
-      "asks": [
-       {
-        "price": 30,
-        "qty": 1
-       }
-      ],
+      "asks": [],
       "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30
       ]
      },
@@ -5315,8 +5346,8 @@
         "qty": 2
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 301,
+        "qty": 5
        }
       ],
       "asks": [],
@@ -5338,7 +5369,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -5367,7 +5398,7 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 346
+     "VRD": 347
     },
     "inventory": {
      "iron": 0,
@@ -5383,8 +5414,8 @@
       "good": "grain",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 47,
-      "orderId": "o248",
+      "limitPrice": 46,
+      "orderId": "o249",
       "cycle": 1
      },
      {
@@ -5425,41 +5456,41 @@
       "good": "grain",
       "bids": [
        {
-        "price": 56,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 55,
-        "qty": 2
+        "price": 50,
+        "qty": 4
        },
        {
-        "price": 54,
-        "qty": 3
+        "price": 49,
+        "qty": 7
        }
       ],
       "asks": [
        {
-        "price": 59,
-        "qty": 3
+        "price": 54,
+        "qty": 2
        },
        {
-        "price": 62,
+        "price": 57,
         "qty": 3
        }
       ],
-      "lastPrice": 56,
+      "lastPrice": 53,
       "trend": [
        45,
-       52,
-       56
+       50,
+       53
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 29,
-        "qty": 3
+        "price": 30,
+        "qty": 7
        },
        {
         "price": 28,
@@ -5470,16 +5501,11 @@
         "qty": 1
        }
       ],
-      "asks": [
-       {
-        "price": 30,
-        "qty": 1
-       }
-      ],
+      "asks": [],
       "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30
       ]
      },
@@ -5515,8 +5541,8 @@
         "qty": 2
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 301,
+        "qty": 5
        }
       ],
       "asks": [],
@@ -5538,7 +5564,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -5567,7 +5593,7 @@
    "planet": "tethys",
    "observation": {
     "purse": {
-     "TTH": 62
+     "TTH": 64
     },
     "inventory": {
      "iron": 2,
@@ -5582,8 +5608,8 @@
       "planet": "tethys",
       "good": "water",
       "side": "buy",
-      "qty": 2,
-      "limitPrice": 24,
+      "qty": 3,
+      "limitPrice": 22,
       "orderId": "o435",
       "cycle": 2
      },
@@ -5593,7 +5619,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 3,
-      "limitPrice": 49,
+      "limitPrice": 46,
       "orderId": "o434",
       "cycle": 2
      },
@@ -5604,7 +5630,7 @@
       "side": "buy",
       "qty": 5,
       "limitPrice": 72,
-      "orderId": "o278",
+      "orderId": "o279",
       "cycle": 1
      },
      {
@@ -5625,12 +5651,12 @@
       "good": "iron",
       "bids": [
        {
-        "price": 114,
+        "price": 110,
         "qty": 2
        },
        {
         "price": 105,
-        "qty": 6
+        "qty": 1
        },
        {
         "price": 104,
@@ -5639,67 +5665,67 @@
       ],
       "asks": [
        {
-        "price": 117,
+        "price": 113,
         "qty": 1
        }
       ],
-      "lastPrice": 114,
+      "lastPrice": 110,
       "trend": [
        116,
-       114
+       110
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 58,
+        "price": 54,
         "qty": 5
        },
        {
-        "price": 57,
+        "price": 53,
         "qty": 8
        },
        {
-        "price": 55,
+        "price": 52,
         "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 60,
+      "lastPrice": 56,
       "trend": [
        45,
-       51,
-       60
+       50,
+       56
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 28,
+        "price": 26,
         "qty": 2
        },
        {
-        "price": 27,
+        "price": 25,
         "qty": 3
        },
        {
-        "price": 25,
-        "qty": 14
+        "price": 24,
+        "qty": 6
        }
       ],
       "asks": [
        {
-        "price": 30,
+        "price": 27,
         "qty": 7
        }
       ],
-      "lastPrice": 28,
+      "lastPrice": 26,
       "trend": [
        23,
-       25,
-       28
+       24,
+       26
       ]
      },
      {
@@ -5753,7 +5779,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -5782,7 +5808,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 9891
+     "HLX": 9789
     },
     "inventory": {
      "iron": 0,
@@ -5792,16 +5818,6 @@
      "tools": 0
     },
     "openOrders": [
-     {
-      "agentId": "helion:trader:0",
-      "planet": "helion",
-      "good": "fuel",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 74,
-      "orderId": "o206",
-      "cycle": 1
-     },
      {
       "agentId": "helion:trader:0",
       "planet": "helion",
@@ -5815,12 +5831,12 @@
      {
       "agentId": "helion:trader:0",
       "planet": "helion",
-      "good": "water",
+      "good": "iron",
       "side": "buy",
-      "qty": 1,
-      "limitPrice": 24,
-      "orderId": "o204",
-      "cycle": 1
+      "qty": 2,
+      "limitPrice": 96,
+      "orderId": "o44",
+      "cycle": 0
      }
     ],
     "loans": [],
@@ -5830,106 +5846,106 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 1
+        "price": 97,
+        "qty": 3
        },
        {
-        "price": 98,
-        "qty": 5
+        "price": 96,
+        "qty": 2
        },
        {
-        "price": 91,
+        "price": 90,
         "qty": 2
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
-        "price": 112,
-        "qty": 8
+        "price": 110,
+        "qty": 4
        },
        {
-        "price": 115,
-        "qty": 6
+        "price": 111,
+        "qty": 4
        }
       ],
-      "lastPrice": 101,
+      "lastPrice": 97,
       "trend": [
        106,
-       101
+       97
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 62,
+        "price": 57,
         "qty": 4
        },
        {
-        "price": 59,
+        "price": 54,
         "qty": 2
        },
        {
-        "price": 58,
-        "qty": 6
+        "price": 53,
+        "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 28,
-        "qty": 1
+        "price": 26,
+        "qty": 3
        },
        {
-        "price": 27,
-        "qty": 10
+        "price": 25,
+        "qty": 7
        },
        {
         "price": 24,
-        "qty": 1
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
+        "price": 84,
         "qty": 4
        },
        {
-        "price": 80,
+        "price": 83,
         "qty": 1
        },
        {
         "price": 78,
-        "qty": 5
+        "qty": 3
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -5967,7 +5983,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -5998,14 +6014,14 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 5734,
+     "HLX": 4598,
      "TTH": 3748
     },
     "inventory": {
      "iron": 0,
      "grain": 0,
      "water": 0,
-     "fuel": 0,
+     "fuel": 1,
      "tools": 0
     },
     "openOrders": [
@@ -6014,18 +6030,28 @@
       "planet": "helion",
       "good": "water",
       "side": "buy",
-      "qty": 3,
-      "limitPrice": 27,
+      "qty": 1,
+      "limitPrice": 22,
+      "orderId": "o362",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "tools",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 256,
       "orderId": "o361",
       "cycle": 2
      },
      {
       "agentId": "helion:trader:1",
       "planet": "helion",
-      "good": "water",
+      "good": "fuel",
       "side": "buy",
-      "qty": 1,
-      "limitPrice": 21,
+      "qty": 4,
+      "limitPrice": 84,
       "orderId": "o360",
       "cycle": 2
      },
@@ -6034,9 +6060,29 @@
       "planet": "helion",
       "good": "fuel",
       "side": "buy",
+      "qty": 2,
+      "limitPrice": 78,
+      "orderId": "o208",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
       "qty": 1,
-      "limitPrice": 61,
+      "limitPrice": 59,
       "orderId": "o207",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 65,
+      "orderId": "o206",
       "cycle": 1
      },
      {
@@ -6057,106 +6103,106 @@
       "good": "iron",
       "bids": [
        {
-        "price": 101,
-        "qty": 1
+        "price": 97,
+        "qty": 3
        },
        {
-        "price": 98,
-        "qty": 5
+        "price": 96,
+        "qty": 2
        },
        {
-        "price": 91,
+        "price": 90,
         "qty": 2
        }
       ],
       "asks": [
        {
         "price": 106,
-        "qty": 1
+        "qty": 3
        },
        {
-        "price": 112,
-        "qty": 8
+        "price": 110,
+        "qty": 4
        },
        {
-        "price": 115,
-        "qty": 6
+        "price": 111,
+        "qty": 4
        }
       ],
-      "lastPrice": 101,
+      "lastPrice": 97,
       "trend": [
        106,
-       101
+       97
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 62,
+        "price": 57,
         "qty": 4
        },
        {
-        "price": 59,
+        "price": 54,
         "qty": 2
        },
        {
-        "price": 58,
-        "qty": 6
+        "price": 53,
+        "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 28,
-        "qty": 1
+        "price": 26,
+        "qty": 3
        },
        {
-        "price": 27,
-        "qty": 10
+        "price": 25,
+        "qty": 7
        },
        {
         "price": 24,
-        "qty": 1
+        "qty": 5
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
+        "price": 84,
         "qty": 4
        },
        {
-        "price": 80,
+        "price": 83,
         "qty": 1
        },
        {
         "price": 78,
-        "qty": 5
+        "qty": 3
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -6194,7 +6240,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -6242,7 +6288,7 @@
       "side": "buy",
       "qty": 1,
       "limitPrice": 56,
-      "orderId": "o249",
+      "orderId": "o250",
       "cycle": 1
      }
     ],
@@ -6273,41 +6319,41 @@
       "good": "grain",
       "bids": [
        {
-        "price": 56,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 55,
-        "qty": 2
+        "price": 50,
+        "qty": 4
        },
        {
-        "price": 54,
-        "qty": 3
+        "price": 49,
+        "qty": 7
        }
       ],
       "asks": [
        {
-        "price": 59,
-        "qty": 3
+        "price": 54,
+        "qty": 2
        },
        {
-        "price": 62,
+        "price": 57,
         "qty": 3
        }
       ],
-      "lastPrice": 56,
+      "lastPrice": 53,
       "trend": [
        45,
-       52,
-       56
+       50,
+       53
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 29,
-        "qty": 3
+        "price": 30,
+        "qty": 7
        },
        {
         "price": 28,
@@ -6318,16 +6364,11 @@
         "qty": 1
        }
       ],
-      "asks": [
-       {
-        "price": 30,
-        "qty": 1
-       }
-      ],
+      "asks": [],
       "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30
       ]
      },
@@ -6363,8 +6404,8 @@
         "qty": 2
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 301,
+        "qty": 5
        }
       ],
       "asks": [],
@@ -6386,7 +6427,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -6412,13 +6453,12 @@
   {
    "universeId": "u0",
    "cycle": 3,
-   "agentId": "verdan:trader:2",
+   "agentId": "verdan:trader:1",
    "role": "trader",
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 6336,
-     "TTH": 1311
+     "VRD": 6667
     },
     "inventory": {
      "iron": 0,
@@ -6429,47 +6469,89 @@
     },
     "openOrders": [
      {
-      "agentId": "verdan:trader:2",
+      "agentId": "verdan:trader:1",
       "planet": "verdan",
-      "good": "tools",
+      "good": "grain",
       "side": "buy",
-      "qty": 4,
-      "limitPrice": 337,
-      "orderId": "o408",
+      "qty": 3,
+      "limitPrice": 39,
+      "orderId": "o407",
       "cycle": 2
      },
      {
-      "agentId": "verdan:trader:2",
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
+      "good": "tools",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 293,
+      "orderId": "o253",
+      "cycle": 1
+     },
+     {
+      "agentId": "verdan:trader:1",
       "planet": "verdan",
       "good": "tools",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 290,
-      "orderId": "o255",
+      "limitPrice": 244,
+      "orderId": "o252",
       "cycle": 1
      },
      {
-      "agentId": "verdan:trader:2",
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 52,
+      "orderId": "o251",
+      "cycle": 1
+     },
+     {
+      "agentId": "verdan:trader:1",
       "planet": "verdan",
       "good": "grain",
       "side": "buy",
-      "qty": 4,
-      "limitPrice": 48,
-      "orderId": "o254",
-      "cycle": 1
+      "qty": 2,
+      "limitPrice": 34,
+      "orderId": "o97",
+      "cycle": 0
      },
      {
-      "agentId": "verdan:trader:2",
+      "agentId": "verdan:trader:1",
       "planet": "verdan",
-      "good": "water",
+      "good": "tools",
       "side": "buy",
-      "qty": 4,
-      "limitPrice": 21,
-      "orderId": "o253",
-      "cycle": 1
+      "qty": 5,
+      "limitPrice": 301,
+      "orderId": "o96",
+      "cycle": 0
+     },
+     {
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
+      "good": "tools",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 323,
+      "orderId": "o95",
+      "cycle": 0
      }
     ],
-    "loans": [],
+    "loans": [
+     {
+      "id": "l14",
+      "borrower": "verdan:trader:1",
+      "planet": "verdan",
+      "currency": "VRD",
+      "principal": 630,
+      "outstanding": 630,
+      "rateBp": 0,
+      "issuedCycle": 2,
+      "dueCycle": 10
+     }
+    ],
     "shipments": [],
     "markets": [
      {
@@ -6496,41 +6578,41 @@
       "good": "grain",
       "bids": [
        {
-        "price": 56,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 55,
-        "qty": 2
+        "price": 50,
+        "qty": 4
        },
        {
-        "price": 54,
-        "qty": 3
+        "price": 49,
+        "qty": 7
        }
       ],
       "asks": [
        {
-        "price": 59,
-        "qty": 3
+        "price": 54,
+        "qty": 2
        },
        {
-        "price": 62,
+        "price": 57,
         "qty": 3
        }
       ],
-      "lastPrice": 56,
+      "lastPrice": 53,
       "trend": [
        45,
-       52,
-       56
+       50,
+       53
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 29,
-        "qty": 3
+        "price": 30,
+        "qty": 7
        },
        {
         "price": 28,
@@ -6541,16 +6623,11 @@
         "qty": 1
        }
       ],
-      "asks": [
-       {
-        "price": 30,
-        "qty": 1
-       }
-      ],
+      "asks": [],
       "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30
       ]
      },
@@ -6586,8 +6663,8 @@
         "qty": 2
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 301,
+        "qty": 5
        }
       ],
       "asks": [],
@@ -6609,7 +6686,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -6641,7 +6718,7 @@
    "observation": {
     "purse": {
      "HLX": 3160,
-     "TTH": 5894
+     "TTH": 5920
     },
     "inventory": {
      "iron": 0,
@@ -6657,7 +6734,7 @@
       "good": "water",
       "side": "buy",
       "qty": 3,
-      "limitPrice": 21,
+      "limitPrice": 19,
       "orderId": "o459",
       "cycle": 2
      },
@@ -6677,7 +6754,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 5,
-      "limitPrice": 44,
+      "limitPrice": 41,
       "orderId": "o457",
       "cycle": 2
      },
@@ -6688,7 +6765,7 @@
       "side": "buy",
       "qty": 3,
       "limitPrice": 91,
-      "orderId": "o311",
+      "orderId": "o312",
       "cycle": 1
      },
      {
@@ -6697,8 +6774,8 @@
       "good": "water",
       "side": "buy",
       "qty": 5,
-      "limitPrice": 20,
-      "orderId": "o310",
+      "limitPrice": 19,
+      "orderId": "o311",
       "cycle": 1
      },
      {
@@ -6708,7 +6785,7 @@
       "side": "buy",
       "qty": 1,
       "limitPrice": 268,
-      "orderId": "o309",
+      "orderId": "o310",
       "cycle": 1
      }
     ],
@@ -6719,12 +6796,12 @@
       "good": "iron",
       "bids": [
        {
-        "price": 114,
+        "price": 110,
         "qty": 2
        },
        {
         "price": 105,
-        "qty": 6
+        "qty": 1
        },
        {
         "price": 104,
@@ -6733,67 +6810,67 @@
       ],
       "asks": [
        {
-        "price": 117,
+        "price": 113,
         "qty": 1
        }
       ],
-      "lastPrice": 114,
+      "lastPrice": 110,
       "trend": [
        116,
-       114
+       110
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 58,
+        "price": 54,
         "qty": 5
        },
        {
-        "price": 57,
+        "price": 53,
         "qty": 8
        },
        {
-        "price": 55,
+        "price": 52,
         "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 60,
+      "lastPrice": 56,
       "trend": [
        45,
-       51,
-       60
+       50,
+       56
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 28,
+        "price": 26,
         "qty": 2
        },
        {
-        "price": 27,
+        "price": 25,
         "qty": 3
        },
        {
-        "price": 25,
-        "qty": 14
+        "price": 24,
+        "qty": 6
        }
       ],
       "asks": [
        {
-        "price": 30,
+        "price": 27,
         "qty": 7
        }
       ],
-      "lastPrice": 28,
+      "lastPrice": 26,
       "trend": [
        23,
-       25,
-       28
+       24,
+       26
       ]
      },
      {
@@ -6847,7 +6924,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -6880,7 +6957,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 417
+     "HLX": 477
     },
     "inventory": {
      "iron": 12,
@@ -6896,8 +6973,8 @@
       "good": "grain",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 60,
-      "orderId": "o465",
+      "limitPrice": 51,
+      "orderId": "o467",
       "cycle": 3
      },
      {
@@ -6906,8 +6983,8 @@
       "good": "grain",
       "side": "buy",
       "qty": 3,
-      "limitPrice": 74,
-      "orderId": "o464",
+      "limitPrice": 63,
+      "orderId": "o466",
       "cycle": 3
      },
      {
@@ -6916,7 +6993,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 55,
+      "limitPrice": 50,
       "orderId": "o320",
       "cycle": 2
      },
@@ -6926,7 +7003,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 49,
+      "limitPrice": 45,
       "orderId": "o319",
       "cycle": 2
      },
@@ -6939,16 +7016,6 @@
       "limitPrice": 19,
       "orderId": "o156",
       "cycle": 1
-     },
-     {
-      "agentId": "helion:colonist:0",
-      "planet": "helion",
-      "good": "grain",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 52,
-      "orderId": "o155",
-      "cycle": 1
      }
     ],
     "loans": [],
@@ -6956,101 +7023,96 @@
     "markets": [
      {
       "good": "iron",
-      "bids": [
-       {
-        "price": 91,
-        "qty": 2
-       }
-      ],
+      "bids": [],
       "asks": [
        {
-        "price": 96,
+        "price": 86,
+        "qty": 1
+       },
+       {
+        "price": 92,
         "qty": 4
        },
        {
-        "price": 106,
-        "qty": 7
-       },
-       {
-        "price": 112,
-        "qty": 8
+        "price": 93,
+        "qty": 5
        }
       ],
-      "lastPrice": 96,
+      "lastPrice": 78,
       "trend": [
        106,
-       101,
-       96
+       97,
+       78
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 74,
+        "price": 63,
         "qty": 3
        },
        {
-        "price": 73,
-        "qty": 4
+        "price": 62,
+        "qty": 3
        },
        {
-        "price": 72,
+        "price": 61,
         "qty": 1
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 32,
-        "qty": 2
+        "price": 26,
+        "qty": 10
        },
        {
-        "price": 31,
-        "qty": 3
+        "price": 25,
+        "qty": 7
        },
        {
-        "price": 30,
-        "qty": 11
+        "price": 24,
+        "qty": 26
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
-        "qty": 6
+        "price": 93,
+        "qty": 2
        },
        {
-        "price": 94,
+        "price": 92,
         "qty": 1
        },
        {
-        "price": 82,
+        "price": 84,
         "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -7065,7 +7127,7 @@
         "qty": 1
        },
        {
-        "price": 346,
+        "price": 326,
         "qty": 1
        }
       ],
@@ -7078,7 +7140,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -7088,7 +7150,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -7117,7 +7179,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 1503
+     "HLX": 1451
     },
     "inventory": {
      "iron": 3,
@@ -7133,8 +7195,8 @@
       "good": "water",
       "side": "buy",
       "qty": 4,
-      "limitPrice": 28,
-      "orderId": "o495",
+      "limitPrice": 22,
+      "orderId": "o497",
       "cycle": 3
      },
      {
@@ -7143,8 +7205,8 @@
       "good": "grain",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 63,
-      "orderId": "o494",
+      "limitPrice": 53,
+      "orderId": "o496",
       "cycle": 3
      }
     ],
@@ -7165,101 +7227,96 @@
     "markets": [
      {
       "good": "iron",
-      "bids": [
-       {
-        "price": 91,
-        "qty": 2
-       }
-      ],
+      "bids": [],
       "asks": [
        {
-        "price": 96,
+        "price": 86,
+        "qty": 1
+       },
+       {
+        "price": 92,
         "qty": 4
        },
        {
-        "price": 106,
-        "qty": 7
-       },
-       {
-        "price": 112,
-        "qty": 8
+        "price": 93,
+        "qty": 5
        }
       ],
-      "lastPrice": 96,
+      "lastPrice": 78,
       "trend": [
        106,
-       101,
-       96
+       97,
+       78
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 74,
+        "price": 63,
         "qty": 3
        },
        {
-        "price": 73,
-        "qty": 4
+        "price": 62,
+        "qty": 3
        },
        {
-        "price": 72,
+        "price": 61,
         "qty": 1
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 32,
-        "qty": 2
+        "price": 26,
+        "qty": 10
        },
        {
-        "price": 31,
-        "qty": 3
+        "price": 25,
+        "qty": 7
        },
        {
-        "price": 30,
-        "qty": 11
+        "price": 24,
+        "qty": 26
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
-        "qty": 6
+        "price": 93,
+        "qty": 2
        },
        {
-        "price": 94,
+        "price": 92,
         "qty": 1
        },
        {
-        "price": 82,
+        "price": 84,
         "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -7274,7 +7331,7 @@
         "qty": 1
        },
        {
-        "price": 346,
+        "price": 326,
         "qty": 1
        }
       ],
@@ -7287,7 +7344,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -7297,7 +7354,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -7326,12 +7383,12 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 431
+     "VRD": 322
     },
     "inventory": {
      "iron": 0,
-     "grain": 11,
-     "water": 11,
+     "grain": 6,
+     "water": 12,
      "fuel": 0,
      "tools": 0
     },
@@ -7341,8 +7398,18 @@
       "planet": "verdan",
       "good": "water",
       "side": "buy",
-      "qty": 4,
-      "limitPrice": 35,
+      "qty": 3,
+      "limitPrice": 24,
+      "orderId": "o531",
+      "cycle": 3
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 27,
       "orderId": "o530",
       "cycle": 3
      },
@@ -7352,18 +7419,18 @@
       "good": "water",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 21,
-      "orderId": "o373",
+      "limitPrice": 24,
+      "orderId": "o370",
       "cycle": 2
      },
      {
       "agentId": "verdan:colonist:6",
       "planet": "verdan",
-      "good": "water",
+      "good": "iron",
       "side": "buy",
-      "qty": 1,
-      "limitPrice": 29,
-      "orderId": "o372",
+      "qty": 4,
+      "limitPrice": 90,
+      "orderId": "o368",
       "cycle": 2
      }
     ],
@@ -7374,15 +7441,15 @@
       "good": "iron",
       "bids": [
        {
+        "price": 120,
+        "qty": 1
+       },
+       {
         "price": 116,
         "qty": 5
        },
        {
-        "price": 107,
-        "qty": 5
-       },
-       {
-        "price": 87,
+        "price": 102,
         "qty": 1
        }
       ],
@@ -7394,55 +7461,64 @@
       "good": "grain",
       "bids": [
        {
-        "price": 63,
+        "price": 52,
         "qty": 4
        },
        {
-        "price": 62,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 60,
-        "qty": 2
+        "price": 50,
+        "qty": 5
        }
       ],
       "asks": [
        {
-        "price": 64,
+        "price": 54,
         "qty": 2
+       },
+       {
+        "price": 57,
+        "qty": 5
        }
       ],
-      "lastPrice": 63,
+      "lastPrice": 52,
       "trend": [
        45,
-       52,
-       56,
-       63
+       50,
+       53,
+       52
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 35,
-        "qty": 7
+        "price": 30,
+        "qty": 4
        },
        {
-        "price": 34,
-        "qty": 6
+        "price": 29,
+        "qty": 12
        },
        {
-        "price": 31,
+        "price": 28,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 35,
+      "asks": [
+       {
+        "price": 33,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30,
-       35
+       30
       ]
      },
      {
@@ -7453,12 +7529,12 @@
         "qty": 1
        },
        {
-        "price": 56,
-        "qty": 1
+        "price": 58,
+        "qty": 2
        },
        {
         "price": 52,
-        "qty": 5
+        "qty": 7
        }
       ],
       "asks": [],
@@ -7469,16 +7545,16 @@
       "good": "tools",
       "bids": [
        {
-        "price": 346,
-        "qty": 3
+        "price": 344,
+        "qty": 2
        },
        {
         "price": 337,
         "qty": 4
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 323,
+        "qty": 2
        }
       ],
       "asks": [],
@@ -7490,7 +7566,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -7500,7 +7576,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -7529,12 +7605,12 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 346
+     "VRD": 991
     },
     "inventory": {
      "iron": 0,
      "grain": 6,
-     "water": 5,
+     "water": 0,
      "fuel": 0,
      "tools": 0
     },
@@ -7545,19 +7621,19 @@
       "good": "grain",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 47,
-      "orderId": "o248",
-      "cycle": 1
+      "limitPrice": 41,
+      "orderId": "o556",
+      "cycle": 3
      },
      {
       "agentId": "verdan:colonist:24",
       "planet": "verdan",
-      "good": "iron",
+      "good": "grain",
       "side": "buy",
-      "qty": 5,
-      "limitPrice": 107,
-      "orderId": "o83",
-      "cycle": 0
+      "qty": 1,
+      "limitPrice": 46,
+      "orderId": "o249",
+      "cycle": 1
      }
     ],
     "loans": [],
@@ -7567,15 +7643,15 @@
       "good": "iron",
       "bids": [
        {
+        "price": 120,
+        "qty": 1
+       },
+       {
         "price": 116,
         "qty": 5
        },
        {
-        "price": 107,
-        "qty": 5
-       },
-       {
-        "price": 87,
+        "price": 102,
         "qty": 1
        }
       ],
@@ -7587,55 +7663,64 @@
       "good": "grain",
       "bids": [
        {
-        "price": 63,
+        "price": 52,
         "qty": 4
        },
        {
-        "price": 62,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 60,
-        "qty": 2
+        "price": 50,
+        "qty": 5
        }
       ],
       "asks": [
        {
-        "price": 64,
+        "price": 54,
         "qty": 2
+       },
+       {
+        "price": 57,
+        "qty": 5
        }
       ],
-      "lastPrice": 63,
+      "lastPrice": 52,
       "trend": [
        45,
-       52,
-       56,
-       63
+       50,
+       53,
+       52
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 35,
-        "qty": 7
+        "price": 30,
+        "qty": 4
        },
        {
-        "price": 34,
-        "qty": 6
+        "price": 29,
+        "qty": 12
        },
        {
-        "price": 31,
+        "price": 28,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 35,
+      "asks": [
+       {
+        "price": 33,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30,
-       35
+       30
       ]
      },
      {
@@ -7646,12 +7731,12 @@
         "qty": 1
        },
        {
-        "price": 56,
-        "qty": 1
+        "price": 58,
+        "qty": 2
        },
        {
         "price": 52,
-        "qty": 5
+        "qty": 7
        }
       ],
       "asks": [],
@@ -7662,16 +7747,16 @@
       "good": "tools",
       "bids": [
        {
-        "price": 346,
-        "qty": 3
+        "price": 344,
+        "qty": 2
        },
        {
         "price": 337,
         "qty": 4
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 323,
+        "qty": 2
        }
       ],
       "asks": [],
@@ -7683,7 +7768,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -7693,7 +7778,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -7722,7 +7807,7 @@
    "planet": "tethys",
    "observation": {
     "purse": {
-     "TTH": 83
+     "TTH": 16
     },
     "inventory": {
      "iron": 2,
@@ -7739,6 +7824,16 @@
       "side": "buy",
       "qty": 2,
       "limitPrice": 24,
+      "orderId": "o580",
+      "cycle": 3
+     },
+     {
+      "agentId": "tethys:colonist:12",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 22,
       "orderId": "o435",
       "cycle": 2
      },
@@ -7748,7 +7843,7 @@
       "good": "grain",
       "side": "buy",
       "qty": 3,
-      "limitPrice": 49,
+      "limitPrice": 46,
       "orderId": "o434",
       "cycle": 2
      },
@@ -7759,8 +7854,18 @@
       "side": "buy",
       "qty": 5,
       "limitPrice": 72,
-      "orderId": "o278",
+      "orderId": "o279",
       "cycle": 1
+     },
+     {
+      "agentId": "tethys:colonist:12",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 21,
+      "orderId": "o117",
+      "cycle": 0
      }
     ],
     "loans": [],
@@ -7770,87 +7875,84 @@
       "good": "iron",
       "bids": [
        {
-        "price": 114,
-        "qty": 1
-       },
-       {
         "price": 105,
-        "qty": 6
+        "qty": 1
        },
        {
         "price": 104,
         "qty": 1
+       },
+       {
+        "price": 102,
+        "qty": 5
        }
       ],
       "asks": [
        {
-        "price": 117,
+        "price": 113,
         "qty": 1
        }
       ],
-      "lastPrice": 111,
+      "lastPrice": 110,
       "trend": [
        116,
-       114,
-       111
+       110,
+       110
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 71,
+        "price": 59,
         "qty": 5
        },
        {
-        "price": 69,
-        "qty": 1
+        "price": 57,
+        "qty": 6
        },
        {
-        "price": 67,
-        "qty": 1
+        "price": 56,
+        "qty": 2
        }
       ],
       "asks": [],
-      "lastPrice": 60,
+      "lastPrice": 59,
       "trend": [
        45,
-       51,
-       60
+       50,
+       56,
+       59
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 30,
-        "qty": 7
-       },
-       {
-        "price": 28,
-        "qty": 2
-       },
-       {
         "price": 26,
-        "qty": 4
+        "qty": 13
+       },
+       {
+        "price": 25,
+        "qty": 3
+       },
+       {
+        "price": 24,
+        "qty": 7
        }
       ],
       "asks": [
        {
-        "price": 32,
-        "qty": 1
-       },
-       {
-        "price": 33,
-        "qty": 4
+        "price": 27,
+        "qty": 2
        }
       ],
-      "lastPrice": 30,
+      "lastPrice": 26,
       "trend": [
        23,
-       25,
-       28,
-       30
+       24,
+       26,
+       26
       ]
      },
      {
@@ -7881,11 +7983,11 @@
         "qty": 5
        },
        {
-        "price": 302,
+        "price": 323,
         "qty": 1
        },
        {
-        "price": 285,
+        "price": 319,
         "qty": 1
        }
       ],
@@ -7898,7 +8000,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -7908,7 +8010,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -7937,7 +8039,7 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 9361
+     "HLX": 9736
     },
     "inventory": {
      "iron": 0,
@@ -7952,30 +8054,10 @@
       "planet": "helion",
       "good": "grain",
       "side": "buy",
-      "qty": 4,
-      "limitPrice": 52,
-      "orderId": "o512",
+      "qty": 5,
+      "limitPrice": 49,
+      "orderId": "o514",
       "cycle": 3
-     },
-     {
-      "agentId": "helion:trader:0",
-      "planet": "helion",
-      "good": "tools",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 346,
-      "orderId": "o511",
-      "cycle": 3
-     },
-     {
-      "agentId": "helion:trader:0",
-      "planet": "helion",
-      "good": "fuel",
-      "side": "buy",
-      "qty": 1,
-      "limitPrice": 74,
-      "orderId": "o206",
-      "cycle": 1
      },
      {
       "agentId": "helion:trader:0",
@@ -7993,101 +8075,96 @@
     "markets": [
      {
       "good": "iron",
-      "bids": [
-       {
-        "price": 91,
-        "qty": 2
-       }
-      ],
+      "bids": [],
       "asks": [
        {
-        "price": 96,
+        "price": 86,
+        "qty": 1
+       },
+       {
+        "price": 92,
         "qty": 4
        },
        {
-        "price": 106,
-        "qty": 7
-       },
-       {
-        "price": 112,
-        "qty": 8
+        "price": 93,
+        "qty": 5
        }
       ],
-      "lastPrice": 96,
+      "lastPrice": 78,
       "trend": [
        106,
-       101,
-       96
+       97,
+       78
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 74,
+        "price": 63,
         "qty": 3
        },
        {
-        "price": 73,
-        "qty": 4
+        "price": 62,
+        "qty": 3
        },
        {
-        "price": 72,
+        "price": 61,
         "qty": 1
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 32,
-        "qty": 2
+        "price": 26,
+        "qty": 10
        },
        {
-        "price": 31,
-        "qty": 3
+        "price": 25,
+        "qty": 7
        },
        {
-        "price": 30,
-        "qty": 11
+        "price": 24,
+        "qty": 26
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
-        "qty": 6
+        "price": 93,
+        "qty": 2
        },
        {
-        "price": 94,
+        "price": 92,
         "qty": 1
        },
        {
-        "price": 82,
+        "price": 84,
         "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -8102,7 +8179,7 @@
         "qty": 1
        },
        {
-        "price": 346,
+        "price": 326,
         "qty": 1
        }
       ],
@@ -8115,7 +8192,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -8125,7 +8202,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -8156,15 +8233,14 @@
    "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 3600,
-     "VRD": 2170,
+     "HLX": 4642,
      "TTH": 3748
     },
     "inventory": {
      "iron": 0,
      "grain": 0,
      "water": 0,
-     "fuel": 0,
+     "fuel": 1,
      "tools": 0
     },
     "openOrders": [
@@ -8173,48 +8249,28 @@
       "planet": "helion",
       "good": "water",
       "side": "buy",
-      "qty": 2,
-      "limitPrice": 30,
-      "orderId": "o515",
-      "cycle": 3
-     },
-     {
-      "agentId": "helion:trader:1",
-      "planet": "helion",
-      "good": "grain",
-      "side": "buy",
       "qty": 1,
-      "limitPrice": 58,
-      "orderId": "o514",
-      "cycle": 3
+      "limitPrice": 22,
+      "orderId": "o362",
+      "cycle": 2
      },
      {
       "agentId": "helion:trader:1",
       "planet": "helion",
-      "good": "fuel",
+      "good": "tools",
       "side": "buy",
       "qty": 2,
-      "limitPrice": 95,
-      "orderId": "o513",
-      "cycle": 3
-     },
-     {
-      "agentId": "helion:trader:1",
-      "planet": "helion",
-      "good": "water",
-      "side": "buy",
-      "qty": 3,
-      "limitPrice": 27,
+      "limitPrice": 256,
       "orderId": "o361",
       "cycle": 2
      },
      {
       "agentId": "helion:trader:1",
       "planet": "helion",
-      "good": "water",
+      "good": "fuel",
       "side": "buy",
-      "qty": 1,
-      "limitPrice": 21,
+      "qty": 4,
+      "limitPrice": 84,
       "orderId": "o360",
       "cycle": 2
      },
@@ -8223,9 +8279,29 @@
       "planet": "helion",
       "good": "fuel",
       "side": "buy",
+      "qty": 2,
+      "limitPrice": 78,
+      "orderId": "o208",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
       "qty": 1,
-      "limitPrice": 61,
+      "limitPrice": 59,
       "orderId": "o207",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:trader:1",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 65,
+      "orderId": "o206",
       "cycle": 1
      }
     ],
@@ -8234,101 +8310,96 @@
     "markets": [
      {
       "good": "iron",
-      "bids": [
-       {
-        "price": 91,
-        "qty": 2
-       }
-      ],
+      "bids": [],
       "asks": [
        {
-        "price": 96,
+        "price": 86,
+        "qty": 1
+       },
+       {
+        "price": 92,
         "qty": 4
        },
        {
-        "price": 106,
-        "qty": 7
-       },
-       {
-        "price": 112,
-        "qty": 8
+        "price": 93,
+        "qty": 5
        }
       ],
-      "lastPrice": 96,
+      "lastPrice": 78,
       "trend": [
        106,
-       101,
-       96
+       97,
+       78
       ]
      },
      {
       "good": "grain",
       "bids": [
        {
-        "price": 74,
+        "price": 63,
         "qty": 3
        },
        {
-        "price": 73,
-        "qty": 4
+        "price": 62,
+        "qty": 3
        },
        {
-        "price": 72,
+        "price": 61,
         "qty": 1
        }
       ],
       "asks": [],
-      "lastPrice": 62,
+      "lastPrice": 57,
       "trend": [
        46,
-       52,
-       62
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 32,
-        "qty": 2
+        "price": 26,
+        "qty": 10
        },
        {
-        "price": 31,
-        "qty": 3
+        "price": 25,
+        "qty": 7
        },
        {
-        "price": 30,
-        "qty": 11
+        "price": 24,
+        "qty": 26
        }
       ],
       "asks": [],
-      "lastPrice": 28,
+      "lastPrice": 23,
       "trend": [
-       24,
-       28
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 95,
-        "qty": 6
+        "price": 93,
+        "qty": 2
        },
        {
-        "price": 94,
+        "price": 92,
         "qty": 1
        },
        {
-        "price": 82,
+        "price": 84,
         "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": 80,
+      "lastPrice": 84,
       "trend": [
        69,
-       80
+       78,
+       84
       ]
      },
      {
@@ -8343,7 +8414,7 @@
         "qty": 1
        },
        {
-        "price": 346,
+        "price": 326,
         "qty": 1
        }
       ],
@@ -8356,7 +8427,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -8366,7 +8437,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -8392,13 +8463,14 @@
   {
    "universeId": "u0",
    "cycle": 4,
-   "agentId": "verdan:trader:0",
+   "agentId": "helion:trader:2",
    "role": "trader",
-   "planet": "verdan",
+   "planet": "helion",
    "observation": {
     "purse": {
-     "HLX": 3220,
-     "VRD": 6206
+     "HLX": 4463,
+     "VRD": 1707,
+     "TTH": 1788
     },
     "inventory": {
      "iron": 0,
@@ -8409,14 +8481,54 @@
     },
     "openOrders": [
      {
-      "agentId": "verdan:trader:0",
-      "planet": "verdan",
+      "agentId": "helion:trader:2",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 24,
+      "orderId": "o517",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:trader:2",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 50,
+      "orderId": "o516",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:trader:2",
+      "planet": "helion",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 93,
+      "orderId": "o515",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:trader:2",
+      "planet": "helion",
+      "good": "tools",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 278,
+      "orderId": "o49",
+      "cycle": 0
+     },
+     {
+      "agentId": "helion:trader:2",
+      "planet": "helion",
       "good": "fuel",
       "side": "buy",
       "qty": 1,
-      "limitPrice": 56,
-      "orderId": "o249",
-      "cycle": 1
+      "limitPrice": 69,
+      "orderId": "o48",
+      "cycle": 0
      }
     ],
     "loans": [],
@@ -8424,112 +8536,111 @@
     "markets": [
      {
       "good": "iron",
-      "bids": [
+      "bids": [],
+      "asks": [
        {
-        "price": 116,
-        "qty": 5
-       },
-       {
-        "price": 107,
-        "qty": 5
-       },
-       {
-        "price": 87,
+        "price": 86,
         "qty": 1
+       },
+       {
+        "price": 92,
+        "qty": 4
+       },
+       {
+        "price": 93,
+        "qty": 5
        }
       ],
-      "asks": [],
-      "lastPrice": null,
-      "trend": []
+      "lastPrice": 78,
+      "trend": [
+       106,
+       97,
+       78
+      ]
      },
      {
       "good": "grain",
       "bids": [
        {
         "price": 63,
-        "qty": 4
+        "qty": 3
        },
        {
         "price": 62,
-        "qty": 5
+        "qty": 3
        },
        {
-        "price": 60,
-        "qty": 2
+        "price": 61,
+        "qty": 1
        }
       ],
-      "asks": [
-       {
-        "price": 64,
-        "qty": 2
-       }
-      ],
-      "lastPrice": 63,
+      "asks": [],
+      "lastPrice": 57,
       "trend": [
-       45,
-       52,
-       56,
-       63
+       46,
+       50,
+       57
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 35,
+        "price": 26,
+        "qty": 10
+       },
+       {
+        "price": 25,
         "qty": 7
        },
        {
-        "price": 34,
-        "qty": 6
-       },
-       {
-        "price": 31,
-        "qty": 2
+        "price": 24,
+        "qty": 26
        }
       ],
       "asks": [],
-      "lastPrice": 35,
+      "lastPrice": 23,
       "trend": [
-       24,
-       26,
-       30,
-       35
+       23
       ]
      },
      {
       "good": "fuel",
       "bids": [
        {
-        "price": 61,
+        "price": 93,
+        "qty": 2
+       },
+       {
+        "price": 92,
         "qty": 1
        },
        {
-        "price": 56,
-        "qty": 1
-       },
-       {
-        "price": 52,
-        "qty": 5
+        "price": 84,
+        "qty": 4
        }
       ],
       "asks": [],
-      "lastPrice": null,
-      "trend": []
+      "lastPrice": 84,
+      "trend": [
+       69,
+       78,
+       84
+      ]
      },
      {
       "good": "tools",
       "bids": [
        {
-        "price": 346,
-        "qty": 3
+        "price": 348,
+        "qty": 1
        },
        {
-        "price": 337,
-        "qty": 4
+        "price": 347,
+        "qty": 1
        },
        {
-        "price": 304,
+        "price": 326,
         "qty": 1
        }
       ],
@@ -8542,7 +8653,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -8552,7 +8663,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -8583,7 +8694,7 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 7301
+     "VRD": 6332
     },
     "inventory": {
      "iron": 0,
@@ -8596,10 +8707,40 @@
      {
       "agentId": "verdan:trader:1",
       "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 24,
+      "orderId": "o565",
+      "cycle": 3
+     },
+     {
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 58,
+      "orderId": "o564",
+      "cycle": 3
+     },
+     {
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
       "good": "grain",
       "side": "buy",
       "qty": 3,
-      "limitPrice": 43,
+      "limitPrice": 41,
+      "orderId": "o563",
+      "cycle": 3
+     },
+     {
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 39,
       "orderId": "o407",
       "cycle": 2
      },
@@ -8610,7 +8751,7 @@
       "side": "buy",
       "qty": 3,
       "limitPrice": 293,
-      "orderId": "o252",
+      "orderId": "o253",
       "cycle": 1
      },
      {
@@ -8620,7 +8761,7 @@
       "side": "buy",
       "qty": 2,
       "limitPrice": 244,
-      "orderId": "o251",
+      "orderId": "o252",
       "cycle": 1
      },
      {
@@ -8630,7 +8771,7 @@
       "side": "buy",
       "qty": 5,
       "limitPrice": 52,
-      "orderId": "o250",
+      "orderId": "o251",
       "cycle": 1
      },
      {
@@ -8652,11 +8793,21 @@
       "limitPrice": 301,
       "orderId": "o96",
       "cycle": 0
+     },
+     {
+      "agentId": "verdan:trader:1",
+      "planet": "verdan",
+      "good": "tools",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 323,
+      "orderId": "o95",
+      "cycle": 0
      }
     ],
     "loans": [
      {
-      "id": "l16",
+      "id": "l14",
       "borrower": "verdan:trader:1",
       "planet": "verdan",
       "currency": "VRD",
@@ -8673,15 +8824,15 @@
       "good": "iron",
       "bids": [
        {
+        "price": 120,
+        "qty": 1
+       },
+       {
         "price": 116,
         "qty": 5
        },
        {
-        "price": 107,
-        "qty": 5
-       },
-       {
-        "price": 87,
+        "price": 102,
         "qty": 1
        }
       ],
@@ -8693,55 +8844,64 @@
       "good": "grain",
       "bids": [
        {
-        "price": 63,
+        "price": 52,
         "qty": 4
        },
        {
-        "price": 62,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 60,
-        "qty": 2
+        "price": 50,
+        "qty": 5
        }
       ],
       "asks": [
        {
-        "price": 64,
+        "price": 54,
         "qty": 2
+       },
+       {
+        "price": 57,
+        "qty": 5
        }
       ],
-      "lastPrice": 63,
+      "lastPrice": 52,
       "trend": [
        45,
-       52,
-       56,
-       63
+       50,
+       53,
+       52
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 35,
-        "qty": 7
+        "price": 30,
+        "qty": 4
        },
        {
-        "price": 34,
-        "qty": 6
+        "price": 29,
+        "qty": 12
        },
        {
-        "price": 31,
+        "price": 28,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 35,
+      "asks": [
+       {
+        "price": 33,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30,
-       35
+       30
       ]
      },
      {
@@ -8752,12 +8912,12 @@
         "qty": 1
        },
        {
-        "price": 56,
-        "qty": 1
+        "price": 58,
+        "qty": 2
        },
        {
         "price": 52,
-        "qty": 5
+        "qty": 7
        }
       ],
       "asks": [],
@@ -8768,16 +8928,16 @@
       "good": "tools",
       "bids": [
        {
-        "price": 346,
-        "qty": 3
+        "price": 344,
+        "qty": 2
        },
        {
         "price": 337,
         "qty": 4
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 323,
+        "qty": 2
        }
       ],
       "asks": [],
@@ -8789,7 +8949,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -8799,7 +8959,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {
@@ -8830,7 +8990,8 @@
    "planet": "verdan",
    "observation": {
     "purse": {
-     "VRD": 6336,
+     "HLX": 1872,
+     "VRD": 4576,
      "TTH": 1311
     },
     "inventory": {
@@ -8841,6 +9002,16 @@
      "tools": 0
     },
     "openOrders": [
+     {
+      "agentId": "verdan:trader:2",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 30,
+      "orderId": "o566",
+      "cycle": 3
+     },
      {
       "agentId": "verdan:trader:2",
       "planet": "verdan",
@@ -8858,7 +9029,7 @@
       "side": "buy",
       "qty": 2,
       "limitPrice": 290,
-      "orderId": "o255",
+      "orderId": "o256",
       "cycle": 1
      },
      {
@@ -8867,8 +9038,8 @@
       "good": "grain",
       "side": "buy",
       "qty": 4,
-      "limitPrice": 48,
-      "orderId": "o254",
+      "limitPrice": 47,
+      "orderId": "o255",
       "cycle": 1
      },
      {
@@ -8877,8 +9048,8 @@
       "good": "water",
       "side": "buy",
       "qty": 4,
-      "limitPrice": 21,
-      "orderId": "o253",
+      "limitPrice": 20,
+      "orderId": "o254",
       "cycle": 1
      }
     ],
@@ -8889,15 +9060,15 @@
       "good": "iron",
       "bids": [
        {
+        "price": 120,
+        "qty": 1
+       },
+       {
         "price": 116,
         "qty": 5
        },
        {
-        "price": 107,
-        "qty": 5
-       },
-       {
-        "price": 87,
+        "price": 102,
         "qty": 1
        }
       ],
@@ -8909,55 +9080,64 @@
       "good": "grain",
       "bids": [
        {
-        "price": 63,
+        "price": 52,
         "qty": 4
        },
        {
-        "price": 62,
+        "price": 51,
         "qty": 5
        },
        {
-        "price": 60,
-        "qty": 2
+        "price": 50,
+        "qty": 5
        }
       ],
       "asks": [
        {
-        "price": 64,
+        "price": 54,
         "qty": 2
+       },
+       {
+        "price": 57,
+        "qty": 5
        }
       ],
-      "lastPrice": 63,
+      "lastPrice": 52,
       "trend": [
        45,
-       52,
-       56,
-       63
+       50,
+       53,
+       52
       ]
      },
      {
       "good": "water",
       "bids": [
        {
-        "price": 35,
-        "qty": 7
+        "price": 30,
+        "qty": 4
        },
        {
-        "price": 34,
-        "qty": 6
+        "price": 29,
+        "qty": 12
        },
        {
-        "price": 31,
+        "price": 28,
         "qty": 2
        }
       ],
-      "asks": [],
-      "lastPrice": 35,
+      "asks": [
+       {
+        "price": 33,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 30,
       "trend": [
        24,
-       26,
+       27,
        30,
-       35
+       30
       ]
      },
      {
@@ -8968,12 +9148,12 @@
         "qty": 1
        },
        {
-        "price": 56,
-        "qty": 1
+        "price": 58,
+        "qty": 2
        },
        {
         "price": 52,
-        "qty": 5
+        "qty": 7
        }
       ],
       "asks": [],
@@ -8984,16 +9164,16 @@
       "good": "tools",
       "bids": [
        {
-        "price": 346,
-        "qty": 3
+        "price": 344,
+        "qty": 2
        },
        {
         "price": 337,
         "qty": 4
        },
        {
-        "price": 304,
-        "qty": 1
+        "price": 323,
+        "qty": 2
        }
       ],
       "asks": [],
@@ -9005,7 +9185,7 @@
      {
       "base": "HLX",
       "quote": "VRD",
-      "lastRatePpm": 1160805
+      "lastRatePpm": 912198
      },
      {
       "base": "HLX",
@@ -9015,7 +9195,7 @@
      {
       "base": "VRD",
       "quote": "TTH",
-      "lastRatePpm": 898356
+      "lastRatePpm": 898252
      }
     ],
     "policy": {

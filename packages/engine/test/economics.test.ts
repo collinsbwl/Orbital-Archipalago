@@ -9,9 +9,10 @@ import { initialSupply } from './helpers.js';
 describe('taylorRateBp', () => {
   it('is the neutral rate at target inflation and no gap, and rises with inflation and the output gap', () => {
     expect(taylorRateBp(0, 0)).toBe(RESERVE_BANK_CONFIG.neutralBp);
-    expect(taylorRateBp(100, 0)).toBe(20 + 150);
+    // Per-cycle terms: 5-cycle inflation / 5, output gap / cyclesPerYear (50).
+    expect(taylorRateBp(500, 0)).toBe(20 + 150);
     expect(taylorRateBp(100, 0)).toBeGreaterThan(taylorRateBp(50, 0));
-    expect(taylorRateBp(0, 200)).toBe(20 + 100);
+    expect(taylorRateBp(0, 10_000)).toBe(20 + 100);
   });
 
   it('clamps to 0..500 and returns integers', () => {
@@ -19,7 +20,7 @@ describe('taylorRateBp', () => {
     expect(taylorRateBp(0, -50_000)).toBe(0);
     expect(taylorRateBp(5_000, 5_000)).toBe(500);
     for (const [i, g] of [[1, 1], [3, 7], [-3, 5], [33, -17], [0.5, 0.5]] as const) expect(Number.isInteger(taylorRateBp(i, g))).toBe(true);
-    expect(taylorRateBp(1, 1)).toBe(Math.round(20 + 1.5 + 0.5));
+    expect(taylorRateBp(10, 100)).toBe(Math.round(20 + 1.5 * 2 + (0.5 * 100) / 50));
   });
 
   it('measures inflation and the output gap in integer bp', () => {
