@@ -1,5 +1,5 @@
 import { AgentDecisionSchema } from '@orbital/contracts';
-import type { AgentTask, Order, OrderId } from '@orbital/contracts';
+import type { AgentTask, Cargo, FxOrder, Order, OrderId, PlanetId } from '@orbital/contracts';
 import type { MarketBook } from './market-book.js';
 
 export const MAX_ACTIONS_PER_AGENT = 10;
@@ -14,7 +14,17 @@ export interface ValidatedDecision {
   agentId: string;
   orders: Order[];
   cancels: OrderId[];
+  fxOrders: FxOrder[];
+  /** At most one per decision; `from` is the planet the trader is docked at. */
+  ship?: { from: PlanetId; to: PlanetId; cargo: Cargo[] };
   memo?: string;
+}
+
+/** Ids the world defines; decisions referencing anything else are rejected. */
+export interface KnownIds {
+  goods: ReadonlySet<string>;
+  planets: ReadonlySet<string>;
+  currencies: ReadonlySet<string>;
 }
 
 /**
@@ -25,7 +35,7 @@ export function validateDecisions(
   raw: readonly unknown[],
   tasks: readonly AgentTask[],
   book: MarketBook,
-  goods: ReadonlySet<string>,
+  known: KnownIds,
 ): { decisions: ValidatedDecision[]; rejections: Rejection[] } {
   const rejections: Rejection[] = [];
   const byAgent = new Map(tasks.map((t) => [t.agentId, t]));
@@ -48,20 +58,30 @@ export function validateDecisions(
       rejections.push({ agentId: d.agentId, action: 'decision', reason: 'duplicate_decision' });
       continue;
     }
-    const out: ValidatedDecision = { agentId: d.agentId, orders: [], cancels: [], ...(d.memo !== undefined ? { memo: d.memo } : {}) };
+    const out: ValidatedDecision = { agentId: d.agentId, orders: [], cancels: [], fxOrders: [], ...(d.memo !== undefined ? { memo: d.memo } : {}) };
     const cancelled = new Set<string>();
     d.actions.forEach((a, i) => {
       const reject = (reason: string) => rejections.push({ agentId: d.agentId, action: a.kind, reason });
       if (i >= MAX_ACTIONS_PER_AGENT) return reject('action_cap');
       if (!task.allowedActions.includes(a.kind)) return reject('not_allowed');
       if (a.kind === 'place_order') {
-        if (!goods.has(a.good)) return reject('unknown_good');
+        if (!known.goods.has(a.good)) return reject('unknown_good');
         out.orders.push({ agentId: d.agentId, planet: task.planet, good: a.good, side: a.side, qty: a.qty, limitPrice: a.limitPrice });
       } else if (a.kind === 'cancel_order') {
         if (book.get(a.orderId)?.agentId !== d.agentId) return reject('not_own_order');
         if (cancelled.has(a.orderId)) return reject('duplicate_cancel');
         cancelled.add(a.orderId);
         out.cancels.push(a.orderId);
+      } else if (a.kind === 'place_fx_order') {
+        if (!known.currencies.has(a.give) || !known.currencies.has(a.want)) return reject('unknown_currency');
+        if (a.give === a.want) return reject('same_currency');
+        out.fxOrders.push({ agentId: d.agentId, give: a.give, giveAmount: a.giveAmount, want: a.want, minReceive: a.minReceive });
+      } else if (a.kind === 'ship') {
+        if (out.ship) return reject('duplicate_ship');
+        if (!known.planets.has(a.to)) return reject('unknown_planet');
+        if (a.to === task.planet) return reject('ship_to_self');
+        if (a.cargo.some((c) => !known.goods.has(c.good))) return reject('unknown_good');
+        out.ship = { from: task.planet, to: a.to, cargo: a.cargo };
       }
     });
     seen.set(d.agentId, out);

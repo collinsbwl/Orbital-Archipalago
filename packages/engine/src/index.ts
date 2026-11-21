@@ -2,6 +2,8 @@ export * from './rng.js';
 export * from './agents.js';
 export * from './bootstrap.js';
 export * from './market-book.js';
+export * from './orbits.js';
+export * from './fx.js';
 export * from './observation.js';
 export * from './scheduler.js';
 export * from './validator.js';

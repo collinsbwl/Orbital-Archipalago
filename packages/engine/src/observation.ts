@@ -1,7 +1,8 @@
-import type { AgentTask, Ledger, PlanetId, PolicyState, WorldConfig } from '@orbital/contracts';
+import type { AgentTask, Ledger, PlanetId, PolicyState, Shipment, WorldConfig } from '@orbital/contracts';
 import type { AgentInfo } from './agents.js';
+import type { FxView } from './fx.js';
 import type { MarketBook } from './market-book.js';
-import { A1_ALLOWED_ACTIONS } from './scheduler.js';
+import { allowedActionsFor } from './scheduler.js';
 
 export interface TaskContext {
   world: WorldConfig;
@@ -9,11 +10,15 @@ export interface TaskContext {
   book: MarketBook;
   memos: ReadonlyMap<string, string>;
   cycle: number;
+  /** All currency pairs with their last non-null clearing rate. */
+  fx: readonly FxView[];
+  /** Engine-tracked in-flight shipments. */
+  flights: readonly Shipment[];
 }
 
-/** Builds one cycle's tasks. Policy is read once per planet. */
+/** Builds one cycle's tasks. `agents[].planet` is where the agent acts (docked planet for traders). Policy is read once per planet. */
 export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[]): Promise<AgentTask[]> {
-  const { world, ledger, book, memos, cycle } = ctx;
+  const { world, ledger, book, memos, cycle, fx, flights } = ctx;
   const policies = new Map<PlanetId, PolicyState>();
   const currency = new Map(world.planets.map((p) => [p.id, p.currency]));
   const tasks: AgentTask[] = [];
@@ -41,14 +46,14 @@ export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[])
         inventory,
         openOrders: book.ordersOf(a.id).slice(-20).reverse(),
         loans: [],
-        shipments: [],
+        shipments: flights.filter((s) => s.owner === a.id).slice(0, 10),
         markets: world.goods.map((g) => book.view(a.planet, g.id)),
-        fx: [],
+        fx: fx.map((f) => ({ ...f })),
         policy,
         headlines: [],
         ...(memo !== undefined ? { memo } : {}),
       },
-      allowedActions: [...A1_ALLOWED_ACTIONS],
+      allowedActions: allowedActionsFor(a.role),
       deadlineMs: world.cycleDeadlineMs,
     });
   }

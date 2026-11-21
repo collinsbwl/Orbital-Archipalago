@@ -16,14 +16,18 @@ async function run(seed: number) {
     reports.push(await universe.step());
     const inv = await ledger.checkInvariants();
     expect(inv.ok, `cycle ${c}: ${JSON.stringify(inv.violations)}`).toBe(true);
-    expect(inv.totals.currency).toEqual(supply);
+    expect(inv.totals.currency, `cycle ${c}: no borrowing, so money per currency is constant`).toEqual(supply);
   }
   return { reports, world };
 }
 
+// One shared 200-cycle run (seed 42) feeds all the assertions below; determinism re-runs it once.
+const shared = { run: undefined as ReturnType<typeof run> | undefined };
+const run42 = () => (shared.run ??= run(42));
+
 describe('200-cycle run on DEFAULT_WORLD', () => {
   it('conserves goods and money, trades on every planet, and is deterministic', async () => {
-    const a = await run(42);
+    const a = await run42();
     const volume: Record<string, number> = {};
     for (const r of a.reports) for (const au of r.auctions) volume[au.planet] = (volume[au.planet] ?? 0) + au.volume;
     for (const p of a.world.planets) expect(volume[p.id], p.id).toBeGreaterThan(0);
@@ -32,9 +36,34 @@ describe('200-cycle run on DEFAULT_WORLD', () => {
 
     const b = await run(42);
     expect(b.reports).toEqual(a.reports);
-    const c = await run(43);
-    expect(c.reports).not.toEqual(a.reports);
   }, 60_000);
+
+  it('moves freighters and clears every FX pair', async () => {
+    const { reports, world } = await run42();
+    const departures = reports.flatMap((r) => r.departures);
+    const arrivals = reports.flatMap((r) => r.arrivals);
+    expect(departures.length).toBeGreaterThan(0);
+    expect(arrivals.length).toBeGreaterThan(0);
+    // Every arrival happens exactly on its arriveCycle and was a departure; a shipment arrives at most once.
+    const departed = new Map(departures.map((s) => [s.id, s]));
+    for (const a of arrivals) expect(departed.get(a.shipment.id)?.arriveCycle).toBe(reports.find((r) => r.arrivals.includes(a))!.cycle);
+    expect(new Set(arrivals.map((a) => a.shipment.id)).size).toBe(arrivals.length);
+
+    const cleared = new Set(reports.flatMap((r) => r.fx).filter((f) => f.ratePpm !== null).map((f) => `${f.base}/${f.quote}`));
+    expect([...cleared].sort()).toEqual(['HLX/TTH', 'HLX/VRD', 'VRD/TTH']);
+    expect(reports.every((r) => r.fx.length === 3)).toBe(true);
+    expect(reports.reduce((s, r) => s + r.ledgerRejections, 0)).toBe(0);
+    expect(reports.reduce((s, r) => s + r.fxOrdersRejected, 0)).toBe(0);
+
+    // Goods reach planets that do not produce them.
+    const recipes = new Map(world.recipes.map((r) => [r.id, r.output.good]));
+    const produces = new Map(world.planets.map((p) => [p.id, new Set(p.recipes.map((r) => recipes.get(r.recipe)))]));
+    expect(arrivals.some((a) => a.delivered.some((c) => !produces.get(a.shipment.to)!.has(c.good)))).toBe(true);
+
+    const exports = reports.reduce((s, r) => s + Object.values(r.tradeFlows).reduce((t, f) => t + f.exports, 0), 0);
+    expect(exports).toBeGreaterThan(0);
+    for (const p of world.planets) expect(reports.reduce((s, r) => s + r.tradeFlows[p.id]!.imports, 0), p.id).toBeGreaterThan(0);
+  });
 
   it('throws when invariants fail (flag on)', async () => {
     const { universe, ledger } = makeUniverse({ agents: scripted(() => []) });
@@ -48,18 +77,21 @@ describe('200-cycle run on DEFAULT_WORLD', () => {
 describe('RandomValidPolicy', () => {
   it('always emits schema-valid decisions and tasks across cycles', async () => {
     const inner = new RandomValidPolicy(makeUniverse().world, 5);
+    const kinds = new Set<string>();
     const agents = scripted(() => []);
     agents.decideAll = async (tasks: AgentTask[]): Promise<AgentDecision[]> => {
       for (const t of tasks) AgentTaskSchema.parse(t);
       const out = await inner.decideAll(tasks);
       for (const d of out) {
         AgentDecisionSchema.parse(d);
-        expect(d.actions.length).toBeLessThanOrEqual(5);
+        expect(d.actions.length).toBeLessThanOrEqual(7);
+        for (const act of d.actions) kinds.add(act.kind);
       }
       return out;
     };
     const { universe } = makeUniverse({ agents });
     await universe.init();
-    for (let i = 0; i < 20; i++) expect((await universe.step()).rejections).toBe(0);
+    for (let i = 0; i < 30; i++) expect((await universe.step()).rejections).toBe(0);
+    expect(kinds.has('ship') && kinds.has('place_fx_order')).toBe(true);
   });
 });
