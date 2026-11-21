@@ -1,0 +1,7721 @@
+[
+ [
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "helion:colonist:0",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 1000
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "helion:colonist:9",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 1000
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "helion:colonist:19",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "helion:colonist:29",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "verdan:colonist:6",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 6,
+     "water": 1,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "verdan:colonist:16",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 8,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "verdan:colonist:26",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "tethys:colonist:3",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 8,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "tethys:colonist:13",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 0,
+   "agentId": "tethys:colonist:23",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 2,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "water",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "fuel",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": []
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  }
+ ],
+ [
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "helion:colonist:0",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 769
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 1,
+     "water": 1,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 42,
+      "orderId": "o2",
+      "cycle": 0
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 21,
+      "orderId": "o1",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 4
+       },
+       {
+        "price": 115,
+        "qty": 3
+       },
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 3
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 42,
+        "qty": 10
+       }
+      ],
+      "asks": [
+       {
+        "price": 48,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 5
+       },
+       {
+        "price": 22,
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 14
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 67,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       52
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 251,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "helion:colonist:9",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 938
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 1,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 19,
+      "orderId": "o15",
+      "cycle": 0
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 17,
+      "orderId": "o13",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 4
+       },
+       {
+        "price": 115,
+        "qty": 3
+       },
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 3
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 42,
+        "qty": 10
+       }
+      ],
+      "asks": [
+       {
+        "price": 48,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 5
+       },
+       {
+        "price": 22,
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 14
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 67,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       52
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 251,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "helion:colonist:19",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 982
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 1,
+     "water": 1,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:19",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 18,
+      "orderId": "o29",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 4
+       },
+       {
+        "price": 115,
+        "qty": 3
+       },
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 3
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 42,
+        "qty": 10
+       }
+      ],
+      "asks": [
+       {
+        "price": 48,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 5
+       },
+       {
+        "price": 22,
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 14
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 67,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       52
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 251,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "helion:colonist:29",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 937
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 1,
+     "water": 1,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:29",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 21,
+      "orderId": "o44",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 4
+       },
+       {
+        "price": 115,
+        "qty": 3
+       },
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 3
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 42,
+        "qty": 10
+       }
+      ],
+      "asks": [
+       {
+        "price": 48,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 5
+       },
+       {
+        "price": 22,
+        "qty": 9
+       },
+       {
+        "price": 21,
+        "qty": 14
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 67,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       52
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 251,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "verdan:colonist:6",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 5,
+     "water": 6,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 4
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 43,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 4
+       },
+       {
+        "price": 22,
+        "qty": 7
+       },
+       {
+        "price": 21,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 296,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "verdan:colonist:16",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 865
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 4,
+     "water": 7,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 4
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 43,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 4
+       },
+       {
+        "price": 22,
+        "qty": 7
+       },
+       {
+        "price": 21,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 296,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "verdan:colonist:26",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 5,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 4
+       },
+       {
+        "price": 44,
+        "qty": 5
+       },
+       {
+        "price": 43,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": 45,
+      "trend": [
+       45
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 23,
+        "qty": 4
+       },
+       {
+        "price": 22,
+        "qty": 7
+       },
+       {
+        "price": 21,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 23,
+      "trend": [
+       23
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 296,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "tethys:colonist:3",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 889
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 1,
+     "water": 7,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:3",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 21,
+      "orderId": "o108",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:3",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 45,
+      "orderId": "o107",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 105,
+        "qty": 4
+       },
+       {
+        "price": 98,
+        "qty": 4
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 2
+       },
+       {
+        "price": 42,
+        "qty": 6
+       },
+       {
+        "price": 41,
+        "qty": 5
+       }
+      ],
+      "asks": [
+       {
+        "price": 47,
+        "qty": 1
+       },
+       {
+        "price": 48,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 47,
+      "trend": [
+       47
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 24,
+        "qty": 1
+       },
+       {
+        "price": 21,
+        "qty": 25
+       },
+       {
+        "price": 20,
+        "qty": 8
+       }
+      ],
+      "asks": [],
+      "lastPrice": 24,
+      "trend": [
+       24
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 69,
+        "qty": 5
+       },
+       {
+        "price": 61,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 293,
+        "qty": 2
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "tethys:colonist:13",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1000
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 1,
+     "water": 1,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 105,
+        "qty": 4
+       },
+       {
+        "price": 98,
+        "qty": 4
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 2
+       },
+       {
+        "price": 42,
+        "qty": 6
+       },
+       {
+        "price": 41,
+        "qty": 5
+       }
+      ],
+      "asks": [
+       {
+        "price": 47,
+        "qty": 1
+       },
+       {
+        "price": 48,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 47,
+      "trend": [
+       47
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 24,
+        "qty": 1
+       },
+       {
+        "price": 21,
+        "qty": 25
+       },
+       {
+        "price": 20,
+        "qty": 8
+       }
+      ],
+      "asks": [],
+      "lastPrice": 24,
+      "trend": [
+       24
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 69,
+        "qty": 5
+       },
+       {
+        "price": 61,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 293,
+        "qty": 2
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 1,
+   "agentId": "tethys:colonist:23",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 726
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 1,
+     "water": 7,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 40,
+      "orderId": "o140",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 32,
+      "orderId": "o139",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 18,
+      "orderId": "o138",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 105,
+        "qty": 4
+       },
+       {
+        "price": 98,
+        "qty": 4
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 45,
+        "qty": 2
+       },
+       {
+        "price": 42,
+        "qty": 6
+       },
+       {
+        "price": 41,
+        "qty": 5
+       }
+      ],
+      "asks": [
+       {
+        "price": 47,
+        "qty": 1
+       },
+       {
+        "price": 48,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 47,
+      "trend": [
+       47
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 24,
+        "qty": 1
+       },
+       {
+        "price": 21,
+        "qty": 25
+       },
+       {
+        "price": 20,
+        "qty": 8
+       }
+      ],
+      "asks": [],
+      "lastPrice": 24,
+      "trend": [
+       24
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 69,
+        "qty": 5
+       },
+       {
+        "price": 61,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 293,
+        "qty": 2
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c0"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  }
+ ],
+ [
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "helion:colonist:0",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 681
+    },
+    "inventory": {
+     "iron": 8,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 22,
+      "orderId": "o160",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 42,
+      "orderId": "o2",
+      "cycle": 0
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 21,
+      "orderId": "o1",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       },
+       {
+        "price": 83,
+        "qty": 1
+       }
+      ],
+      "asks": [
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 112,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 106,
+      "trend": [
+       106
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 48,
+        "qty": 7
+       },
+       {
+        "price": 47,
+        "qty": 5
+       },
+       {
+        "price": 46,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 49,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 48,
+      "trend": [
+       45,
+       48
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 12
+       },
+       {
+        "price": 25,
+        "qty": 8
+       },
+       {
+        "price": 24,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 27,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 26,
+      "trend": [
+       23,
+       26
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 3
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 67,
+      "trend": [
+       52,
+       67
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "helion:colonist:9",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 812
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 22,
+      "orderId": "o183",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 20,
+      "orderId": "o182",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 19,
+      "orderId": "o15",
+      "cycle": 0
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 17,
+      "orderId": "o13",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       },
+       {
+        "price": 83,
+        "qty": 1
+       }
+      ],
+      "asks": [
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 112,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 106,
+      "trend": [
+       106
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 48,
+        "qty": 7
+       },
+       {
+        "price": 47,
+        "qty": 5
+       },
+       {
+        "price": 46,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 49,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 48,
+      "trend": [
+       45,
+       48
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 12
+       },
+       {
+        "price": 25,
+        "qty": 8
+       },
+       {
+        "price": 24,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 27,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 26,
+      "trend": [
+       23,
+       26
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 3
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 67,
+      "trend": [
+       52,
+       67
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "helion:colonist:19",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 1000
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       },
+       {
+        "price": 83,
+        "qty": 1
+       }
+      ],
+      "asks": [
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 112,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 106,
+      "trend": [
+       106
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 48,
+        "qty": 7
+       },
+       {
+        "price": 47,
+        "qty": 5
+       },
+       {
+        "price": 46,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 49,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 48,
+      "trend": [
+       45,
+       48
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 12
+       },
+       {
+        "price": 25,
+        "qty": 8
+       },
+       {
+        "price": 24,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 27,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 26,
+      "trend": [
+       23,
+       26
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 3
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 67,
+      "trend": [
+       52,
+       67
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "helion:colonist:29",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 910
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:29",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 45,
+      "orderId": "o214",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       },
+       {
+        "price": 83,
+        "qty": 1
+       }
+      ],
+      "asks": [
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 112,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 106,
+      "trend": [
+       106
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 48,
+        "qty": 7
+       },
+       {
+        "price": 47,
+        "qty": 5
+       },
+       {
+        "price": 46,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 49,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 48,
+      "trend": [
+       45,
+       48
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 12
+       },
+       {
+        "price": 25,
+        "qty": 8
+       },
+       {
+        "price": 24,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 27,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 26,
+      "trend": [
+       23,
+       26
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 3
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 67,
+      "trend": [
+       52,
+       67
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "verdan:colonist:6",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 908
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 4,
+     "water": 5,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 23,
+      "orderId": "o226",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 50,
+        "qty": 5
+       },
+       {
+        "price": 48,
+        "qty": 5
+       },
+       {
+        "price": 45,
+        "qty": 4
+       }
+      ],
+      "asks": [
+       {
+        "price": 52,
+        "qty": 6
+       }
+      ],
+      "lastPrice": 49,
+      "trend": [
+       45,
+       49
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 27,
+        "qty": 7
+       },
+       {
+        "price": 26,
+        "qty": 4
+       },
+       {
+        "price": 24,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": 27,
+      "trend": [
+       23,
+       27
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 296,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "verdan:colonist:16",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 865
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 7,
+     "water": 5,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 50,
+        "qty": 5
+       },
+       {
+        "price": 48,
+        "qty": 5
+       },
+       {
+        "price": 45,
+        "qty": 4
+       }
+      ],
+      "asks": [
+       {
+        "price": 52,
+        "qty": 6
+       }
+      ],
+      "lastPrice": 49,
+      "trend": [
+       45,
+       49
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 27,
+        "qty": 7
+       },
+       {
+        "price": 26,
+        "qty": 4
+       },
+       {
+        "price": 24,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": 27,
+      "trend": [
+       23,
+       27
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 296,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "verdan:colonist:26",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 582
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 5,
+     "water": 5,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:26",
+      "planet": "verdan",
+      "good": "iron",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 92,
+      "orderId": "o250",
+      "cycle": 1
+     },
+     {
+      "agentId": "verdan:colonist:26",
+      "planet": "verdan",
+      "good": "grain",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 37,
+      "orderId": "o249",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 50,
+        "qty": 5
+       },
+       {
+        "price": 48,
+        "qty": 5
+       },
+       {
+        "price": 45,
+        "qty": 4
+       }
+      ],
+      "asks": [
+       {
+        "price": 52,
+        "qty": 6
+       }
+      ],
+      "lastPrice": 49,
+      "trend": [
+       45,
+       49
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 27,
+        "qty": 7
+       },
+       {
+        "price": 26,
+        "qty": 4
+       },
+       {
+        "price": 24,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": 27,
+      "trend": [
+       23,
+       27
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 296,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "tethys:colonist:3",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 979
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 6,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:3",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 21,
+      "orderId": "o108",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 5
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 54,
+        "qty": 2
+       },
+       {
+        "price": 52,
+        "qty": 3
+       },
+       {
+        "price": 51,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": 54,
+      "trend": [
+       47,
+       54
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 27,
+        "qty": 8
+       },
+       {
+        "price": 26,
+        "qty": 4
+       },
+       {
+        "price": 25,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 28,
+      "trend": [
+       24,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 69,
+        "qty": 5
+       },
+       {
+        "price": 61,
+        "qty": 9
+       },
+       {
+        "price": 57,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "tethys:colonist:13",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 950
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 0,
+     "water": 6,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:13",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 26,
+      "orderId": "o274",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 5
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 54,
+        "qty": 2
+       },
+       {
+        "price": 52,
+        "qty": 3
+       },
+       {
+        "price": 51,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": 54,
+      "trend": [
+       47,
+       54
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 27,
+        "qty": 8
+       },
+       {
+        "price": 26,
+        "qty": 4
+       },
+       {
+        "price": 25,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 28,
+      "trend": [
+       24,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 69,
+        "qty": 5
+       },
+       {
+        "price": 61,
+        "qty": 9
+       },
+       {
+        "price": 57,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 2,
+   "agentId": "tethys:colonist:23",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 729
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 6,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 51,
+      "orderId": "o291",
+      "cycle": 1
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 40,
+      "orderId": "o140",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 32,
+      "orderId": "o139",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 18,
+      "orderId": "o138",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 5
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 54,
+        "qty": 2
+       },
+       {
+        "price": 52,
+        "qty": 3
+       },
+       {
+        "price": 51,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": 54,
+      "trend": [
+       47,
+       54
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 27,
+        "qty": 8
+       },
+       {
+        "price": 26,
+        "qty": 4
+       },
+       {
+        "price": 25,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 28,
+      "trend": [
+       24,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 69,
+        "qty": 5
+       },
+       {
+        "price": 61,
+        "qty": 9
+       },
+       {
+        "price": 57,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c1"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  }
+ ],
+ [
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "helion:colonist:0",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 702
+    },
+    "inventory": {
+     "iron": 8,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 22,
+      "orderId": "o160",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 42,
+      "orderId": "o2",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 104,
+        "qty": 4
+       },
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 108,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 96,
+      "trend": [
+       106,
+       96
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 57,
+        "qty": 2
+       },
+       {
+        "price": 54,
+        "qty": 10
+       },
+       {
+        "price": 52,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 31,
+        "qty": 3
+       },
+       {
+        "price": 30,
+        "qty": 7
+       },
+       {
+        "price": 28,
+        "qty": 11
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 2
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 62,
+      "trend": [
+       52,
+       67,
+       62
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "helion:colonist:9",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 479
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 1,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 43,
+      "orderId": "o321",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 50,
+      "orderId": "o320",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 31,
+      "orderId": "o319",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 22,
+      "orderId": "o183",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 20,
+      "orderId": "o182",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 19,
+      "orderId": "o15",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 104,
+        "qty": 4
+       },
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 108,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 96,
+      "trend": [
+       106,
+       96
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 57,
+        "qty": 2
+       },
+       {
+        "price": 54,
+        "qty": 10
+       },
+       {
+        "price": 52,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 31,
+        "qty": 3
+       },
+       {
+        "price": 30,
+        "qty": 7
+       },
+       {
+        "price": 28,
+        "qty": 11
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 2
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 62,
+      "trend": [
+       52,
+       67,
+       62
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "helion:colonist:19",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 848
+    },
+    "inventory": {
+     "iron": 8,
+     "grain": 0,
+     "water": 0,
+     "fuel": 1,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:19",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 30,
+      "orderId": "o331",
+      "cycle": 2
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 104,
+        "qty": 4
+       },
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 108,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 96,
+      "trend": [
+       106,
+       96
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 57,
+        "qty": 2
+       },
+       {
+        "price": 54,
+        "qty": 10
+       },
+       {
+        "price": 52,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 31,
+        "qty": 3
+       },
+       {
+        "price": 30,
+        "qty": 7
+       },
+       {
+        "price": 28,
+        "qty": 11
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 2
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 62,
+      "trend": [
+       52,
+       67,
+       62
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "helion:colonist:29",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 949
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:29",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 51,
+      "orderId": "o343",
+      "cycle": 2
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 104,
+        "qty": 4
+       },
+       {
+        "price": 106,
+        "qty": 3
+       },
+       {
+        "price": 108,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 96,
+      "trend": [
+       106,
+       96
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 57,
+        "qty": 2
+       },
+       {
+        "price": 54,
+        "qty": 10
+       },
+       {
+        "price": 52,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 31,
+        "qty": 3
+       },
+       {
+        "price": 30,
+        "qty": 7
+       },
+       {
+        "price": 28,
+        "qty": 11
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 62,
+        "qty": 2
+       },
+       {
+        "price": 60,
+        "qty": 2
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 62,
+      "trend": [
+       52,
+       67,
+       62
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "verdan:colonist:6",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 837
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 7,
+     "water": 3,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 71,
+      "orderId": "o357",
+      "cycle": 2
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 23,
+      "orderId": "o226",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 53,
+        "qty": 6
+       },
+       {
+        "price": 50,
+        "qty": 6
+       },
+       {
+        "price": 49,
+        "qty": 7
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       45,
+       49,
+       52
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 28,
+        "qty": 3
+       },
+       {
+        "price": 27,
+        "qty": 11
+       },
+       {
+        "price": 26,
+        "qty": 6
+       }
+      ],
+      "asks": [
+       {
+        "price": 29,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 28,
+      "trend": [
+       23,
+       27,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 72,
+        "qty": 1
+       },
+       {
+        "price": 71,
+        "qty": 1
+       },
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 357,
+        "qty": 2
+       },
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "verdan:colonist:16",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 877
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 6,
+     "water": 7,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:16",
+      "planet": "verdan",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 72,
+      "orderId": "o375",
+      "cycle": 2
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 53,
+        "qty": 6
+       },
+       {
+        "price": 50,
+        "qty": 6
+       },
+       {
+        "price": 49,
+        "qty": 7
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       45,
+       49,
+       52
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 28,
+        "qty": 3
+       },
+       {
+        "price": 27,
+        "qty": 11
+       },
+       {
+        "price": 26,
+        "qty": 6
+       }
+      ],
+      "asks": [
+       {
+        "price": 29,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 28,
+      "trend": [
+       23,
+       27,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 72,
+        "qty": 1
+       },
+       {
+        "price": 71,
+        "qty": 1
+       },
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 357,
+        "qty": 2
+       },
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "verdan:colonist:26",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 363
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 4,
+     "water": 2,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:26",
+      "planet": "verdan",
+      "good": "iron",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 92,
+      "orderId": "o389",
+      "cycle": 2
+     },
+     {
+      "agentId": "verdan:colonist:26",
+      "planet": "verdan",
+      "good": "iron",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 92,
+      "orderId": "o250",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 107,
+        "qty": 5
+       },
+       {
+        "price": 106,
+        "qty": 4
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 53,
+        "qty": 6
+       },
+       {
+        "price": 50,
+        "qty": 6
+       },
+       {
+        "price": 49,
+        "qty": 7
+       }
+      ],
+      "asks": [],
+      "lastPrice": 52,
+      "trend": [
+       45,
+       49,
+       52
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 28,
+        "qty": 3
+       },
+       {
+        "price": 27,
+        "qty": 11
+       },
+       {
+        "price": 26,
+        "qty": 6
+       }
+      ],
+      "asks": [
+       {
+        "price": 29,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 28,
+      "trend": [
+       23,
+       27,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 72,
+        "qty": 1
+       },
+       {
+        "price": 71,
+        "qty": 1
+       },
+       {
+        "price": 61,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 357,
+        "qty": 2
+       },
+       {
+        "price": 337,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "tethys:colonist:3",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 780
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 11,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:3",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 55,
+      "orderId": "o404",
+      "cycle": 2
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 5
+       },
+       {
+        "price": 111,
+        "qty": 4
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 125,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 65,
+        "qty": 7
+       },
+       {
+        "price": 64,
+        "qty": 3
+       },
+       {
+        "price": 62,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 65,
+      "trend": [
+       47,
+       54,
+       65
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 8
+       },
+       {
+        "price": 25,
+        "qty": 13
+       },
+       {
+        "price": 24,
+        "qty": 11
+       }
+      ],
+      "asks": [
+       {
+        "price": 28,
+        "qty": 5
+       },
+       {
+        "price": 31,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 27,
+      "trend": [
+       24,
+       28,
+       27
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 9
+       },
+       {
+        "price": 60,
+        "qty": 4
+       },
+       {
+        "price": 56,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "tethys:colonist:13",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1007
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 0,
+     "water": 5,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:13",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 47,
+      "orderId": "o420",
+      "cycle": 2
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 5
+       },
+       {
+        "price": 111,
+        "qty": 4
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 125,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 65,
+        "qty": 7
+       },
+       {
+        "price": 64,
+        "qty": 3
+       },
+       {
+        "price": 62,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 65,
+      "trend": [
+       47,
+       54,
+       65
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 8
+       },
+       {
+        "price": 25,
+        "qty": 13
+       },
+       {
+        "price": 24,
+        "qty": 11
+       }
+      ],
+      "asks": [
+       {
+        "price": 28,
+        "qty": 5
+       },
+       {
+        "price": 31,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 27,
+      "trend": [
+       24,
+       28,
+       27
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 9
+       },
+       {
+        "price": 60,
+        "qty": 4
+       },
+       {
+        "price": 56,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 3,
+   "agentId": "tethys:colonist:23",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 273
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 5,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 54,
+      "orderId": "o441",
+      "cycle": 2
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 45,
+      "orderId": "o440",
+      "cycle": 2
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 60,
+      "orderId": "o439",
+      "cycle": 2
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 51,
+      "orderId": "o291",
+      "cycle": 1
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 40,
+      "orderId": "o140",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 32,
+      "orderId": "o139",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 18,
+      "orderId": "o138",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 5
+       },
+       {
+        "price": 111,
+        "qty": 4
+       },
+       {
+        "price": 94,
+        "qty": 2
+       }
+      ],
+      "asks": [
+       {
+        "price": 125,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 105,
+      "trend": [
+       105
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 65,
+        "qty": 7
+       },
+       {
+        "price": 64,
+        "qty": 3
+       },
+       {
+        "price": 62,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 65,
+      "trend": [
+       47,
+       54,
+       65
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 26,
+        "qty": 8
+       },
+       {
+        "price": 25,
+        "qty": 13
+       },
+       {
+        "price": 24,
+        "qty": 11
+       }
+      ],
+      "asks": [
+       {
+        "price": 28,
+        "qty": 5
+       },
+       {
+        "price": 31,
+        "qty": 1
+       }
+      ],
+      "lastPrice": 27,
+      "trend": [
+       24,
+       28,
+       27
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 9
+       },
+       {
+        "price": 60,
+        "qty": 4
+       },
+       {
+        "price": 56,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c2"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  }
+ ],
+ [
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "helion:colonist:0",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 665
+    },
+    "inventory": {
+     "iron": 12,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 29,
+      "orderId": "o455",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 32,
+      "orderId": "o454",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 29,
+      "orderId": "o453",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:colonist:0",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 22,
+      "orderId": "o160",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 5
+       },
+       {
+        "price": 88,
+        "qty": 4
+       },
+       {
+        "price": 86,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 99,
+        "qty": 5
+       },
+       {
+        "price": 101,
+        "qty": 5
+       },
+       {
+        "price": 104,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 92,
+      "trend": [
+       106,
+       96,
+       92
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 63,
+        "qty": 7
+       },
+       {
+        "price": 62,
+        "qty": 4
+       },
+       {
+        "price": 59,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 37,
+        "qty": 2
+       },
+       {
+        "price": 36,
+        "qty": 1
+       },
+       {
+        "price": 35,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 4
+       },
+       {
+        "price": 68,
+        "qty": 4
+       },
+       {
+        "price": 63,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 73,
+      "trend": [
+       52,
+       67,
+       62,
+       73
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "helion:colonist:9",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 501
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 35,
+      "orderId": "o470",
+      "cycle": 3
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 43,
+      "orderId": "o321",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 50,
+      "orderId": "o320",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 31,
+      "orderId": "o319",
+      "cycle": 2
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 22,
+      "orderId": "o183",
+      "cycle": 1
+     },
+     {
+      "agentId": "helion:colonist:9",
+      "planet": "helion",
+      "good": "water",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 20,
+      "orderId": "o182",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 5
+       },
+       {
+        "price": 88,
+        "qty": 4
+       },
+       {
+        "price": 86,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 99,
+        "qty": 5
+       },
+       {
+        "price": 101,
+        "qty": 5
+       },
+       {
+        "price": 104,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 92,
+      "trend": [
+       106,
+       96,
+       92
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 63,
+        "qty": 7
+       },
+       {
+        "price": 62,
+        "qty": 4
+       },
+       {
+        "price": 59,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 37,
+        "qty": 2
+       },
+       {
+        "price": 36,
+        "qty": 1
+       },
+       {
+        "price": 35,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 4
+       },
+       {
+        "price": 68,
+        "qty": 4
+       },
+       {
+        "price": 63,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 73,
+      "trend": [
+       52,
+       67,
+       62,
+       73
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "helion:colonist:19",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 556
+    },
+    "inventory": {
+     "iron": 11,
+     "grain": 0,
+     "water": 0,
+     "fuel": 1,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:19",
+      "planet": "helion",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 53,
+      "orderId": "o483",
+      "cycle": 3
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 5
+       },
+       {
+        "price": 88,
+        "qty": 4
+       },
+       {
+        "price": 86,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 99,
+        "qty": 5
+       },
+       {
+        "price": 101,
+        "qty": 5
+       },
+       {
+        "price": 104,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 92,
+      "trend": [
+       106,
+       96,
+       92
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 63,
+        "qty": 7
+       },
+       {
+        "price": 62,
+        "qty": 4
+       },
+       {
+        "price": 59,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 37,
+        "qty": 2
+       },
+       {
+        "price": 36,
+        "qty": 1
+       },
+       {
+        "price": 35,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 4
+       },
+       {
+        "price": 68,
+        "qty": 4
+       },
+       {
+        "price": 63,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 73,
+      "trend": [
+       52,
+       67,
+       62,
+       73
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "helion:colonist:29",
+   "role": "colonist",
+   "planet": "helion",
+   "observation": {
+    "purse": {
+     "HLX": 1000
+    },
+    "inventory": {
+     "iron": 7,
+     "grain": 0,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "helion:colonist:29",
+      "planet": "helion",
+      "good": "iron",
+      "side": "sell",
+      "qty": 1,
+      "limitPrice": 112,
+      "orderId": "o495",
+      "cycle": 3
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 95,
+        "qty": 5
+       },
+       {
+        "price": 88,
+        "qty": 4
+       },
+       {
+        "price": 86,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 99,
+        "qty": 5
+       },
+       {
+        "price": 101,
+        "qty": 5
+       },
+       {
+        "price": 104,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 92,
+      "trend": [
+       106,
+       96,
+       92
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 63,
+        "qty": 7
+       },
+       {
+        "price": 62,
+        "qty": 4
+       },
+       {
+        "price": 59,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       48,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 37,
+        "qty": 2
+       },
+       {
+        "price": 36,
+        "qty": 1
+       },
+       {
+        "price": 35,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": 31,
+      "trend": [
+       23,
+       26,
+       31
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 4
+       },
+       {
+        "price": 68,
+        "qty": 4
+       },
+       {
+        "price": 63,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": 73,
+      "trend": [
+       52,
+       67,
+       62,
+       73
+      ]
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 346,
+        "qty": 1
+       },
+       {
+        "price": 342,
+        "qty": 2
+       },
+       {
+        "price": 341,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "verdan:colonist:6",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 736
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 1,
+     "water": 8,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 71,
+      "orderId": "o511",
+      "cycle": 3
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 26,
+      "orderId": "o510",
+      "cycle": 3
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "fuel",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 71,
+      "orderId": "o357",
+      "cycle": 2
+     },
+     {
+      "agentId": "verdan:colonist:6",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 23,
+      "orderId": "o226",
+      "cycle": 1
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 106,
+        "qty": 4
+       },
+       {
+        "price": 102,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 56,
+        "qty": 6
+       },
+       {
+        "price": 53,
+        "qty": 6
+       },
+       {
+        "price": 51,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 60,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       49,
+       52,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 32,
+        "qty": 1
+       },
+       {
+        "price": 31,
+        "qty": 2
+       },
+       {
+        "price": 30,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 33,
+      "trend": [
+       23,
+       27,
+       28,
+       33
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 6
+       },
+       {
+        "price": 61,
+        "qty": 3
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 357,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 312,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "verdan:colonist:16",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 986
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 5,
+     "water": 4,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:16",
+      "planet": "verdan",
+      "good": "water",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 29,
+      "orderId": "o527",
+      "cycle": 3
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 106,
+        "qty": 4
+       },
+       {
+        "price": 102,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 56,
+        "qty": 6
+       },
+       {
+        "price": 53,
+        "qty": 6
+       },
+       {
+        "price": 51,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 60,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       49,
+       52,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 32,
+        "qty": 1
+       },
+       {
+        "price": 31,
+        "qty": 2
+       },
+       {
+        "price": 30,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 33,
+      "trend": [
+       23,
+       27,
+       28,
+       33
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 6
+       },
+       {
+        "price": 61,
+        "qty": 3
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 357,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 312,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "verdan:colonist:26",
+   "role": "colonist",
+   "planet": "verdan",
+   "observation": {
+    "purse": {
+     "VRD": 547
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 7,
+     "water": 0,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "verdan:colonist:26",
+      "planet": "verdan",
+      "good": "iron",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 92,
+      "orderId": "o389",
+      "cycle": 2
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 119,
+        "qty": 1
+       },
+       {
+        "price": 106,
+        "qty": 4
+       },
+       {
+        "price": 102,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 56,
+        "qty": 6
+       },
+       {
+        "price": 53,
+        "qty": 6
+       },
+       {
+        "price": 51,
+        "qty": 3
+       }
+      ],
+      "asks": [
+       {
+        "price": 60,
+        "qty": 3
+       }
+      ],
+      "lastPrice": 56,
+      "trend": [
+       45,
+       49,
+       52,
+       56
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 32,
+        "qty": 1
+       },
+       {
+        "price": 31,
+        "qty": 2
+       },
+       {
+        "price": 30,
+        "qty": 9
+       }
+      ],
+      "asks": [],
+      "lastPrice": 33,
+      "trend": [
+       23,
+       27,
+       28,
+       33
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 71,
+        "qty": 6
+       },
+       {
+        "price": 61,
+        "qty": 3
+       },
+       {
+        "price": 58,
+        "qty": 5
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 357,
+        "qty": 2
+       },
+       {
+        "price": 316,
+        "qty": 2
+       },
+       {
+        "price": 312,
+        "qty": 1
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "tethys:colonist:3",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1000
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 10,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 5
+       },
+       {
+        "price": 111,
+        "qty": 4
+       }
+      ],
+      "asks": [
+       {
+        "price": 125,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 124,
+      "trend": [
+       105,
+       124
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 77,
+        "qty": 3
+       },
+       {
+        "price": 73,
+        "qty": 2
+       },
+       {
+        "price": 69,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 77,
+      "trend": [
+       47,
+       54,
+       65,
+       77
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 28,
+        "qty": 8
+       },
+       {
+        "price": 27,
+        "qty": 5
+       },
+       {
+        "price": 26,
+        "qty": 11
+       }
+      ],
+      "asks": [
+       {
+        "price": 29,
+        "qty": 6
+       },
+       {
+        "price": 31,
+        "qty": 1
+       },
+       {
+        "price": 32,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 28,
+      "trend": [
+       24,
+       28,
+       27,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 5
+       },
+       {
+        "price": 60,
+        "qty": 4
+       },
+       {
+        "price": 56,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       },
+       {
+        "price": 289,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "tethys:colonist:13",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 1166
+    },
+    "inventory": {
+     "iron": 0,
+     "grain": 0,
+     "water": 6,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 5
+       },
+       {
+        "price": 111,
+        "qty": 4
+       }
+      ],
+      "asks": [
+       {
+        "price": 125,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 124,
+      "trend": [
+       105,
+       124
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 77,
+        "qty": 3
+       },
+       {
+        "price": 73,
+        "qty": 2
+       },
+       {
+        "price": 69,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 77,
+      "trend": [
+       47,
+       54,
+       65,
+       77
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 28,
+        "qty": 8
+       },
+       {
+        "price": 27,
+        "qty": 5
+       },
+       {
+        "price": 26,
+        "qty": 11
+       }
+      ],
+      "asks": [
+       {
+        "price": 29,
+        "qty": 6
+       },
+       {
+        "price": 31,
+        "qty": 1
+       },
+       {
+        "price": 32,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 28,
+      "trend": [
+       24,
+       28,
+       27,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 5
+       },
+       {
+        "price": 60,
+        "qty": 4
+       },
+       {
+        "price": 56,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       },
+       {
+        "price": 289,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  },
+  {
+   "universeId": "u0",
+   "cycle": 4,
+   "agentId": "tethys:colonist:23",
+   "role": "colonist",
+   "planet": "tethys",
+   "observation": {
+    "purse": {
+     "TTH": 10
+    },
+    "inventory": {
+     "iron": 4,
+     "grain": 0,
+     "water": 6,
+     "fuel": 0,
+     "tools": 0
+    },
+    "openOrders": [
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 69,
+      "orderId": "o583",
+      "cycle": 3
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 54,
+      "orderId": "o441",
+      "cycle": 2
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 4,
+      "limitPrice": 45,
+      "orderId": "o440",
+      "cycle": 2
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 60,
+      "orderId": "o439",
+      "cycle": 2
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 1,
+      "limitPrice": 51,
+      "orderId": "o291",
+      "cycle": 1
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 3,
+      "limitPrice": 40,
+      "orderId": "o140",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "grain",
+      "side": "buy",
+      "qty": 2,
+      "limitPrice": 32,
+      "orderId": "o139",
+      "cycle": 0
+     },
+     {
+      "agentId": "tethys:colonist:23",
+      "planet": "tethys",
+      "good": "water",
+      "side": "buy",
+      "qty": 5,
+      "limitPrice": 18,
+      "orderId": "o138",
+      "cycle": 0
+     }
+    ],
+    "loans": [],
+    "shipments": [],
+    "markets": [
+     {
+      "good": "iron",
+      "bids": [
+       {
+        "price": 124,
+        "qty": 3
+       },
+       {
+        "price": 116,
+        "qty": 5
+       },
+       {
+        "price": 111,
+        "qty": 4
+       }
+      ],
+      "asks": [
+       {
+        "price": 125,
+        "qty": 4
+       }
+      ],
+      "lastPrice": 124,
+      "trend": [
+       105,
+       124
+      ]
+     },
+     {
+      "good": "grain",
+      "bids": [
+       {
+        "price": 77,
+        "qty": 3
+       },
+       {
+        "price": 73,
+        "qty": 2
+       },
+       {
+        "price": 69,
+        "qty": 3
+       }
+      ],
+      "asks": [],
+      "lastPrice": 77,
+      "trend": [
+       47,
+       54,
+       65,
+       77
+      ]
+     },
+     {
+      "good": "water",
+      "bids": [
+       {
+        "price": 28,
+        "qty": 8
+       },
+       {
+        "price": 27,
+        "qty": 5
+       },
+       {
+        "price": 26,
+        "qty": 11
+       }
+      ],
+      "asks": [
+       {
+        "price": 29,
+        "qty": 6
+       },
+       {
+        "price": 31,
+        "qty": 1
+       },
+       {
+        "price": 32,
+        "qty": 2
+       }
+      ],
+      "lastPrice": 28,
+      "trend": [
+       24,
+       28,
+       27,
+       28
+      ]
+     },
+     {
+      "good": "fuel",
+      "bids": [
+       {
+        "price": 61,
+        "qty": 5
+       },
+       {
+        "price": 60,
+        "qty": 4
+       },
+       {
+        "price": 56,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     },
+     {
+      "good": "tools",
+      "bids": [
+       {
+        "price": 353,
+        "qty": 1
+       },
+       {
+        "price": 292,
+        "qty": 5
+       },
+       {
+        "price": 289,
+        "qty": 2
+       }
+      ],
+      "asks": [],
+      "lastPrice": null,
+      "trend": []
+     }
+    ],
+    "fx": [],
+    "policy": {
+     "tariffsBp": {},
+     "quotas": {},
+     "embargoes": [],
+     "policyRateBp": 0
+    },
+    "headlines": [],
+    "memo": "acted c3"
+   },
+   "allowedActions": [
+    "place_order",
+    "cancel_order",
+    "pass"
+   ],
+   "deadlineMs": 6000
+  }
+ ]
+]
