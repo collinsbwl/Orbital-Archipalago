@@ -12,7 +12,7 @@ pub struct EditInventory<'info> {
     pub ledger: AccountLoader<'info, PlanetLedger>,
 }
 
-fn check_lines(lines: &[Cargo]) -> Result<()> {
+pub(crate) fn check_lines(lines: &[Cargo]) -> Result<()> {
     require!(lines.len() <= MAX_CARGO_LINES, ErrorCode::TooManyCargoLines);
     require!(lines.iter().all(|c| c.qty > 0), ErrorCode::InvalidAmount);
     Ok(())

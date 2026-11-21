@@ -4,7 +4,7 @@ use anchor_spl::token::{Mint, Token};
 use crate::{constants::*, error::ErrorCode, state::Config};
 
 #[derive(Accounts)]
-#[instruction(code: [u8; 3])]
+#[instruction(code: [u8; 5])]
 pub struct CreateCurrency<'info> {
     #[account(mut, address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -27,10 +27,13 @@ pub struct CreateCurrency<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_create_currency(_ctx: Context<CreateCurrency>, code: [u8; 3]) -> Result<()> {
-    require!(
-        code.iter().all(|b| b.is_ascii_uppercase()),
-        ErrorCode::InvalidCurrencyCode
-    );
+pub fn handle_create_currency(_ctx: Context<CreateCurrency>, code: [u8; 5]) -> Result<()> {
+    require!(valid_code(&code), ErrorCode::InvalidCurrencyCode);
     Ok(())
+}
+
+/// 2 to 5 capitals followed only by zero padding, e.g. "HX\0\0\0" or "HELIX". Padding keeps one canonical form per code.
+pub fn valid_code(code: &[u8; 5]) -> bool {
+    let n = code.iter().position(|&b| b == 0).unwrap_or(5);
+    (2..=5).contains(&n) && code[..n].iter().all(|b| b.is_ascii_uppercase()) && code[n..].iter().all(|&b| b == 0)
 }

@@ -36,8 +36,8 @@ pub struct InventorySlot {
 pub struct PlanetLedger {
     /// sha256(planetId)
     pub planet: [u8; 32],
-    pub currency: [u8; 3],
-    pub _pad: [u8; 5],
+    pub currency: [u8; 5],
+    pub _pad: [u8; 3],
     pub len: u64,
     pub slots: [InventorySlot; MAX_SLOTS],
 }

@@ -15,16 +15,23 @@ use {
     solana_transaction::versioned::VersionedTransaction,
 };
 
+/// A currency code in its on-chain form: 2-5 capitals padded with zeros to 5 bytes.
+pub fn code(s: &str) -> [u8; 5] {
+    let mut out = [0u8; 5];
+    out[..s.len()].copy_from_slice(s.as_bytes());
+    out
+}
+
 pub fn config_pda() -> Pubkey {
     Pubkey::find_program_address(&[orbital::constants::CONFIG_SEED], &orbital::id()).0
 }
 pub fn authority_pda() -> Pubkey {
     Pubkey::find_program_address(&[orbital::constants::MINT_AUTHORITY_SEED], &orbital::id()).0
 }
-pub fn mint_pda(code: &[u8; 3]) -> Pubkey {
+pub fn mint_pda(code: &[u8; 5]) -> Pubkey {
     Pubkey::find_program_address(&[orbital::constants::MINT_SEED, code], &orbital::id()).0
 }
-pub fn purse_pda(owner: &[u8; 32], code: &[u8; 3]) -> Pubkey {
+pub fn purse_pda(owner: &[u8; 32], code: &[u8; 5]) -> Pubkey {
     Pubkey::find_program_address(&[orbital::constants::PURSE_SEED, owner, code], &orbital::id()).0
 }
 /// Ids are hashed client-side: owner and good keys on-chain are sha256(id).
@@ -59,7 +66,7 @@ pub fn init_ix(admin: &Keypair) -> Instruction {
     )
 }
 
-pub fn create_currency_ix(admin: &Keypair, code: [u8; 3]) -> Instruction {
+pub fn create_currency_ix(admin: &Keypair, code: [u8; 5]) -> Instruction {
     Instruction::new_with_bytes(
         orbital::id(),
         &orbital::instruction::CreateCurrency { code }.data(),
@@ -75,7 +82,7 @@ pub fn create_currency_ix(admin: &Keypair, code: [u8; 3]) -> Instruction {
     )
 }
 
-pub fn open_purse_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 3]) -> Instruction {
+pub fn open_purse_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 5]) -> Instruction {
     Instruction::new_with_bytes(
         orbital::id(),
         &orbital::instruction::OpenPurse { owner, code }.data(),
@@ -91,7 +98,7 @@ pub fn open_purse_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 3]) -> Instruc
     )
 }
 
-pub fn issue_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 3], amount: u64) -> Instruction {
+pub fn issue_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 5], amount: u64) -> Instruction {
     Instruction::new_with_bytes(
         orbital::id(),
         &orbital::instruction::Issue { owner, code, amount }.data(),
@@ -107,7 +114,7 @@ pub fn issue_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 3], amount: u64) ->
     )
 }
 
-pub fn transfer_ix(admin: &Keypair, from: [u8; 32], to: [u8; 32], code: [u8; 3], amount: u64) -> Instruction {
+pub fn transfer_ix(admin: &Keypair, from: [u8; 32], to: [u8; 32], code: [u8; 5], amount: u64) -> Instruction {
     Instruction::new_with_bytes(
         orbital::id(),
         &orbital::instruction::Transfer { from_owner: from, to_owner: to, code, amount }.data(),
@@ -134,7 +141,7 @@ pub fn alloc_ledger(svm: &mut LiteSVM) -> Pubkey {
     addr
 }
 
-pub fn create_planet_ix(admin: &Keypair, ledger: Pubkey, planet: &str, code: [u8; 3]) -> Instruction {
+pub fn create_planet_ix(admin: &Keypair, ledger: Pubkey, planet: &str, code: [u8; 5]) -> Instruction {
     Instruction::new_with_bytes(
         orbital::id(),
         &orbital::instruction::CreatePlanet { planet: key(planet), currency: code }.data(),
@@ -160,12 +167,12 @@ pub fn consume_ix(admin: &Keypair, ledger: Pubkey, owner: &str, c: Vec<Cargo>) -
     Instruction::new_with_bytes(orbital::id(), &orbital::instruction::Consume { owner: key(owner), cargo: c }.data(), edit_accounts(admin, ledger))
 }
 
-pub fn balance(svm: &LiteSVM, owner: &str, code: [u8; 3]) -> u64 {
+pub fn balance(svm: &LiteSVM, owner: &str, code: [u8; 5]) -> u64 {
     let acct = svm.get_account(&purse_pda(&key(owner), &code)).unwrap();
     spl_token::state::Account::unpack(&acct.data).unwrap().amount
 }
 
-pub fn supply(svm: &LiteSVM, code: [u8; 3]) -> u64 {
+pub fn supply(svm: &LiteSVM, code: [u8; 5]) -> u64 {
     spl_token::state::Mint::unpack(&svm.get_account(&mint_pda(&code)).unwrap().data).unwrap().supply
 }
 
@@ -182,4 +189,26 @@ pub fn inventory(svm: &LiteSVM, ledger: Pubkey, owner: &str, good: &str) -> u64 
         }
     }
     0
+}
+
+/// One atomic transaction that opens an owner: a purse per currency, starting cash, starting goods.
+pub fn open_account_ix(admin: &Keypair, ledger: Pubkey, owner: &str, codes: &[[u8; 5]], amounts: &[u64], cargo: Vec<Cargo>) -> Instruction {
+    let mut metas = orbital::accounts::OpenAccount {
+        admin: admin.pubkey(),
+        config: config_pda(),
+        mint_authority: authority_pda(),
+        ledger,
+        token_program: TOKEN_PROGRAM,
+        system_program: system_program::ID,
+    }
+    .to_account_metas(None);
+    for c in codes {
+        metas.push(anchor_lang::prelude::AccountMeta::new(mint_pda(c), false));
+        metas.push(anchor_lang::prelude::AccountMeta::new(purse_pda(&key(owner), c), false));
+    }
+    Instruction::new_with_bytes(
+        orbital::id(),
+        &orbital::instruction::OpenAccount { owner: key(owner), codes: codes.to_vec(), amounts: amounts.to_vec(), cargo }.data(),
+        metas,
+    )
 }

@@ -90,8 +90,6 @@ interface BookOrder {
   cycle: number;
 }
 
-/** Instructions per transaction: keeps openAccount under the 1232-byte transaction limit. */
-const MAX_IXS_PER_TX = 3;
 
 const notYet = (what: string): never => {
   throw new LedgerError('invalid_state', `SolanaLedger.${what} is not implemented yet (C2-C4)`);
@@ -141,14 +139,26 @@ export class SolanaLedger implements Ledger {
     }
     if (await this.isOpen(req.owner)) throw new LedgerError('invalid_state', `account ${req.owner} already exists`);
 
-    // Every owner gets a purse in every currency, so it can receive any of them later.
-    const ixs: TransactionInstruction[] = [];
-    for (const code of this.currencies) ixs.push(await this.openPurseIx(req.owner, code));
-    for (const [code, amt] of Object.entries(purse)) if (amt > 0) ixs.push(await this.issueIx(req.owner, code, amt));
-    await this.sendAll(ixs);
-
+    // One atomic instruction: a purse in every currency (so the owner can receive any of them later), the starting cash,
+    // and the starting goods. Either all of it happens or none of it does.
     const cargo = Object.entries(inventory).filter(([, q]) => q > 0).map(([good, qty]) => ({ good, qty }));
-    if (cargo.length) await this.send([await this.grantIx(req.planet, req.owner, cargo)], INVENTORY_COMPUTE_UNITS);
+    const ix = await this.program.methods
+      .openAccount(idKey(req.owner), this.currencies.map(codeBytes), this.currencies.map((c) => new BN(purse[c] ?? 0)), toCargo(cargo))
+      .accountsPartial({
+        admin: this.admin.publicKey,
+        config: this.addr.config(),
+        mintAuthority: this.addr.mintAuthority(),
+        ledger: await this.addr.ledger(req.planet),
+      })
+      // For each currency: its mint, then the purse the program will create.
+      .remainingAccounts(
+        this.currencies.flatMap((c) => [
+          { pubkey: this.addr.mint(c), isSigner: false, isWritable: true },
+          { pubkey: this.addr.purse(req.owner, c), isSigner: false, isWritable: true },
+        ]),
+      )
+      .instruction();
+    await this.send([ix], INVENTORY_COMPUTE_UNITS);
     this.owners.add(req.owner);
     this.ownerByHash.set(Buffer.from(idKey(req.owner)).toString('hex'), req.owner);
   }
@@ -671,40 +681,6 @@ export class SolanaLedger implements Ledger {
   borrow = async (_req: BorrowRequest) => notYet('borrow'); // C4
   repay = async (_req: RepayRequest) => notYet('repay'); // C4
 
-  // ---- Instruction builders (also used by bootstrap) -------------------------------------------
-
-  async openPurseIx(owner: OwnerId, code: CurrencyId): Promise<TransactionInstruction> {
-    return this.program.methods
-      .openPurse(idKey(owner), codeBytes(code))
-      .accountsPartial({
-        admin: this.admin.publicKey,
-        config: this.addr.config(),
-        mint: this.addr.mint(code),
-        purse: this.addr.purse(owner, code),
-      })
-      .instruction();
-  }
-
-  async issueIx(owner: OwnerId, code: CurrencyId, amount: number): Promise<TransactionInstruction> {
-    return this.program.methods
-      .issue(idKey(owner), codeBytes(code), new BN(amount))
-      .accountsPartial({
-        admin: this.admin.publicKey,
-        config: this.addr.config(),
-        mintAuthority: this.addr.mintAuthority(),
-        mint: this.addr.mint(code),
-        purse: this.addr.purse(owner, code),
-      })
-      .instruction();
-  }
-
-  async grantIx(planet: PlanetId, owner: OwnerId, cargo: Cargo[]): Promise<TransactionInstruction> {
-    return this.program.methods
-      .grant(idKey(owner), toCargo(cargo))
-      .accountsPartial(await this.editAccounts(planet))
-      .instruction();
-  }
-
   // ---- Validation ------------------------------------------------------------------------------
 
   private checkOwner(owner: string): void {
@@ -884,11 +860,6 @@ export class SolanaLedger implements Ledger {
       });
     }
     return out;
-  }
-
-  /** Sends instructions in as few transactions as fit; not atomic across transactions. */
-  private async sendAll(ixs: TransactionInstruction[]): Promise<void> {
-    for (let i = 0; i < ixs.length; i += MAX_IXS_PER_TX) await this.send(ixs.slice(i, i + MAX_IXS_PER_TX));
   }
 
   private async send(ixs: TransactionInstruction[], computeUnits?: number): Promise<void> {

@@ -10,19 +10,19 @@ use crate::{
 
 /// FX orders reuse OrderBook/OrderSlot: slot.qty = giveAmount, slot.limit = minReceive, slot.side = 0 if the order
 /// gives the pair's first (alphabetical) currency, 1 if it gives the second. The book's planet/good fields hold the codes.
-fn pad(code: &[u8; 3]) -> [u8; 32] {
+fn pad(code: &[u8; 5]) -> [u8; 32] {
     let mut out = [0u8; 32];
-    out[..3].copy_from_slice(code);
+    out[..5].copy_from_slice(code);
     out
 }
 
-fn check_pair(a: &[u8; 3], b: &[u8; 3]) -> Result<()> {
+fn check_pair(a: &[u8; 5], b: &[u8; 5]) -> Result<()> {
     require!(a < b, ErrorCode::AccountMismatch); // canonical order, so each pair has exactly one book
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(a: [u8; 3], b: [u8; 3])]
+#[instruction(a: [u8; 5], b: [u8; 5])]
 pub struct CreateFxBook<'info> {
     #[account(mut, address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -39,7 +39,7 @@ pub struct CreateFxBook<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_create_fx_book(ctx: Context<CreateFxBook>, a: [u8; 3], b: [u8; 3]) -> Result<()> {
+pub fn handle_create_fx_book(ctx: Context<CreateFxBook>, a: [u8; 5], b: [u8; 5]) -> Result<()> {
     check_pair(&a, &b)?;
     let mut book = ctx.accounts.book.load_init()?;
     book.planet = pad(&a);
@@ -48,7 +48,7 @@ pub fn handle_create_fx_book(ctx: Context<CreateFxBook>, a: [u8; 3], b: [u8; 3])
 }
 
 #[derive(Accounts)]
-#[instruction(owner: [u8; 32], a: [u8; 3], b: [u8; 3], give_code: [u8; 3])]
+#[instruction(owner: [u8; 32], a: [u8; 5], b: [u8; 5], give_code: [u8; 5])]
 pub struct FxOrderOp<'info> {
     #[account(address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -63,7 +63,7 @@ pub struct FxOrderOp<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-fn side_of(give_code: &[u8; 3], a: &[u8; 3], b: &[u8; 3]) -> Result<u8> {
+fn side_of(give_code: &[u8; 5], a: &[u8; 5], b: &[u8; 5]) -> Result<u8> {
     if give_code == a {
         Ok(0)
     } else if give_code == b {
@@ -74,7 +74,7 @@ fn side_of(give_code: &[u8; 3], a: &[u8; 3], b: &[u8; 3]) -> Result<u8> {
 }
 
 pub fn handle_place_fx_order(
-    ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 3], b: [u8; 3], give_code: [u8; 3], give_amount: u64, min_receive: u64, cycle: u64,
+    ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 5], b: [u8; 5], give_code: [u8; 5], give_amount: u64, min_receive: u64, cycle: u64,
 ) -> Result<()> {
     require!(give_amount > 0, ErrorCode::InvalidAmount);
     check_pair(&a, &b)?;
@@ -100,7 +100,7 @@ pub fn handle_place_fx_order(
     ctx.accounts.book.load_mut()?.push(OrderSlot { seq, owner, qty: give_amount, limit: min_receive, cycle, side, _pad: [0; 7] })
 }
 
-pub fn handle_cancel_fx_order(ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 3], b: [u8; 3], give_code: [u8; 3], seq: u64) -> Result<()> {
+pub fn handle_cancel_fx_order(ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 5], b: [u8; 5], give_code: [u8; 5], seq: u64) -> Result<()> {
     let mut book = ctx.accounts.book.load_mut()?;
     let i = book.find(seq).ok_or(ErrorCode::UnknownOrder)?;
     let slot = book.slots[i];
@@ -126,7 +126,7 @@ pub fn handle_cancel_fx_order(ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 
 // ---- The FX auction ---------------------------------------------------------------------------------------
 
 #[derive(Accounts)]
-#[instruction(base: [u8; 3], quote: [u8; 3])]
+#[instruction(base: [u8; 5], quote: [u8; 5])]
 pub struct ClearFxAuction<'info> {
     #[account(address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -143,7 +143,7 @@ pub struct ClearFxAuction<'info> {
     // spend), then, if it traded, its purse in the currency it receives. Last, if rounding left dust, the quote treasury's purse.
 }
 
-fn pay<'info>(token_program: Pubkey, vault: &Account<'info, TokenAccount>, bump: u8, code: &[u8; 3], to: &AccountInfo<'info>, amount: u64) -> Result<()> {
+fn pay<'info>(token_program: Pubkey, vault: &Account<'info, TokenAccount>, bump: u8, code: &[u8; 5], to: &AccountInfo<'info>, amount: u64) -> Result<()> {
     if amount == 0 {
         return Ok(());
     }
@@ -158,7 +158,7 @@ fn pay<'info>(token_program: Pubkey, vault: &Account<'info, TokenAccount>, bump:
     )
 }
 
-fn check_purse(account: &AccountInfo, owner: &[u8; 32], code: &[u8; 3]) -> Result<()> {
+fn check_purse(account: &AccountInfo, owner: &[u8; 32], code: &[u8; 5]) -> Result<()> {
     let expected = Pubkey::find_program_address(&[PURSE_SEED, owner.as_ref(), code.as_ref()], &crate::ID).0;
     require_keys_eq!(account.key(), expected, ErrorCode::AccountMismatch);
     Ok(())
@@ -166,7 +166,7 @@ fn check_purse(account: &AccountInfo, owner: &[u8; 32], code: &[u8; 3]) -> Resul
 
 /// Clears every order in the pair's book at one rate and removes them all (orders are immediate-or-cancel):
 /// what is not spent is refunded.
-pub fn handle_clear_fx_auction<'info>(ctx: Context<'info, ClearFxAuction<'info>>, base: [u8; 3], quote: [u8; 3], treasury: [u8; 32]) -> Result<()> {
+pub fn handle_clear_fx_auction<'info>(ctx: Context<'info, ClearFxAuction<'info>>, base: [u8; 5], quote: [u8; 5], treasury: [u8; 32]) -> Result<()> {
     let (a, b) = if base < quote { (base, quote) } else { (quote, base) };
     let mut book = ctx.accounts.book.load_mut()?;
     require!(book.planet == pad(&a) && book.good == pad(&b), ErrorCode::AccountMismatch);

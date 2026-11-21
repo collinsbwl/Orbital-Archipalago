@@ -13,8 +13,8 @@ pub const MINT_AUTHORITY_SEED: &[u8] = b"mint_authority";
 #[constant]
 pub const MINT_SEED: &[u8] = b"mint";
 
-/// Currency codes are 3 ASCII capitals, e.g. "HLX".
-pub const CURRENCY_CODE_LEN: usize = 3;
+/// Currency codes are 2 to 5 ASCII capitals (the contract's rule), stored in 5 bytes padded with zeros: "HX" is H X 0 0 0.
+pub const CURRENCY_CODE_LEN: usize = 5;
 
 /// All amounts in the contracts are integer minor units, so mints have 0 decimals.
 pub const CURRENCY_DECIMALS: u8 = 0;

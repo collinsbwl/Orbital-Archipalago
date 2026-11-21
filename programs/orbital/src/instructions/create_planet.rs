@@ -14,7 +14,7 @@ pub struct CreatePlanet<'info> {
     pub ledger: AccountLoader<'info, PlanetLedger>,
 }
 
-pub fn handle_create_planet(ctx: Context<CreatePlanet>, planet: [u8; 32], currency: [u8; 3]) -> Result<()> {
+pub fn handle_create_planet(ctx: Context<CreatePlanet>, planet: [u8; 32], currency: [u8; 5]) -> Result<()> {
     let mut ledger = ctx.accounts.ledger.load_init()?;
     ledger.planet = planet;
     ledger.currency = currency;

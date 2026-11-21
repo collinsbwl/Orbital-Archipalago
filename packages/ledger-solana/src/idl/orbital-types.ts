@@ -310,7 +310,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -319,7 +319,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -328,7 +328,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -453,7 +453,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -560,7 +560,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -569,7 +569,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -671,7 +671,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -941,7 +941,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         }
@@ -1024,7 +1024,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -1033,7 +1033,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         }
@@ -1101,7 +1101,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         }
@@ -1282,7 +1282,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         }
@@ -1648,13 +1648,133 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
         {
           "name": "amount",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "openAccount",
+      "docs": [
+        "Opens an owner in one atomic transaction: purses in every currency, starting cash, starting goods."
+      ],
+      "discriminator": [
+        101,
+        152,
+        91,
+        243,
+        176,
+        36,
+        189,
+        101
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mintAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "ledger",
+          "docs": [
+            "The planet ledger where the starting goods are placed."
+          ],
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "codes",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                5
+              ]
+            }
+          }
+        },
+        {
+          "name": "amounts",
+          "type": {
+            "vec": "u64"
+          }
+        },
+        {
+          "name": "cargo",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "cargo"
+              }
+            }
+          }
         }
       ]
     },
@@ -1767,7 +1887,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         }
@@ -1907,7 +2027,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -1916,7 +2036,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -1925,7 +2045,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -2058,7 +2178,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -2274,7 +2394,7 @@ export type Orbital = {
           "type": {
             "array": [
               "u8",
-              3
+              5
             ]
           }
         },
@@ -2781,7 +2901,7 @@ export type Orbital = {
             "type": {
               "array": [
                 "u8",
-                3
+                5
               ]
             }
           },
@@ -2790,7 +2910,7 @@ export type Orbital = {
             "type": {
               "array": [
                 "u8",
-                5
+                3
               ]
             }
           },

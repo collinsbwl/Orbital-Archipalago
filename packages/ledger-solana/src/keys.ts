@@ -19,12 +19,12 @@ export function idKey(id: string): number[] {
   return Array.from(createHash('sha256').update(id, 'utf8').digest());
 }
 
-/** Currency codes are exactly 3 ASCII capitals on-chain (the contract schema allows 2-5). */
+/** Currency codes are 2 to 5 capitals (the contract's rule), stored in 5 bytes padded with zeros: "HX" is H X 0 0 0. */
 export function codeBytes(code: string): number[] {
-  if (!/^[A-Z]{3}$/.test(code)) {
-    throw new LedgerError('invalid_state', `currency code "${code}" must be exactly 3 capitals on-chain`);
+  if (!/^[A-Z]{2,5}$/.test(code)) {
+    throw new LedgerError('invalid_state', `currency code "${code}" must be 2-5 capital letters`);
   }
-  return Array.from(enc(code));
+  return Array.from(Buffer.concat([enc(code), Buffer.alloc(5 - code.length)]));
 }
 
 export class Addresses {
