@@ -35,7 +35,7 @@ fn purses_are_self_owned_and_money_moves_with_conserved_supply() {
 }
 
 #[test]
-fn transfer_rejects_overdraft_zero_and_non_admin() {
+fn transfer_rejects_overdraft_and_non_admin() {
     let (mut svm, admin) = world();
     for who in ["alice", "bob"] {
         send(&mut svm, &admin, open_purse_ix(&admin, key(who), HLX)).unwrap();
@@ -43,7 +43,7 @@ fn transfer_rejects_overdraft_zero_and_non_admin() {
     send(&mut svm, &admin, issue_ix(&admin, key("alice"), HLX, 100)).unwrap();
 
     assert!(send(&mut svm, &admin, transfer_ix(&admin, key("alice"), key("bob"), HLX, 101)).is_err());
-    assert!(send(&mut svm, &admin, transfer_ix(&admin, key("alice"), key("bob"), HLX, 0)).is_err());
+    send(&mut svm, &admin, transfer_ix(&admin, key("alice"), key("bob"), HLX, 0)).unwrap(); // zero is a no-op, not an error
 
     let intruder = Keypair::new();
     svm.airdrop(&intruder.pubkey(), 1_000_000_000).unwrap();

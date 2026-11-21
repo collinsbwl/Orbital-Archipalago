@@ -1,4 +1,4 @@
-import { SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { SystemProgram, Transaction } from '@solana/web3.js';
 import { SolanaLedger, type SolanaLedgerOptions } from './solana-ledger.js';
 import { codeBytes, idKey } from './keys.js';
 
@@ -11,10 +11,10 @@ const PLANET_LEDGER_SPACE = 8 + 48 + 1024 * 72;
  */
 export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<SolanaLedger> {
   const ledger = new SolanaLedger(opts);
-  const { connection, admin, world } = opts;
-  const exists = async (pk: Parameters<typeof connection.getAccountInfo>[0]) => (await connection.getAccountInfo(pk, 'confirmed')) !== null;
-  const run = (tx: Transaction) => sendAndConfirmTransaction(connection, tx, [admin], { commitment: 'confirmed' });
-  const { program } = ledger;
+  const { chain, program } = ledger;
+  const { admin, world } = opts;
+  const exists = async (pk: Parameters<typeof chain.getAccountData>[0]) => (await chain.getAccountData(pk)) !== null;
+  const run = (tx: Transaction) => chain.send(tx, [admin]);
 
   if (!(await exists(ledger.addr.config()))) {
     await run(new Transaction().add(await program.methods.initialize().accountsPartial({ admin: admin.publicKey, config: ledger.addr.config() }).instruction()));
@@ -32,7 +32,7 @@ export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<Solana
 
     const ledgerAddr = await ledger.addr.ledger(planet.id);
     if (!(await exists(ledgerAddr))) {
-      const lamports = await connection.getMinimumBalanceForRentExemption(PLANET_LEDGER_SPACE);
+      const lamports = await chain.rentExemption(PLANET_LEDGER_SPACE);
       await run(new Transaction().add(
         SystemProgram.createAccountWithSeed({
           fromPubkey: admin.publicKey, newAccountPubkey: ledgerAddr, basePubkey: admin.publicKey,

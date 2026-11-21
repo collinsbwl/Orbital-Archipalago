@@ -44,7 +44,9 @@ describe('purses', () => {
     await ledger.openAccount({ owner: a, planet: 'helion', purse: { HLX: 50 } });
     await ledger.openAccount({ owner: b, planet: 'helion' });
     await rejects(ledger.transfer({ from: a, to: b, currency: 'HLX', amount: 51 }), 'insufficient_funds');
-    await rejects(ledger.transfer({ from: a, to: b, currency: 'HLX', amount: 0 }), 'invalid_amount');
+    await rejects(ledger.transfer({ from: a, to: b, currency: 'HLX', amount: -1 }), 'invalid_amount');
+    await rejects(ledger.transfer({ from: a, to: b, currency: 'XXX', amount: 1 }), 'invalid_amount');
+    await ledger.transfer({ from: a, to: b, currency: 'HLX', amount: 0 }); // zero is allowed
     await rejects(ledger.transfer({ from: a, to: b, currency: 'HLX', amount: 1.5 }), 'invalid_amount');
     await rejects(ledger.transfer({ from: a, to: 'ghost', currency: 'HLX', amount: 1 }), 'unknown_account');
     await rejects(ledger.getPurse('ghost', 'HLX'), 'unknown_account');
@@ -59,7 +61,7 @@ describe('inventories', () => {
     await ledger.openAccount({ owner: a, planet: 'helion', inventory: { iron: 10, water: 3 } });
     expect(await ledger.getInventory(a, 'helion', 'iron')).toBe(10);
     expect(await ledger.getInventory(a, 'verdan', 'iron')).toBe(0);
-    expect(await ledger.getInventory('nobody', 'helion', 'iron')).toBe(0);
+    await rejects(ledger.getInventory('nobody', 'helion', 'iron'), 'unknown_account');
   });
 
   it('produces and consumes', async () => {
@@ -83,12 +85,12 @@ describe('inventories', () => {
     );
     expect(await ledger.getInventory(a, 'helion', 'iron')).toBe(3);
     expect(await ledger.getInventory(a, 'helion', 'tools')).toBe(0);
-    await rejects(ledger.getInventory(a, 'mars', 'iron'), 'unknown_account');
+    await rejects(ledger.getInventory(a, 'mars', 'iron'), 'invalid_amount');
   });
 });
 
 describe('later milestones', () => {
   it('fail loudly instead of pretending', async () => {
-    await rejects(ledger.checkInvariants(), 'invalid_state');
+    await rejects(ledger.borrow({ borrower: 'x', planet: 'helion', amount: 1, termCycles: 1, cycle: 1 }), 'invalid_state');
   });
 });

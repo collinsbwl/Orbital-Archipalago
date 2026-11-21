@@ -1,4 +1,5 @@
 import { LedgerError, type LedgerErrorCode } from '@orbital/contracts';
+import { ChainError } from './chain.js';
 
 /** Program error name (programs/orbital/src/error.rs) -> contract error code. */
 const BY_PROGRAM_ERROR: Record<string, LedgerErrorCode> = {
@@ -13,8 +14,9 @@ const BY_PROGRAM_ERROR: Record<string, LedgerErrorCode> = {
 };
 
 /** Turns a failed transaction into a LedgerError by reading the program's "Error Code: X" log line. */
-export function toLedgerError(e: unknown, logs: string[] = []): Error {
+export function toLedgerError(e: unknown): Error {
   if (e instanceof LedgerError) return e;
+  const logs = e instanceof ChainError ? e.logs : [];
   const text = [e instanceof Error ? e.message : String(e), ...logs].join('\n');
   const m = /Error Code: (\w+)/.exec(text);
   const code = m?.[1] && BY_PROGRAM_ERROR[m[1]];

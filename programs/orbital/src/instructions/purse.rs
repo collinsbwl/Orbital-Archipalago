@@ -82,7 +82,7 @@ pub struct TransferFunds<'info> {
 }
 
 pub fn handle_transfer(ctx: Context<TransferFunds>, from_owner: [u8; 32], _to_owner: [u8; 32], code: [u8; 3], amount: u64) -> Result<()> {
-    require!(amount > 0, ErrorCode::InvalidAmount);
+    // A transfer of 0 is allowed (the ledger contract pins this); only issue and cargo lines require > 0.
     require!(ctx.accounts.from_purse.amount >= amount, ErrorCode::InsufficientFunds);
     let seeds: &[&[u8]] = &[PURSE_SEED, from_owner.as_ref(), code.as_ref(), &[ctx.bumps.from_purse]];
     token::transfer(
