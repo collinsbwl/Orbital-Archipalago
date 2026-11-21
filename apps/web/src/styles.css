@@ -1,0 +1,31 @@
+body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #12141a; color: #dde; }
+.app { padding: 8px 16px; }
+header { display: flex; gap: 16px; align-items: center; padding: 8px 0; border-bottom: 1px solid #334; flex-wrap: wrap; }
+.spacer { flex: 1; }
+main { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 1.4fr); gap: 16px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+h2 { font-size: 15px; margin: 12px 0 6px; }
+button, select, input { font: inherit; }
+.muted { color: #889; }
+.ok, .ack-ok { color: #6c6; }
+.err, .ack-err { color: #e66; }
+.badge { padding: 0 6px; border-radius: 3px; background: #334; font-size: 12px; }
+.badge.live { background: #2a6; color: #fff; }
+.badge.fixture { background: #a72; color: #fff; }
+.badge.crisis { background: #a33; }
+.badge.shock { background: #a62; }
+.badge.policy { background: #36a; }
+.badge.headline { background: #555; }
+.scene { width: 100%; height: 360px; background: #0a0b10; }
+.legend { display: flex; gap: 12px; padding: 4px 0; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid #234; }
+.charts { display: flex; flex-wrap: wrap; gap: 16px; }
+.chart-group { display: flex; flex-direction: column; gap: 4px; color: #8cf; }
+.chart .muted { font-size: 12px; }
+.events { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow: auto; }
+.events li { padding: 2px 4px; }
+.events li.god { background: #3a2a10; border-left: 3px solid #fb3; }
+.god-panel .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+.god-panel input[type='number'] { width: 80px; }
