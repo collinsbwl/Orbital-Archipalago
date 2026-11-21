@@ -1,4 +1,4 @@
-import { BN } from '@anchor-lang/core';
+import BN from 'bn.js';
 import { SystemProgram, Transaction } from '@solana/web3.js';
 import { SolanaLedger, type SolanaLedgerOptions } from './solana-ledger.js';
 import { codeBytes, idKey } from './keys.js';

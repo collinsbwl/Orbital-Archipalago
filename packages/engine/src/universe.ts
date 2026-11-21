@@ -57,6 +57,12 @@ export interface CycleReport {
 
 /** Cycles of metrics kept in memory, and the number of events in `Snapshot.events`. */
 export const HISTORY_CYCLES = 1_000;
+
+/**
+ * A resting local order is cancelled (and its escrow refunded) once it is this many cycles old. Without a lifetime,
+ * orders that never cross pile up forever: books reach hundreds of orders and funds stay locked. 0 disables expiry.
+ */
+export const DEFAULT_ORDER_TTL_CYCLES = 5;
 export const MAX_EVENTS = 50;
 
 /** An applied `shock` command: active for cycles `[start, endCycle)`. Scales output (supply shocks) or need (`demand_surge`). */
@@ -75,6 +81,8 @@ export interface UniverseOptions {
   world: WorldConfig;
   ledger: Ledger;
   agents: DecisionProvider;
+  /** Cancel resting orders older than this many cycles (DEFAULT_ORDER_TTL_CYCLES); 0 = never expire. */
+  orderTtlCycles?: number;
   /** Throw if `ledger.checkInvariants()` fails after a cycle. Default true. */
   checkInvariants?: boolean;
   /** If present, `step()` writes the cycle's snapshot (with empty `series`) to it. */
@@ -88,6 +96,7 @@ export class Universe {
   private readonly ledger: Ledger;
   private readonly provider: DecisionProvider;
   private readonly check: boolean;
+  private readonly orderTtl: number;
   private readonly roster: AgentInfo[];
   private readonly known: KnownIds;
   private readonly memos = new Map<string, string>();
@@ -118,6 +127,7 @@ export class Universe {
     this.ledger = opts.ledger;
     this.provider = opts.agents;
     this.check = opts.checkInvariants ?? true;
+    this.orderTtl = opts.orderTtlCycles ?? DEFAULT_ORDER_TTL_CYCLES;
     this.sink = opts.sink;
     this.borrowCaps = borrowCapsOf(opts.world);
     this.roster = listAgents(opts.world);
@@ -163,7 +173,7 @@ export class Universe {
     if (!isForkable(this.ledger)) throw new Error('ledger does not support clone(); cannot fork');
     if (!this.provider.fork) throw new Error('decision provider does not support fork(); cannot fork');
     const u = new Universe({
-      world: { ...this.world, universeId }, ledger: await this.ledger.clone(), agents: this.provider.fork(), checkInvariants: this.check,
+      world: { ...this.world, universeId }, ledger: await this.ledger.clone(), agents: this.provider.fork(), checkInvariants: this.check, orderTtlCycles: this.orderTtl,
       ...(this.sink ? { sink: this.sink } : {}),
     });
     const fill = <K, V>(to: Map<K, V>, from: ReadonlyMap<K, V>) => {
@@ -306,6 +316,20 @@ export class Universe {
     }
   }
 
+  /** Cancels every resting order that has reached its lifetime, oldest first. Refunds go back through the ledger. */
+  private async expireStaleOrders(cycle: number): Promise<void> {
+    if (this.orderTtl <= 0) return;
+    for (const o of this.book.all()) {
+      if (cycle - o.cycle < this.orderTtl) continue;
+      try {
+        await this.ledger.cancelOrder(o.orderId);
+      } catch (e) {
+        if (!(e instanceof LedgerError)) throw e;
+      }
+      this.book.remove(o.orderId);
+    }
+  }
+
   async step(): Promise<CycleReport> {
     const { world, ledger, book } = this;
     const cycle = this._cycle;
@@ -316,6 +340,8 @@ export class Universe {
     const used: Counts = {};
     const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false));
     const unmet = await runConsumption(world, ledger, this.multipliers(true));
+
+    await this.expireStaleOrders(cycle);
 
     const due = schedule(this.roster, cycle, this.location);
     const tasks = await buildTasks(

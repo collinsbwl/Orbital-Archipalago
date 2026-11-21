@@ -362,13 +362,17 @@ export class InMemoryLedger implements Ledger {
 
     // spent/received per order; everything is computed before any state is touched.
     const spent = new Map<OrderId, { spent: number; received: number }>();
+    const priority: FxEntry[] = []; // filled orders in allocation order: sellers then buyers, best first
     let dust = 0n;
     if (best) {
       const { r, v } = best;
       let left = v;
       for (const x of sellers.filter((s) => s.limit <= r).sort((a, b) => cmp(a.limit, b.limit) || a.e.seq - b.e.seq)) {
         const s = bmin(left, BigInt(x.e.order.giveAmount));
-        if (s > 0n) spent.set(x.e.id, { spent: Number(s), received: Number((s * r) / SCALE) });
+        if (s > 0n) {
+          spent.set(x.e.id, { spent: Number(s), received: Number((s * r) / SCALE) });
+          priority.push(x.e);
+        }
         dust -= (s * r) / SCALE;
         left -= s;
       }
@@ -379,6 +383,7 @@ export class InMemoryLedger implements Ledger {
         if (b > 0n) {
           const pay = ceilDiv(b * r, SCALE);
           spent.set(x.e.id, { spent: Number(pay), received: Number(b) });
+          priority.push(x.e);
           dust += pay;
         }
         left -= b;
@@ -387,11 +392,14 @@ export class InMemoryLedger implements Ledger {
     const treasury = this.planetOfCurrency.get(quote)!;
     if (dust > 0n) this.account(treasury);
 
-    const fills: FxFill[] = [];
+    // Fills are reported in allocation (priority) order, as the README says; settlement below order does not matter.
+    const fills: FxFill[] = priority.map((e) => {
+      const s = spent.get(e.id)!;
+      return { orderId: e.id, agentId: e.order.agentId, give: e.order.give, giveAmount: s.spent, want: e.order.want, receiveAmount: s.received };
+    });
     for (const x of [...sellers, ...buyers]) {
       const o = x.e.order;
       const s = spent.get(x.e.id);
-      if (s) fills.push({ orderId: x.e.id, agentId: o.agentId, give: o.give, giveAmount: s.spent, want: o.want, receiveAmount: s.received });
       this.addPurse(o.agentId, o.give, x.e.escrow - (s?.spent ?? 0));
       this.addPurse(o.agentId, o.want, s?.received ?? 0);
       this.fxOrders.delete(x.e.id);

@@ -515,6 +515,22 @@ export function runLedgerContractSuite(name: string, makeLedger: (world: WorldCo
         await inv(l);
       });
 
+      it('lists fills in allocation priority order, not placement order', async () => {
+        const l = await mk();
+        // Sellers (give ALP, want BET) in placement order: a1 limit 3.0, a2 limit 1.0, a3 limit 2.0.
+        // Buyers (give BET): a1 limit 4.0, a2 limit 6.0. At r = 4.0 all 30 ALP trade; a2 (best limit) takes all of it.
+        const r = await l.placeFxOrders([
+          fx('a1', 'ALP', 10, 'BET', 30), fx('a2', 'ALP', 10, 'BET', 10), fx('a3', 'ALP', 10, 'BET', 20),
+          fx('a1', 'BET', 80, 'ALP', 20), fx('a2', 'BET', 120, 'ALP', 20),
+        ], 1);
+        const [s1, s2, s3, , b2] = r.accepted.map((a) => a.orderId);
+        const res = await l.clearFxAuction('ALP', 'BET', 1);
+        expect(res.ratePpm).toBe(4_000_000);
+        // sellers first, cheapest limit first (a2, a3, a1), then the buyer; placement order would start with a1
+        expect(res.fills.map((f) => f.orderId)).toEqual([s2, s3, s1, b2]);
+        await inv(l);
+      });
+
       it('only the requested pair is cleared and direction determines who is the base seller', async () => {
         const l = await mk();
         const r = await l.placeFxOrders([fx('a1', 'ALP', 10, 'GAM', 10), fx('a2', 'GAM', 10, 'ALP', 10), fx('a1', 'BET', 10, 'ALP', 10), fx('a2', 'ALP', 10, 'BET', 10)], 1);

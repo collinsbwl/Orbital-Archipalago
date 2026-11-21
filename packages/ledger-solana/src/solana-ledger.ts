@@ -1,4 +1,5 @@
-import { AnchorProvider, BN, Program, Wallet } from '@anchor-lang/core';
+import { AnchorProvider, Program } from '@anchor-lang/core';
+import BN from 'bn.js';
 import { ComputeBudgetProgram, Connection, type Keypair, type PublicKey, Transaction, type TransactionInstruction } from '@solana/web3.js';
 import {
   AgentIdSchema, LedgerError, type AuctionResult, type BorrowRequest, type Cargo, type CurrencyId, type DepartRequest, type GoodId,
@@ -116,7 +117,7 @@ export class SolanaLedger implements Ledger {
     this.admin = opts.admin;
     this.world = opts.world;
     // Anchor only builds instructions here; it never talks to this placeholder connection.
-    const provider = new AnchorProvider(opts.connection ?? new Connection('http://127.0.0.1:1'), new Wallet(opts.admin), { commitment: 'confirmed' });
+    const provider = new AnchorProvider(opts.connection ?? new Connection('http://127.0.0.1:1'), wallet(opts.admin), { commitment: 'confirmed' });
     this.program = new Program<Orbital>(IDL as unknown as Orbital, provider);
     this.addr = new Addresses(opts.programId ?? this.program.programId, opts.admin.publicKey);
     this.currencies = opts.world.planets.map((p) => p.currency);
@@ -527,15 +528,17 @@ export class SolanaLedger implements Ledger {
     if (outcome.rate === null) return none;
     return {
       base, quote, cycle, ratePpm: toSafeNumber(outcome.rate),
-      fills: outcome.fills.map((f) => {
-        const o = book[f.index]!;
-        const gives = giveOf(o);
-        const hex = o.ownerKey.toString('hex');
-        return {
-          orderId: `o${o.seq}`, agentId: this.ownerByHash.get(hex) ?? hex, give: gives, giveAmount: toSafeNumber(f.spent),
-          want: gives === base ? quote : base, receiveAmount: toSafeNumber(f.received),
-        };
-      }),
+      // Sellers then buyers, each in allocation priority order, exactly as the program settles them.
+      fills: outcome.fills
+        .map((f) => {
+          const o = book[f.index]!;
+          const gives = giveOf(o);
+          const hex = o.ownerKey.toString('hex');
+          return {
+            orderId: `o${o.seq}`, agentId: this.ownerByHash.get(hex) ?? hex, give: gives, giveAmount: toSafeNumber(f.spent),
+            want: gives === base ? quote : base, receiveAmount: toSafeNumber(f.received),
+          };
+        }),
     };
   }
 
@@ -956,6 +959,15 @@ export class SolanaLedger implements Ledger {
 const pairOf = (x: CurrencyId, y: CurrencyId): [CurrencyId, CurrencyId] => (x < y ? [x, y] : [y, x]);
 
 const slotKey = (owner: OwnerId, good: GoodId) => `${Buffer.from(idKey(owner)).toString('hex')}|${good}`;
+
+/** The minimal wallet Anchor wants. It only builds instructions here; signing happens in the Chain. */
+function wallet(admin: Keypair) {
+  return {
+    publicKey: admin.publicKey,
+    signTransaction: async <T>(tx: T): Promise<T> => tx,
+    signAllTransactions: async <T>(txs: T[]): Promise<T[]> => txs,
+  };
+}
 
 function toCargo(cargo: Cargo[]) {
   return cargo.map((c) => ({ good: idKey(c.good), qty: new BN(c.qty) }));
