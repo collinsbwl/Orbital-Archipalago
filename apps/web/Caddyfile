@@ -1,0 +1,24 @@
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	encode zstd gzip
+
+	@engine path /ws /ws/* /api/* /healthz
+	handle @engine {
+		reverse_proxy engine:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

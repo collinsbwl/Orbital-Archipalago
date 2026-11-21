@@ -25,7 +25,18 @@ export class TigerStore implements MetricsSink, SeriesSource {
   /** Build a store from a connection string (default: `TIGER_DATABASE_URL`). */
   static fromUrl(url: string | undefined = process.env.TIGER_DATABASE_URL): TigerStore {
     if (!url) throw new Error('TIGER_DATABASE_URL is not set');
-    return new TigerStore(new pg.Pool({ connectionString: url }));
+    // Managed providers (Tiger Cloud) use CAs Node doesn't trust by default. `pg` 8.x
+    // aliases `sslmode=require` to `verify-full` AND its URL parser overrides our `ssl`
+    // option. Strip the param and pass an explicit TLS-without-verify config.
+    const sslRe = /[?&]sslmode=(require|verify-ca|verify-full|prefer)\b/i;
+    const useSsl = sslRe.test(url);
+    const cleanUrl = useSsl ? url.replace(sslRe, (m) => (m.startsWith('?') ? '?' : '&')).replace(/[?&]$/, '') : url;
+    return new TigerStore(
+      new pg.Pool({
+        connectionString: cleanUrl,
+        ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+      }),
+    );
   }
 
   migrate(): Promise<void> {

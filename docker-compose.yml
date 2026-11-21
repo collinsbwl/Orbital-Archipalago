@@ -1,8 +1,13 @@
-# Local Tiger Data (TimescaleDB on Postgres 16) for the engine's metrics store.
-#   docker compose up -d tiger
-#   export TIGER_DATABASE_URL=postgres://orbital:orbital@localhost:5432/orbital
+# Two workflows in one file:
+#   Local dev (host-run engine, local DB in Docker via the `local` profile):
+#     docker compose --profile local up -d tiger
+#     export TIGER_DATABASE_URL='postgres://orbital:orbital@localhost:5432/orbital'
+#   Full stack (Coolify, or local full-stack run against Tiger Cloud):
+#     docker compose up -d        # TIGER_DATABASE_URL must be set in the env
 services:
   tiger:
+    # Local-dev only; Coolify prod uses Tiger Cloud (TIGER_DATABASE_URL from env).
+    profiles: ["local"]
     image: timescale/timescaledb:latest-pg16
     environment:
       POSTGRES_USER: orbital
@@ -17,6 +22,56 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+    restart: unless-stopped
+
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    environment:
+      NODE_ENV: production
+      ENGINE_PORT: 8080
+      TIGER_DATABASE_URL: ${TIGER_DATABASE_URL}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-http://solana-test-validator:8899}
+    expose:
+      - "8080"
+    depends_on:
+      solana-test-validator:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      # Coolify replaces SERVICE_FQDN_WEB_80 with the public FQDN it assigns.
+      SERVICE_FQDN_WEB_80:
+    expose:
+      - "80"
+    depends_on:
+      engine:
+        condition: service_started
+    restart: unless-stopped
+
+  solana-test-validator:
+    image: solanalabs/solana:stable
+    command:
+      - solana-test-validator
+      - --ledger
+      - /ledger
+      - --rpc-port
+      - "8899"
+      - --quiet
+    volumes:
+      - solana-ledger:/ledger
+    expose:
+      - "8899"
+    restart: unless-stopped
 
 volumes:
   tiger-data:
+  solana-ledger:
