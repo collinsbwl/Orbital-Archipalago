@@ -18,7 +18,7 @@
     "idl:sync": "node scripts/sync-idl.mjs",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run && vitest run -c vitest.contract.config.ts -t \"ledger contract (accounts|transfer, produce, consume) (?!any method on an unopened)\"",
+    "test": "vitest run && vitest run -c vitest.contract.config.ts -t \"ledger contract (accounts|transfer, produce, consume|local orders|local auction|fx auction) (?!any method on an unopened)\"",
     "test:contract": "vitest run -c vitest.contract.config.ts",
     "test:validator": "vitest run"
   },

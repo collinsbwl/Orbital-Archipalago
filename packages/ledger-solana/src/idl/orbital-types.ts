@@ -14,6 +14,508 @@ export type Orbital = {
   },
   "instructions": [
     {
+      "name": "cancelFxOrder",
+      "docs": [
+        "Cancels an FX order and refunds its escrow."
+      ],
+      "discriminator": [
+        98,
+        143,
+        174,
+        131,
+        198,
+        226,
+        64,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  120,
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "a"
+              },
+              {
+                "kind": "arg",
+                "path": "b"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "giveCode"
+              }
+            ]
+          }
+        },
+        {
+          "name": "purse",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "giveCode"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "a",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "b",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "giveCode",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "seq",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancelOrder",
+      "docs": [
+        "Cancels a resting order and refunds what remains of its escrow."
+      ],
+      "discriminator": [
+        95,
+        129,
+        237,
+        240,
+        8,
+        49,
+        223,
+        132
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true
+        },
+        {
+          "name": "ledger",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "purse",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "code",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "seq",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "clearFxAuction",
+      "docs": [
+        "Clears one FX pair at a single rate and settles and removes every order in its book."
+      ],
+      "discriminator": [
+        24,
+        149,
+        152,
+        20,
+        41,
+        123,
+        72,
+        159
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true
+        },
+        {
+          "name": "baseVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "base"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quoteVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "quote"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "base",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "quote",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "clearLocalAuction",
+      "docs": [
+        "Clears one book at a single uniform price and settles every fill. The client sends the buys and sells already",
+        "sorted (best first); the program verifies the sort in one pass. Purses of the filled orders are the remaining accounts."
+      ],
+      "discriminator": [
+        80,
+        12,
+        110,
+        237,
+        32,
+        240,
+        166,
+        247
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true
+        },
+        {
+          "name": "ledger",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "code",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "buys",
+          "type": "bytes"
+        },
+        {
+          "name": "sells",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
       "name": "consume",
       "docs": [
         "Destroy goods in an owner's inventory."
@@ -74,6 +576,96 @@ export type Orbital = {
                 "name": "cargo"
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "createBook",
+      "docs": [
+        "Creates the order book for one (planet, good)."
+      ],
+      "discriminator": [
+        175,
+        218,
+        251,
+        18,
+        91,
+        19,
+        194,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "planet"
+              },
+              {
+                "kind": "arg",
+                "path": "good"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "planet",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "good",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
           }
         }
       ]
@@ -186,6 +778,98 @@ export type Orbital = {
       ]
     },
     {
+      "name": "createFxBook",
+      "docs": [
+        "Creates the FX order book for one currency pair (codes in alphabetical order)."
+      ],
+      "discriminator": [
+        19,
+        1,
+        111,
+        231,
+        204,
+        235,
+        220,
+        227
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  120,
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "a"
+              },
+              {
+                "kind": "arg",
+                "path": "b"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "a",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "b",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "createPlanet",
       "docs": [
         "Initialises a pre-allocated zero-copy ledger for one planet."
@@ -244,6 +928,108 @@ export type Orbital = {
         },
         {
           "name": "currency",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "createVault",
+      "docs": [
+        "Creates the escrow vault for one currency."
+      ],
+      "discriminator": [
+        29,
+        237,
+        247,
+        208,
+        193,
+        82,
+        54,
+        135
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "code",
           "type": {
             "array": [
               "u8",
@@ -622,6 +1408,313 @@ export type Orbital = {
       ]
     },
     {
+      "name": "placeFxOrder",
+      "docs": [
+        "Rests one FX order, escrowing the currency it gives."
+      ],
+      "discriminator": [
+        103,
+        74,
+        120,
+        2,
+        214,
+        34,
+        35,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  120,
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "a"
+              },
+              {
+                "kind": "arg",
+                "path": "b"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "giveCode"
+              }
+            ]
+          }
+        },
+        {
+          "name": "purse",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "giveCode"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "a",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "b",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "giveCode",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "giveAmount",
+          "type": "u64"
+        },
+        {
+          "name": "minReceive",
+          "type": "u64"
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "placeOrder",
+      "docs": [
+        "Rests one order, escrowing funds (buy) or goods (sell)."
+      ],
+      "discriminator": [
+        51,
+        194,
+        155,
+        175,
+        109,
+        130,
+        96,
+        106
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true
+        },
+        {
+          "name": "ledger",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "purse",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "code",
+          "type": {
+            "array": [
+              "u8",
+              3
+            ]
+          }
+        },
+        {
+          "name": "side",
+          "type": "u8"
+        },
+        {
+          "name": "qty",
+          "type": "u64"
+        },
+        {
+          "name": "limit",
+          "type": "u64"
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "produce",
       "docs": [
         "Consume inputs and create outputs in an owner's inventory."
@@ -841,6 +1934,19 @@ export type Orbital = {
       ]
     },
     {
+      "name": "orderBook",
+      "discriminator": [
+        55,
+        230,
+        125,
+        218,
+        149,
+        39,
+        65,
+        248
+      ]
+    },
+    {
       "name": "planetLedger",
       "discriminator": [
         161,
@@ -894,6 +2000,31 @@ export type Orbital = {
       "code": 6007,
       "name": "overflow",
       "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6008,
+      "name": "unknownOrder",
+      "msg": "Unknown order"
+    },
+    {
+      "code": 6009,
+      "name": "bookFull",
+      "msg": "Order book is full"
+    },
+    {
+      "code": 6010,
+      "name": "accountMismatch",
+      "msg": "Accounts do not match (planet, currency, owner or purse)"
+    },
+    {
+      "code": 6011,
+      "name": "invalidSide",
+      "msg": "Invalid order side"
+    },
+    {
+      "code": 6012,
+      "name": "badSortOrder",
+      "msg": "The supplied sort order is not valid for this book"
     }
   ],
   "types": [
@@ -932,6 +2063,13 @@ export type Orbital = {
           {
             "name": "admin",
             "type": "pubkey"
+          },
+          {
+            "name": "nextOrder",
+            "docs": [
+              "Next order sequence number (local and FX orders share it). Ids are \"o<seq>\", starting at 1."
+            ],
+            "type": "u64"
           }
         ]
       }
@@ -970,6 +2108,119 @@ export type Orbital = {
           {
             "name": "qty",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "orderBook",
+      "docs": [
+        "All resting orders for one (planet, good), in placement order (oldest first)."
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "planet",
+            "docs": [
+              "sha256(planetId)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "good",
+            "docs": [
+              "sha256(goodId)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "len",
+            "type": "u64"
+          },
+          {
+            "name": "slots",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "orderSlot"
+                  }
+                },
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "orderSlot",
+      "docs": [
+        "One resting order. `qty` is what remains unfilled. Buys have `limit * qty` of currency escrowed in the vault;",
+        "sells have `qty` of the good held here (removed from the owner's inventory)."
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "owner",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "qty",
+            "type": "u64"
+          },
+          {
+            "name": "limit",
+            "type": "u64"
+          },
+          {
+            "name": "cycle",
+            "type": "u64"
+          },
+          {
+            "name": "side",
+            "docs": [
+              "SIDE_BUY or SIDE_SELL"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "pad",
+            "type": {
+              "array": [
+                "u8",
+                7
+              ]
+            }
           }
         ]
       }
@@ -1041,12 +2292,29 @@ export type Orbital = {
   ],
   "constants": [
     {
+      "name": "bookSeed",
+      "docs": [
+        "Seed prefix of each order book: [\"book\", sha256(planet), sha256(good)]."
+      ],
+      "type": "bytes",
+      "value": "[98, 111, 111, 107]"
+    },
+    {
       "name": "configSeed",
       "docs": [
         "Seed of the singleton Config account."
       ],
       "type": "bytes",
       "value": "[99, 111, 110, 102, 105, 103]"
+    },
+    {
+      "name": "fxBookSeed",
+      "docs": [
+        "Seed prefix of each FX order book, one per unordered currency pair: [\"fxbook\", first_code, second_code]",
+        "with the codes in alphabetical order."
+      ],
+      "type": "bytes",
+      "value": "[102, 120, 98, 111, 111, 107]"
     },
     {
       "name": "mintAuthoritySeed",
@@ -1072,6 +2340,14 @@ export type Orbital = {
       ],
       "type": "bytes",
       "value": "[112, 117, 114, 115, 101]"
+    },
+    {
+      "name": "vaultSeed",
+      "docs": [
+        "Seed prefix of each escrow vault (a self-owned token account, one per currency): [\"vault\", currency_code]."
+      ],
+      "type": "bytes",
+      "value": "[118, 97, 117, 108, 116]"
     }
   ]
 };

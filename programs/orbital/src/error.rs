@@ -18,4 +18,14 @@ pub enum ErrorCode {
     TooManyCargoLines,
     #[msg("Arithmetic overflow")]
     Overflow,
+    #[msg("Unknown order")]
+    UnknownOrder,
+    #[msg("Order book is full")]
+    BookFull,
+    #[msg("Accounts do not match (planet, currency, owner or purse)")]
+    AccountMismatch,
+    #[msg("Invalid order side")]
+    InvalidSide,
+    #[msg("The supplied sort order is not valid for this book")]
+    BadSortOrder,
 }

@@ -1,5 +1,7 @@
+pub mod auction;
 pub mod constants;
 pub mod error;
+pub mod fx;
 pub mod instructions;
 pub mod state;
 
@@ -58,5 +60,53 @@ pub mod orbital {
     /// Destroy goods in an owner's inventory.
     pub fn consume(ctx: Context<EditInventory>, owner: [u8; 32], cargo: Vec<Cargo>) -> Result<()> {
         crate::instructions::inventory::handle_consume(ctx, owner, cargo)
+    }
+
+    /// Creates the escrow vault for one currency.
+    pub fn create_vault(ctx: Context<CreateVault>, code: [u8; 3]) -> Result<()> {
+        crate::instructions::orders::handle_create_vault(ctx, code)
+    }
+
+    /// Creates the order book for one (planet, good).
+    pub fn create_book(ctx: Context<CreateBook>, planet: [u8; 32], good: [u8; 32]) -> Result<()> {
+        crate::instructions::orders::handle_create_book(ctx, planet, good)
+    }
+
+    /// Rests one order, escrowing funds (buy) or goods (sell).
+    pub fn place_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 3], side: u8, qty: u64, limit: u64, cycle: u64) -> Result<()> {
+        crate::instructions::orders::handle_place_order(ctx, owner, code, side, qty, limit, cycle)
+    }
+
+    /// Cancels a resting order and refunds what remains of its escrow.
+    pub fn cancel_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 3], seq: u64) -> Result<()> {
+        crate::instructions::orders::handle_cancel_order(ctx, owner, code, seq)
+    }
+
+    /// Clears one book at a single uniform price and settles every fill. The client sends the buys and sells already
+    /// sorted (best first); the program verifies the sort in one pass. Purses of the filled orders are the remaining accounts.
+    pub fn clear_local_auction<'info>(ctx: Context<'info, ClearLocalAuction<'info>>, code: [u8; 3], buys: Vec<u8>, sells: Vec<u8>) -> Result<()> {
+        crate::instructions::orders::handle_clear_local_auction(ctx, code, buys, sells)
+    }
+
+    /// Creates the FX order book for one currency pair (codes in alphabetical order).
+    pub fn create_fx_book(ctx: Context<CreateFxBook>, a: [u8; 3], b: [u8; 3]) -> Result<()> {
+        crate::instructions::fx_orders::handle_create_fx_book(ctx, a, b)
+    }
+
+    /// Rests one FX order, escrowing the currency it gives.
+    pub fn place_fx_order(
+        ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 3], b: [u8; 3], give_code: [u8; 3], give_amount: u64, min_receive: u64, cycle: u64,
+    ) -> Result<()> {
+        crate::instructions::fx_orders::handle_place_fx_order(ctx, owner, a, b, give_code, give_amount, min_receive, cycle)
+    }
+
+    /// Cancels an FX order and refunds its escrow.
+    pub fn cancel_fx_order(ctx: Context<FxOrderOp>, owner: [u8; 32], a: [u8; 3], b: [u8; 3], give_code: [u8; 3], seq: u64) -> Result<()> {
+        crate::instructions::fx_orders::handle_cancel_fx_order(ctx, owner, a, b, give_code, seq)
+    }
+
+    /// Clears one FX pair at a single rate and settles and removes every order in its book.
+    pub fn clear_fx_auction<'info>(ctx: Context<'info, ClearFxAuction<'info>>, base: [u8; 3], quote: [u8; 3], treasury: [u8; 32]) -> Result<()> {
+        crate::instructions::fx_orders::handle_clear_fx_auction(ctx, base, quote, treasury)
     }
 }

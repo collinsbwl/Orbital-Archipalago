@@ -9,6 +9,11 @@ const BY_PROGRAM_ERROR: Record<string, LedgerErrorCode> = {
   LedgerFull: 'invalid_state',
   TooManyCargoLines: 'invalid_state',
   Overflow: 'invalid_amount',
+  UnknownOrder: 'unknown_order',
+  BookFull: 'invalid_state',
+  BadSortOrder: 'invalid_state',
+  AccountMismatch: 'invalid_state',
+  InvalidSide: 'invalid_amount',
   Unauthorized: 'invalid_state',
   InvalidCurrencyCode: 'invalid_state',
 };

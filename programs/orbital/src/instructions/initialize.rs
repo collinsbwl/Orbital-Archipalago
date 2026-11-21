@@ -19,5 +19,6 @@ pub struct Initialize<'info> {
 
 pub fn handle_initialize(ctx: Context<Initialize>) -> Result<()> {
     ctx.accounts.config.admin = ctx.accounts.admin.key();
+    ctx.accounts.config.next_order = 1;
     Ok(())
 }

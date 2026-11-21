@@ -29,3 +29,22 @@ pub const MAX_SLOTS: usize = 1024;
 
 /// Max cargo lines in one produce/consume/grant instruction.
 pub const MAX_CARGO_LINES: usize = 8;
+
+/// Seed prefix of each escrow vault (a self-owned token account, one per currency): ["vault", currency_code].
+#[constant]
+pub const VAULT_SEED: &[u8] = b"vault";
+
+/// Seed prefix of each order book: ["book", sha256(planet), sha256(good)].
+#[constant]
+pub const BOOK_SEED: &[u8] = b"book";
+
+/// Resting orders one book can hold. The auction scans the book, so this stays modest.
+pub const MAX_ORDERS: usize = 128;
+
+pub const SIDE_BUY: u8 = 0;
+pub const SIDE_SELL: u8 = 1;
+
+/// Seed prefix of each FX order book, one per unordered currency pair: ["fxbook", first_code, second_code]
+/// with the codes in alphabetical order.
+#[constant]
+pub const FX_BOOK_SEED: &[u8] = b"fxbook";

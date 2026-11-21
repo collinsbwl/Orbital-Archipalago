@@ -8,6 +8,9 @@ const CONFIG_SEED = enc('config');
 const MINT_AUTHORITY_SEED = enc('mint_authority');
 const MINT_SEED = enc('mint');
 const PURSE_SEED = enc('purse');
+const VAULT_SEED = enc('vault');
+const BOOK_SEED = enc('book');
+const FX_BOOK_SEED = enc('fxbook');
 
 /** Owners and goods are stored on-chain as sha256(id): fixed size, any id length. */
 export function idKey(id: string): number[] {
@@ -28,8 +31,17 @@ export class Addresses {
   config = () => PublicKey.findProgramAddressSync([CONFIG_SEED], this.programId)[0];
   mintAuthority = () => PublicKey.findProgramAddressSync([MINT_AUTHORITY_SEED], this.programId)[0];
   mint = (code: string) => PublicKey.findProgramAddressSync([MINT_SEED, Buffer.from(codeBytes(code))], this.programId)[0];
-  purse = (owner: string, code: string) =>
-    PublicKey.findProgramAddressSync([PURSE_SEED, Buffer.from(idKey(owner)), Buffer.from(codeBytes(code))], this.programId)[0];
+  purse = (owner: string, code: string) => this.purseOfKey(Buffer.from(idKey(owner)), code);
+  /** Same as purse(), for an owner known only by its on-chain key (sha256 of the id), e.g. read from an order book. */
+  purseOfKey = (ownerKey: Buffer, code: string) =>
+    PublicKey.findProgramAddressSync([PURSE_SEED, ownerKey, Buffer.from(codeBytes(code))], this.programId)[0];
+  /** Escrow vault holding every resting buy order's currency. */
+  vault = (code: string) => PublicKey.findProgramAddressSync([VAULT_SEED, Buffer.from(codeBytes(code))], this.programId)[0];
+  /** FX book for an unordered currency pair; the codes must be in alphabetical order (a < b). */
+  fxBook = (a: string, b: string) =>
+    PublicKey.findProgramAddressSync([FX_BOOK_SEED, Buffer.from(codeBytes(a)), Buffer.from(codeBytes(b))], this.programId)[0];
+  book = (planet: string, good: string) =>
+    PublicKey.findProgramAddressSync([BOOK_SEED, Buffer.from(idKey(planet)), Buffer.from(idKey(good))], this.programId)[0];
 
   /** Planet ledgers are too big for a PDA (CPI-created accounts cap at 10 KB), so each one is a
    *  deterministic seeded account: createWithSeed(admin, planetId, program). Anyone can re-derive it. */

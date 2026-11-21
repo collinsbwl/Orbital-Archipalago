@@ -30,6 +30,14 @@ export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<Solana
       ));
     }
 
+    if (!(await exists(ledger.addr.vault(code)))) {
+      await run(new Transaction().add(
+        await program.methods.createVault(codeBytes(code)).accountsPartial({
+          admin: admin.publicKey, config: ledger.addr.config(), mint: ledger.addr.mint(code), vault: ledger.addr.vault(code),
+        }).instruction(),
+      ));
+    }
+
     const ledgerAddr = await ledger.addr.ledger(planet.id);
     if (!(await exists(ledgerAddr))) {
       const lamports = await chain.rentExemption(PLANET_LEDGER_SPACE);
