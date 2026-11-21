@@ -3,6 +3,8 @@ import type { AgentDecision, AgentId, AgentTask, PlanetId, Role, WorldConfig } f
 /** Track B's AgentRuntime satisfies this; RandomValidPolicy and ScriptedEngine are local fakes. */
 export interface DecisionProvider {
   decideAll(tasks: AgentTask[]): Promise<AgentDecision[]>;
+  /** Independent copy with the same internal state (RNG, memory), for universe forks. Absent = not forkable. */
+  fork?(): DecisionProvider;
 }
 
 export interface AgentInfo {

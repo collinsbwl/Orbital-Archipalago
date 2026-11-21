@@ -33,6 +33,7 @@ const runner = new LiveRunner({
   intervalMs: arg('interval', 1000),
   maxCycles: arg('cycles', world.cycles),
   ...(tiger ? { audit: (e) => tiger.recordGodModeAudit(e) } : {}),
+  ...(tiger ? { onFork: (id: string) => tiger.registerUniverse(id, `${world.name} (${id})`, world.seed, { ...world, universeId: id }) } : {}),
   onError: (err) => console.error('cycle failed', err),
 });
 

@@ -30,6 +30,10 @@ Milestones refer to [architecture.md](architecture.md) §2; "build plan" is `orb
 - [ ] Withheld cargo (embargo/quota) goes back to the origin planet while the trader docks at the destination, so it's stranded until the trader returns.
 - [ ] Engine loan cache excludes interest accrued between repays (`Loan.outstanding` is refreshed only from ledger returns).
 - [ ] `Snapshot.gatewayCostUsd` is always 0 and the `gateway_cost` table is never written. Wire it once Track B's gateway reports usage.
+- [ ] Forks need `clone()` on the ledger. `InMemoryLedger` has it; `SolanaLedger` (Track C) would need a fork strategy, such as replaying from a seed or snapshotting accounts.
+- [ ] A fork's chart series start at the fork cycle. Its pre-fork history isn't copied into Tiger, so the dashboard can't overlay a fork and its parent from cycle 0 without a query that unions the parent's rows.
+- [ ] Shock edge cases: a supply shock scaled to 0 output still consumes inputs; `demand_surge` is spread evenly across colonists (floor of the total).
+- [ ] Drought moves prices only slightly under stub agents (grain price +6%, CPI +2% vs control). Re-check with B1/B3 agents.
 - [ ] Recorded **Snapshot fixtures** for the frontend (A5 builds against them; only `AgentTask` fixtures exist today).
 
 ## Verification gaps

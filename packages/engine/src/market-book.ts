@@ -11,6 +11,14 @@ export class MarketBook {
   private orders = new Map<OrderId, OrderRecord>();
   private trends = new Map<string, number[]>();
 
+  /** Independent deep copy. */
+  clone(): MarketBook {
+    const b = new MarketBook();
+    b.orders = structuredClone(this.orders);
+    b.trends = structuredClone(this.trends);
+    return b;
+  }
+
   add(rec: OrderRecord): void {
     this.orders.set(rec.orderId, { ...rec });
   }

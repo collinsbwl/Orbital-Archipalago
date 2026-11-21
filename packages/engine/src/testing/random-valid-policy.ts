@@ -22,7 +22,7 @@ export class RandomValidPolicy implements DecisionProvider {
   private readonly startPurse: Map<string, { colonist: number; trader: number }>;
   private readonly needQty: Map<string, number>;
 
-  constructor(world: WorldConfig, seed: number) {
+  constructor(private readonly world: WorldConfig, seed: number) {
     this.rng = new Rng(seed);
     this.currency = new Map(world.planets.map((p) => [p.id, p.currency]));
     this.basePrice = new Map(world.goods.map((g) => [g.id, g.basePrice]));
@@ -32,6 +32,13 @@ export class RandomValidPolicy implements DecisionProvider {
     this.currencies = world.planets.map((p) => p.currency);
     this.startPurse = new Map(world.planets.map((p) => [p.id, p.purses]));
     this.needQty = new Map(world.colonistNeeds.map((n) => [n.good, n.qty]));
+  }
+
+  /** Same world, same RNG state: the copy decides exactly like the original would. */
+  fork(): RandomValidPolicy {
+    const p = new RandomValidPolicy(this.world, 0);
+    p.rng.setState(this.rng.getState());
+    return p;
   }
 
   async decideAll(tasks: AgentTask[]): Promise<AgentDecision[]> {

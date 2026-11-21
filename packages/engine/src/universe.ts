@@ -1,20 +1,23 @@
 import { LedgerError } from '@orbital/contracts';
 import type {
-  ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GoodId, Ledger, Loan, PlanetId, Shipment, SimEvent, Snapshot, SurveyAnswer,
-  WorldConfig,
+  ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyState, Shipment, SimEvent, Snapshot,
+  SurveyAnswer, UniverseId, WorldConfig,
 } from '@orbital/contracts';
 import { listAgents } from './agents.js';
 import type { AgentInfo, DecisionProvider } from './agents.js';
 import { bootstrap } from './bootstrap.js';
 import { fxKey, fxPairs, fxViews } from './fx.js';
+import { Detectors } from './detectors/index.js';
+import type { DetectedEvent } from './detectors/index.js';
+import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
 import { orbitPhase, travelCycles } from './orbits.js';
 import { runConsumption } from './phases/consumption.js';
-import { runProduction } from './phases/production.js';
-import type { Counts } from './phases/production.js';
+import { multKey, runProduction } from './phases/production.js';
+import type { Counts, Multipliers } from './phases/production.js';
 import type { MetricsSink } from './ports.js';
 import { RESERVE_BANK_CONFIG, inflationBp, outputGapBp, taylorRateBp } from './reserve-bank.js';
 import { schedule } from './scheduler.js';
@@ -30,6 +33,8 @@ export interface TradeFlow {
 /** Plain data, JSON-safe. */
 export interface CycleReport {
   cycle: number;
+  /** Auto-detector hits this cycle (also added to the event feed as kind 'crisis'). */
+  detected: DetectedEvent[];
   auctions: AuctionResult[];
   produced: Counts;
   unmet: Counts;
@@ -54,6 +59,18 @@ export interface CycleReport {
 export const HISTORY_CYCLES = 1_000;
 export const MAX_EVENTS = 50;
 
+/** An applied `shock` command: active for cycles `[start, endCycle)`. Scales output (supply shocks) or need (`demand_surge`). */
+interface ActiveShock {
+  planet: PlanetId;
+  good: GoodId;
+  shock: Extract<GodModeCommand, { kind: 'shock' }>['shock'];
+  magnitudeBp: number;
+  endCycle: number;
+}
+
+/** Tag of events caused by an operator command (vs emergent ones). */
+export const GOD_MODE_TAG = '[god mode]';
+
 export interface UniverseOptions {
   world: WorldConfig;
   ledger: Ledger;
@@ -65,7 +82,8 @@ export interface UniverseOptions {
 }
 
 export class Universe {
-  readonly book = new MarketBook();
+  /** Mutable only so `fork()` can install a copy. */
+  book = new MarketBook();
   private readonly world: WorldConfig;
   private readonly ledger: Ledger;
   private readonly provider: DecisionProvider;
@@ -86,8 +104,14 @@ export class Universe {
   private readonly defaulted = new Set<string>();
   private readonly history: { cycle: number; metrics: Record<PlanetId, PlanetMetrics> }[] = [];
   private readonly events: SimEvent[] = [];
+  private readonly detectors = new Detectors();
   private eventSeq = 0;
   private _cycle = 0;
+  /** God-mode commands waiting for the next step's Events phase, in arrival order. */
+  private queue: GodModeCommand[] = [];
+  private shocks: ActiveShock[] = [];
+  /** Reserve-bank rule suspended for a planet until this cycle (exclusive), after a god-mode `policy_rate`. */
+  private readonly rateOverride = new Map<PlanetId, number>();
 
   constructor(opts: UniverseOptions) {
     this.world = opts.world;
@@ -108,6 +132,56 @@ export class Universe {
 
   get cycle(): number {
     return this._cycle;
+  }
+
+  get universeId(): UniverseId {
+    return this.world.universeId;
+  }
+
+  /**
+   * Queues an operator command for the Events phase at the start of the next `step()`. Throws on an unknown planet or
+   * good, or an embargo of the planet itself. `pause`, `resume` and `fork` are not engine commands (see LiveRunner).
+   */
+  enqueue(command: GodModeCommand, meta: { sub: string }): void {
+    void meta; // reserved for the audit trail; the runner audits every command
+    if (command.kind === 'pause' || command.kind === 'resume' || command.kind === 'fork') throw new Error(`${command.kind} is not an engine command`);
+    if (!this.known.planets.has(command.planet)) throw new Error(`unknown planet ${command.planet}`);
+    if ('good' in command && !this.known.goods.has(command.good)) throw new Error(`unknown good ${command.good}`);
+    if (command.kind === 'embargo') {
+      if (!this.known.planets.has(command.target)) throw new Error(`unknown planet ${command.target}`);
+      if (command.target === command.planet) throw new Error('a planet cannot embargo itself');
+    }
+    this.queue.push(structuredClone(command));
+  }
+
+  /**
+   * Independent copy of the whole universe (ledger, book, flights, loans, memos, history, events, shocks, queue, overrides,
+   * fx rates, cycle, provider RNG) under a new id, sharing only the metrics sink. Call between steps. Throws if the
+   * ledger has no `clone()` or the provider no `fork()`.
+   */
+  async fork(universeId: UniverseId): Promise<Universe> {
+    if (!isForkable(this.ledger)) throw new Error('ledger does not support clone(); cannot fork');
+    if (!this.provider.fork) throw new Error('decision provider does not support fork(); cannot fork');
+    const u = new Universe({
+      world: { ...this.world, universeId }, ledger: await this.ledger.clone(), agents: this.provider.fork(), checkInvariants: this.check,
+      ...(this.sink ? { sink: this.sink } : {}),
+    });
+    const fill = <K, V>(to: Map<K, V>, from: ReadonlyMap<K, V>) => {
+      to.clear();
+      for (const [k, v] of from) to.set(k, structuredClone(v));
+    };
+    u.book = this.book.clone();
+    fill(u.memos, this.memos); fill(u.location, this.location); fill(u.flights, this.flights); fill(u.fxRates, this.fxRates);
+    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride);
+    for (const id of this.defaulted) u.defaulted.add(id);
+    u.history.push(...structuredClone(this.history));
+    u.events.push(...structuredClone(this.events));
+    u.eventSeq = this.eventSeq;
+    u.detectors.setState(structuredClone(this.detectors.getState()));
+    u._cycle = this._cycle;
+    u.queue = structuredClone(this.queue);
+    u.shocks = structuredClone(this.shocks);
+    return u;
   }
 
   /** Docked planet of a trader, or null while in flight. */
@@ -179,6 +253,41 @@ export class Universe {
     return { defaults, ledgerRejections };
   }
 
+  /** Events phase: expires old shocks, then applies queued god-mode commands in order, each with a tagged event. */
+  private async runEvents(cycle: number): Promise<void> {
+    this.shocks = this.shocks.filter((s) => s.endCycle > cycle);
+    const name = (id: PlanetId) => this.world.planets.find((p) => p.id === id)!.name;
+    const pct = (bp: number) => `${bp >= 0 ? '+' : ''}${bp / 100}%`;
+    for (const c of this.queue.splice(0)) {
+      if (c.kind === 'shock') {
+        this.shocks.push({ planet: c.planet, good: c.good, shock: c.shock, magnitudeBp: c.magnitudeBp, endCycle: cycle + c.durationCycles });
+        const what = c.shock === 'demand_surge' ? 'demand' : 'output';
+        this.addEvent(cycle, 'shock', `${GOD_MODE_TAG} ${c.shock} on ${name(c.planet)}: ${c.good} ${what} ${pct(c.magnitudeBp)} for ${c.durationCycles} cycles`, c.planet);
+      } else if (c.kind === 'tariff') {
+        await this.ledger.applyPolicy({ kind: 'set_tariff', planet: c.planet, good: c.good, rateBp: c.rateBp });
+        this.addEvent(cycle, 'policy', `${GOD_MODE_TAG} ${name(c.planet)} sets a ${c.rateBp / 100}% tariff on ${c.good}`, c.planet);
+      } else if (c.kind === 'embargo') {
+        await this.ledger.applyPolicy({ kind: 'set_embargo', planet: c.planet, target: c.target, active: c.active });
+        this.addEvent(cycle, 'policy', `${GOD_MODE_TAG} ${name(c.planet)} ${c.active ? 'embargoes' : 'lifts the embargo on'} ${name(c.target)}`, c.planet);
+      } else if (c.kind === 'policy_rate') {
+        await this.ledger.applyPolicy({ kind: 'set_policy_rate', planet: c.planet, rateBp: c.rateBp });
+        this.rateOverride.set(c.planet, cycle + RESERVE_BANK_CONFIG.overrideCycles);
+        this.addEvent(cycle, 'policy', `${GOD_MODE_TAG} ${name(c.planet)} policy rate set to ${c.rateBp} bp (reserve-bank rule suspended ${RESERVE_BANK_CONFIG.overrideCycles} cycles)`, c.planet);
+      }
+    }
+  }
+
+  /** Product of the active shocks per `planet|good`, for the supply shocks (`demand` false) or demand surges (`demand` true). */
+  private multipliers(demand: boolean): Multipliers {
+    const m = new Map<string, number>();
+    for (const s of this.shocks) {
+      if ((s.shock === 'demand_surge') !== demand) continue;
+      const k = multKey(s.planet, s.good);
+      m.set(k, (m.get(k) ?? 1) * (Math.max(0, 10_000 + s.magnitudeBp) / 10_000));
+    }
+    return m;
+  }
+
   /** Every `intervalCycles`: each planet's reserve bank sets its policy rate from `history` (which includes `cycle`). */
   private async runReserveBanks(cycle: number): Promise<void> {
     const cfg = RESERVE_BANK_CONFIG;
@@ -188,6 +297,7 @@ export class Universe {
     for (const p of this.world.planets) {
       const inflation = inflationBp(now[p.id]!.cpi, earlier[p.id]!.cpi);
       const gap = outputGapBp(now[p.id]!.gdp, this.history.slice(-cfg.gdpWindow).map((h) => h.metrics[p.id]!.gdp));
+      if ((this.rateOverride.get(p.id) ?? 0) > cycle) continue; // suspended by a god-mode policy_rate
       const rateBp = taylorRateBp(inflation, gap);
       const old = (await this.ledger.getPolicy(p.id)).policyRateBp;
       if (rateBp === old) continue;
@@ -200,11 +310,12 @@ export class Universe {
     const { world, ledger, book } = this;
     const cycle = this._cycle;
 
+    await this.runEvents(cycle);
     const { arrivals, flows } = await this.runArrivals(cycle);
     const due0 = await this.settleDueLoans(cycle);
     const used: Counts = {};
-    const produced = await runProduction(world, ledger, cycle, used);
-    const unmet = await runConsumption(world, ledger);
+    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false));
+    const unmet = await runConsumption(world, ledger, this.multipliers(true));
 
     const due = schedule(this.roster, cycle, this.location);
     const tasks = await buildTasks(
@@ -286,6 +397,12 @@ export class Universe {
     if (this.history.length > HISTORY_CYCLES) this.history.shift();
     await this.runReserveBanks(cycle);
 
+    // Auto-detectors run on final end-of-cycle policy (incl. god-mode and reserve-bank changes).
+    const policies: Record<PlanetId, PolicyState> = {};
+    for (const p of world.planets) policies[p.id] = await ledger.getPolicy(p.id);
+    const detected = this.detectors.observe({ cycle, metrics, policies, fx, arrivals });
+    for (const ev of detected) this.addEvent(cycle, 'crisis', ev.text, ev.planet);
+
     if (this.check) {
       const inv = await ledger.checkInvariants();
       if (!inv.ok) throw new Error(`invariants violated at cycle ${cycle}: ${JSON.stringify(inv.violations)}`);
@@ -296,7 +413,7 @@ export class Universe {
     return {
       cycle, auctions, produced, unmet, rejections: rejections.length, placeOrdersRejected: placed.rejected.length,
       fxOrdersRejected: placedFx.rejected.length, ledgerRejections, departures, arrivals, fx, tradeFlows: flows, metrics,
-      defaults: due0.defaults,
+      defaults: due0.defaults, detected,
     };
   }
 
