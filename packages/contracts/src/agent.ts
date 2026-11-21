@@ -111,3 +111,14 @@ export const AgentDecisionSchema = z.object({
   usage: UsageSchema.optional(),
 });
 export type AgentDecision = z.infer<typeof AgentDecisionSchema>;
+
+/**
+ * Track B surface the engine (Track A) depends on. See architecture.md §3.2.
+ * `decideAll` runs the day's agent tasks in parallel. It must return exactly one
+ * decision per task, keyed by `agentId`, in the same order as the input tasks.
+ * Any failure (timeout, bad output, refusal, budget) resolves to standing orders
+ * inside the runtime; the engine never sees a thrown decision.
+ */
+export interface AgentRuntime {
+  decideAll(tasks: AgentTask[], signal: AbortSignal): Promise<AgentDecision[]>;
+}

@@ -7,7 +7,7 @@ Companion to [orbital-economy-sim-build-plan.md](orbital-economy-sim-build-plan.
 - **Three tracks, one hub.** Track A builds the sim engine (the hub). Track B builds agents and the model gateway. Track C builds the Solana program. B and C never call each other: both plug into A through interfaces frozen on day 0.
 - **Agents never touch models or the chain directly.** An agent is a pure function `(observation) → decision`. The engine decides who acts, the gateway decides which model answers, and the engine validates and settles the result.
 - **No LiteLLM for v1.** A ~300-line in-process TypeScript gateway on the Gemini SDK (`@google/genai`) covers tier routing, context caching, concurrency, deadlines and cost tracking. LiteLLM only earns its place if we go multi-provider or split universes across processes, and the gateway interface lets us add it later without touching agents. Reasoning is in [Do we need LiteLLM?](#do-we-need-litellm).
-- **Hackathon stack, one job each.** Gemini decides and explains. Solana settles. Tiger Data stores the economy's history and serves the charts. Auth0 decides who may watch and who may touch god mode. Vercel serves the web app. Vultr runs the sim. Map is in [Hackathon stack](#hackathon-stack).
+- **Hackathon stack, one job each.** Gemini decides and explains. Solana settles. Tiger Data stores the economy's history and serves the charts. Auth0 decides who may watch and who may touch god mode. Vultr runs everything — sim and web app — on one VM, deployed with Coolify. Map is in [Hackathon stack](#hackathon-stack).
 
 ---
 
@@ -21,38 +21,41 @@ Each sponsor owns a layer we already needed. None of them is a demo route bolted
 | **Solana** | `programs/orbital`, `packages/ledger-solana` | Every auction, shipment, loan, and tariff settles on-chain. Local batch auctions and FX books are the DEX. `borrow` / `repay` is the lending market. Shipments, customs, and embargoes are the supply chain. Agent and planet PDAs are the identity. A cycle can clear dozens of transfers because confirmation is fast and fees are near zero. |
 | **Tiger Data** | Engine metrics writer, read back into `Snapshot` chart series | PostgreSQL, so the SQL we already know. One database holds relational rows (Auth0 users, universes, world config) beside hypertables of cycle metrics (GDP, CPI, prices, FX, trade balance, gateway cost). Continuous aggregates feed the dashboard charts. Compression is what makes 8 universes × 200 cycles of ticks cheap to keep. |
 | **Auth0** | `apps/web`, enforced again on the Vultr engine | Social login, passwordless, and MFA come from Auth0. Roles are `spectator` and `operator`. Spectators watch and talk to the advisor. Operators send `GodModeCommand`. The advisor is the Auth0-for-AI-Agents surface: the endpoint checks the caller's token before Gemini sees the question. |
-| **Vercel** | `apps/web` | The React and Three.js app. It opens a WebSocket outward and renders snapshots. It does not run the cycle loop. |
-| **Vultr** | Cloud Compute VM | The Node process: engine, WebSocket server, Gemini gateway, Solana client, and a local `solana-test-validator` for the demo. This is the long-running workload. |
+| **Vultr + Coolify** | Cloud Compute VM | One box runs everything. Coolify (self-hosted PaaS) manages a Docker Compose stack: Caddy fronts the single domain and routes `/` to the `apps/web` static build, `/ws` to the engine WebSocket, and `/api` to the advisor HTTPS endpoint; the engine Node process holds the cycle loop, Gemini gateway and Solana client; `solana-test-validator` runs beside it. Same origin means one Auth0 callback and no CORS. |
 
-### Can we host on Vercel and Vultr?
+### Can we host everything on one Vultr VM?
 
-Yes. That split is the deployment.
+Yes — Coolify is the easy path.
 
 ```
 Browser
-  │  Auth0 login (SPA on Vercel)
+  │  Auth0 login + API calls (one origin)
   ▼
-apps/web  ── Vercel ── HTTPS + WSS ──►  Vultr Cloud Compute
-                                          ├─ packages/engine  (cycle loop, WS server)
-                                          ├─ packages/gateway (Gemini API)
-                                          ├─ Solana test-validator + SolanaLedger
-                                          └─ writes/reads Tiger Data Cloud
+https://<your-domain>  ── Vultr Cloud Compute, managed by Coolify ──┐
+                         ├─ Caddy (TLS + routing, bundled with Coolify)
+                         │    ├─ /         → apps/web (static build)
+                         │    ├─ /ws       → engine WebSocket
+                         │    └─ /api      → advisor HTTPS
+                         ├─ packages/engine  (cycle loop, WS + HTTP server)
+                         ├─ packages/gateway (Gemini API)
+                         ├─ Solana test-validator + SolanaLedger
+                         └─ reads/writes Tiger Data Cloud
 ```
 
-- **Vercel** builds and serves `apps/web`. Auth0's SPA SDK runs there. `ENGINE_WS_URL` points at the Vultr box. The app sends the Auth0 access token on the socket handshake and on advisor requests.
-- **Vultr** runs one Cloud Compute instance (Docker Compose: engine, Caddy, `solana-test-validator`). The process is alive for the whole demo, holds the gateway limiter, and keeps the 5–8 s cycle deadline. A serverless function cannot own that loop.
-- **Tiger Data Cloud** (free tier) is the database. The connection string lives on Vultr. The Vercel app never talks to Postgres. Chart series ride along in `Snapshot`, filled from continuous aggregates when the engine builds the frame. A `god_mode_audit` table records which Auth0 `sub` fired which command.
-- **Auth0** is the only identity provider. Vultr validates the JWT (issuer, audience, `operator` role for god mode). Spectators who open the advisor get a Gemini answer scoped to universes they can see.
+- **Coolify** is the PaaS on the VM: git-push deploys, per-PR preview environments, log aggregation, Let's Encrypt TLS, and the Docker Compose definition for engine + `solana-test-validator`. The SPA deploys as a static site Coolify builds from the same repo.
+- **Vultr Cloud Compute** is the one box. The engine process is alive for the whole demo, holds the gateway limiter, and keeps the 5–8 s cycle deadline — a serverless function cannot own that loop. A GPU stays off: inference is the Gemini API. GPU is open only if we later host a local model.
+- **Tiger Data Cloud** (free tier) is the database. The connection string is a Coolify env var on the engine service. The SPA never talks to Postgres. Chart series ride along in `Snapshot`, filled from continuous aggregates. A `god_mode_audit` table records which Auth0 `sub` fired which command.
+- **Auth0** is the only identity provider, and the single origin collapses the config: one SPA callback URL, one API audience. The engine validates the JWT (issuer, audience, `operator` role for god mode) on the WS handshake and on `/api/advisor`. Same origin also means no CORS.
 
-Vultr Cloud GPUs stay off for v1. Inference is the Gemini API. The Vultr box is CPU for the sim, the validator, and the socket server. A GPU is an open decision only if we later host a local model.
+What we give up versus Vercel: a global CDN for the SPA, push-to-deploy polish, and the Vercel sponsor slot. For the demo that's a fair trade for one domain, one deploy and one log stream.
 
-Local dev matches the demo shape: Docker Compose on a laptop runs the engine and a Timescale-compatible Postgres (Tiger's extension). Vercel is only the hosted frontend.
+Local dev still matches the demo shape: Docker Compose on a laptop runs the engine + a Timescale-compatible Postgres (Tiger's extension) + Caddy. Coolify is only the hosted PaaS.
 
 ## 1. System shape
 
 ```
  Auth0 ──JWT──► ┌────────────────────────────────┐
-                │ apps/web on Vercel             │
+                │ apps/web (static, via Coolify) │
                 │ React, Three.js, advisor chat  │
                 └───────────────▲────────────────┘
                                 │ WSS: Snapshot out, GodModeCommand in
@@ -94,7 +97,7 @@ packages/
 programs/
   orbital/          # Track C: Anchor program (Rust). Auctions, credit, shipments, policy — the on-chain economy
 apps/
-  web/              # Vercel. Dashboard, 3D view, Auth0, advisor chat (Track A from A5; see §2)
+  web/              # Served by Coolify on the same Vultr VM. Dashboard, 3D view, Auth0, advisor chat (Track A from A5; see §2)
 ```
 
 ---
@@ -124,7 +127,7 @@ Owns the deterministic core and the critical path. Every other track's milestone
 | A2 | Orbits, shipping and travel times, customs, FX pair auctions | Freighters move and FX clears with stub traders |
 | A3 | Credit, rule-based reserve banks, metrics (GDP, CPI, trade balance…), Tiger Data hypertables + continuous aggregates, WS server | Build-plan Phase 0 exit test passes. Snapshot stream is live and chart series come from continuous aggregates |
 | A4 | God-mode event handlers, fork (copy ledger + RNG state), detectors (trade war, currency crisis, recession, diversion) | Each event changes the metric it should under stub agents. Operator commands land in `god_mode_audit` |
-| A5 | `apps/web` on Vercel: Auth0 login, metric panels, event feed, god-mode panel (operators only), then the 3D view | Dashboard runs against recorded snapshots and against a live run on Vultr |
+| A5 | `apps/web` served by Coolify on the Vultr VM: Auth0 login, metric panels, event feed, god-mode panel (operators only), then the 3D view | Dashboard runs against recorded snapshots and against a live run on Vultr |
 
 Frontend starts at A5 because the engine is the critical path. It builds against **recorded `Snapshot` fixtures**, so it never blocks on a live run. If a fourth person joins, `apps/web` becomes Track D and starts on day 1 against fixtures.
 
@@ -393,8 +396,8 @@ If we do add it, pin the exact version or image digest and keep the Gemini adapt
 | Governments' thinking budget | Small on routine reviews, larger after shocks | B |
 | Universes in one process or many | One process, shared gateway, on one Vultr VM | A + B |
 | Per-run hard budget | $15, then stub | B |
-| Frontend host | Vercel (`apps/web`, Auth0 SPA) | Web |
-| Engine host | Vultr Cloud Compute, Docker Compose with `solana-test-validator` | A |
+| Frontend host | Coolify on the Vultr VM (`apps/web`, Auth0 SPA) — single origin with the engine | Web |
+| Engine host | Vultr Cloud Compute, Coolify-managed Docker Compose with `solana-test-validator` | A |
 | Database | Tiger Data Cloud free tier. Local Docker Postgres with the Tiger extension for dev | A |
 | Chain for the demo | `solana-test-validator` on the Vultr VM. Devnet only if we want a public explorer | C |
 | Vultr GPU | Off. Inference is Gemini. Revisit only for a local model | Team |
