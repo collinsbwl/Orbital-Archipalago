@@ -50,6 +50,10 @@ export class LiveSource implements SnapshotSource {
     this.failPending('stopped');
   }
 
+  setPlaybackSpeed(): void {
+    /* the server sets the pace */
+  }
+
   setPlaybackPaused(): void {
     /* server-side pause is a god-mode command */
   }

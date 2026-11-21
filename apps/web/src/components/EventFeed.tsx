@@ -6,7 +6,6 @@ export function EventFeed({ events }: { events: SimEvent[] }) {
   const newestFirst = [...events].reverse().sort((a, b) => b.cycle - a.cycle);
   return (
     <section>
-      <h2>Events</h2>
       {newestFirst.length === 0 && <p className="muted">No events yet.</p>}
       <ul className="events">
         {newestFirst.map((e) => (
