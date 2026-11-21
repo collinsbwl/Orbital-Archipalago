@@ -28,6 +28,8 @@ export interface DetectorInput {
 export const DETECTOR_CONFIG = {
   /** Cycles of history kept (bounds memory). */
   historyCycles: 60,
+  /** No events before this cycle: start-up values (placeholder confidence 50, CPI at base prices) aren't signal. History is still recorded. */
+  warmupCycles: 10,
   tradeWar: {
     /** Two planets' tariff raises must fall within this many cycles of each other. */
     raiseWindowCycles: 10,
@@ -138,6 +140,9 @@ function ev(detector: DetectorKind, cycle: number, text: string, planet?: Planet
 export class Detectors {
   private s: DetectorState = emptyState();
 
+  /** `warmupCycles` defaults to DETECTOR_CONFIG.warmupCycles (tests on hand-built sequences pass 0). */
+  constructor(private readonly opts: { warmupCycles?: number } = {}) {}
+
   getState(): DetectorState {
     return JSON.parse(JSON.stringify(this.s)) as DetectorState;
   }
@@ -165,7 +170,7 @@ export class Detectors {
     out.push(...this.confidenceCollapse(input));
 
     this.prune(cycle);
-    return out;
+    return cycle < (this.opts.warmupCycles ?? DETECTOR_CONFIG.warmupCycles) ? [] : out;
   }
 
   // ---- shared bookkeeping --------------------------------------------------

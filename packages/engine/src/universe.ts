@@ -291,7 +291,7 @@ export class Universe {
   /** Every `intervalCycles`: each planet's reserve bank sets its policy rate from `history` (which includes `cycle`). */
   private async runReserveBanks(cycle: number): Promise<void> {
     const cfg = RESERVE_BANK_CONFIG;
-    if (cycle === 0 || cycle % cfg.intervalCycles !== 0 || this.history.length <= cfg.intervalCycles) return;
+    if (cycle < cfg.warmupCycles || cycle % cfg.intervalCycles !== 0 || this.history.length <= cfg.intervalCycles) return;
     const now = this.history[this.history.length - 1]!.metrics;
     const earlier = this.history[this.history.length - 1 - cfg.intervalCycles]!.metrics;
     for (const p of this.world.planets) {

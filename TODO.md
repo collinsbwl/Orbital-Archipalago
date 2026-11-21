@@ -33,7 +33,7 @@ Milestones refer to [architecture.md](architecture.md) §2; "build plan" is `orb
 - [ ] Forks need `clone()` on the ledger. `InMemoryLedger` has it; `SolanaLedger` (Track C) would need a fork strategy, such as replaying from a seed or snapshotting accounts.
 - [ ] A fork's chart series start at the fork cycle. Its pre-fork history isn't copied into Tiger, so the dashboard can't overlay a fork and its parent from cycle 0 without a query that unions the parent's rows.
 - [ ] Shock edge cases: a supply shock scaled to 0 output still consumes inputs; `demand_surge` is spread evenly across colonists (floor of the total).
-- [ ] Drought moves prices only slightly under stub agents (grain price +6%, CPI +2% vs control). Re-check with B1/B3 agents.
+- [ ] Drought barely moves the grain clearing price under stub agents (CPI rises, price flat), so `god-mode.test.ts` only logs price. Re-check, and assert it, with B1/B3 agents.
 - [ ] Recorded **Snapshot fixtures** for the frontend (A5 builds against them; only `AgentTask` fixtures exist today).
 
 ## Verification gaps

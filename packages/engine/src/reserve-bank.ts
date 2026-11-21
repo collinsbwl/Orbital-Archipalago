@@ -12,6 +12,8 @@ export const RESERVE_BANK_CONFIG = {
   gdpWindow: 20,
   /** Build plan: 200 cycles ~ 4 years. Used to turn the (level) output gap into a per-cycle rate term. */
   cyclesPerYear: 50,
+  /** No reviews before this cycle: early CPI jumps from base prices to the first clearing prices are a start-up artifact. */
+  warmupCycles: 10,
   /** A god-mode `policy_rate` suspends that planet's rule for this many cycles. */
   overrideCycles: 20,
 };
