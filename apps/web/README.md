@@ -1,6 +1,8 @@
 # @orbital/web
 
-First-cut dashboard: header, 3D view (three.js), metric panels, event feed, god-mode panel (operators only).
+A full-screen 3D view of the archipelago with floating panels (planet metrics and charts, event feed, god-mode panel for operators).
+
+The scene (`src/scene/`, built with React Three Fiber): a glowing sun and starfield, low-poly planets that each have their own look (`planet-look.ts`), faint trade lanes between every pair of planets, and a freighter with an engine trail for each shipment in flight. Hover a ship for its owner, cargo, route and arrival. Drag to rotate, scroll to zoom. Planets are stationary (set `PLANETS_ORBIT` in `src/scene/frame.ts` to make them circle the sun), and ships glide smoothly along the lane between their two planets (`clock.ts` learns the cycle length from the gaps between snapshots). In fixture mode there are pause and 1x/2x/4x buttons.
 
 ## Run
 

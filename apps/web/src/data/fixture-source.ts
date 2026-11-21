@@ -18,6 +18,7 @@ export class FixtureSource implements SnapshotSource {
   private stopped = false;
   private readonly url: string;
   private readonly intervalMs: number;
+  private speed = 1;
   private readonly fetchImpl: typeof fetch;
 
   constructor(opts: FixtureSourceOptions = {}) {
@@ -61,6 +62,13 @@ export class FixtureSource implements SnapshotSource {
     else if (this.snapshots.length > 0 && !this.stopped) this.resume();
   }
 
+  setPlaybackSpeed(speed: number): void {
+    if (!Number.isFinite(speed) || speed <= 0) return;
+    this.speed = speed;
+    this.store.set({ playbackSpeed: speed });
+    if (this.timer !== undefined) this.resume(); // running: re-time the ticks at the new pace
+  }
+
   sendCommand(): Promise<CommandAck> {
     return Promise.resolve({ ok: false, error: 'fixture mode is read-only' });
   }
@@ -82,7 +90,7 @@ export class FixtureSource implements SnapshotSource {
 
   private resume(): void {
     this.pause();
-    this.timer = setInterval(() => this.tick(), this.intervalMs);
+    this.timer = setInterval(() => this.tick(), this.intervalMs / this.speed);
   }
 
   private show(): void {

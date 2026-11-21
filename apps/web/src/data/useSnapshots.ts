@@ -20,6 +20,8 @@ export interface SnapshotsView {
   error: string | null;
   playbackPaused: boolean;
   setPlaybackPaused: (paused: boolean) => void;
+  playbackSpeed: number;
+  setPlaybackSpeed: (speed: number) => void;
 }
 
 const { mode, wsUrl } = resolveMode(window.location.search, import.meta.env.VITE_ENGINE_WS_URL);
@@ -53,5 +55,6 @@ export function useSnapshots(): SnapshotsView {
     sendCommand: (u, c) => (source ? source.sendCommand(u, c) : Promise.resolve({ ok: false, error: 'not connected' })),
     selectUniverse: (id) => source?.selectUniverse(id),
     setPlaybackPaused: (p) => source?.setPlaybackPaused(p),
+    setPlaybackSpeed: (v) => source?.setPlaybackSpeed(v),
   };
 }

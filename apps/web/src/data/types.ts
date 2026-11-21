@@ -22,10 +22,12 @@ export interface SourceState {
   error: string | null;
   /** Fixture playback paused locally (fixture mode only). */
   playbackPaused: boolean;
+  /** Fixture playback speed multiplier: 1 is normal (fixture mode only). */
+  playbackSpeed: number;
 }
 
 export const INITIAL_STATE: SourceState = {
-  snapshot: null, role: null, connected: false, universeId: null, universes: [], error: null, playbackPaused: false,
+  snapshot: null, role: null, connected: false, universeId: null, universes: [], error: null, playbackPaused: false, playbackSpeed: 1,
 };
 
 export interface SnapshotSource {
@@ -37,6 +39,8 @@ export interface SnapshotSource {
   selectUniverse(universeId: UniverseId): void;
   /** Local playback control; a no-op for live sources (the server owns pause there). */
   setPlaybackPaused(paused: boolean): void;
+  /** Local playback speed (1 = normal); a no-op for live sources, where the server sets the pace. */
+  setPlaybackSpeed(speed: number): void;
 }
 
 /** Tiny observable state holder shared by both sources. */
