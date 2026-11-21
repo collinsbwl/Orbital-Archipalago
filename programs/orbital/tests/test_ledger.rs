@@ -6,7 +6,7 @@ use anchor_spl::token::spl_token;
 use solana_keypair::Keypair;
 use solana_signer::Signer;
 
-const HLX: [u8; 3] = *b"HLX";
+const HLX: [u8; 5] = *b"HLX\0\0";
 
 fn world() -> (litesvm::LiteSVM, Keypair) {
     let (mut svm, admin) = setup();
@@ -100,4 +100,63 @@ fn ledger_cannot_be_created_twice_or_on_a_non_zero_account() {
     send(&mut svm, &admin, create_planet_ix(&admin, ledger, "helion", HLX)).unwrap();
     assert!(send(&mut svm, &admin, create_planet_ix(&admin, ledger, "other", HLX)).is_err());
     let _: Pubkey = ledger;
+}
+
+const CODES: [&str; 3] = ["HLX", "HX", "HELIX"];
+
+fn world3() -> (litesvm::LiteSVM, Keypair, anchor_lang::prelude::Pubkey) {
+    let (mut svm, admin) = setup();
+    send(&mut svm, &admin, init_ix(&admin)).unwrap();
+    for c in CODES {
+        send(&mut svm, &admin, create_currency_ix(&admin, code(c))).unwrap();
+    }
+    let ledger = alloc_ledger(&mut svm);
+    send(&mut svm, &admin, create_planet_ix(&admin, ledger, "helion", HLX)).unwrap();
+    (svm, admin, ledger)
+}
+
+#[test]
+fn open_account_does_everything_in_one_transaction() {
+    let (mut svm, admin, ledger) = world3();
+    let codes = CODES.map(code);
+    send(&mut svm, &admin, open_account_ix(&admin, ledger, "alice", &codes, &[1_000, 0, 5], vec![cargo("iron", 10)])).unwrap();
+
+    assert_eq!(balance(&svm, "alice", code("HLX")), 1_000);
+    assert_eq!(balance(&svm, "alice", code("HX")), 0);
+    assert_eq!(balance(&svm, "alice", code("HELIX")), 5);
+    assert_eq!(supply(&svm, code("HLX")), 1_000);
+    assert_eq!(inventory(&svm, ledger, "alice", "iron"), 10);
+
+    // every purse is self-owned, so no wallet key can spend it
+    for c in codes {
+        let purse = purse_pda(&key("alice"), &c);
+        let acct = spl_token::state::Account::unpack(&svm.get_account(&purse).unwrap().data).unwrap();
+        assert_eq!(acct.owner, purse);
+    }
+    // the purses work like any other
+    send(&mut svm, &admin, open_account_ix(&admin, ledger, "bob", &codes, &[0, 0, 0], vec![])).unwrap();
+    send(&mut svm, &admin, transfer_ix(&admin, key("alice"), key("bob"), code("HLX"), 400)).unwrap();
+    assert_eq!(balance(&svm, "bob", code("HLX")), 400);
+}
+
+#[test]
+fn open_account_is_all_or_nothing() {
+    let (mut svm, admin, ledger) = world3();
+    let codes = CODES.map(code);
+
+    // A bad cargo line fails after the purses and the minting have been set up inside the transaction...
+    let bad = open_account_ix(&admin, ledger, "carol", &codes, &[500, 500, 500], vec![cargo("iron", 0)]);
+    assert!(send(&mut svm, &admin, bad).is_err());
+    // ...and none of it stuck: no purses, no money created.
+    for c in codes {
+        assert!(svm.get_account(&purse_pda(&key("carol"), &c)).is_none());
+        assert_eq!(supply(&svm, c), 0);
+    }
+    assert_eq!(inventory(&svm, ledger, "carol", "iron"), 0);
+
+    // The same owner can still be opened properly afterwards, but only once.
+    send(&mut svm, &admin, open_account_ix(&admin, ledger, "carol", &codes, &[500, 0, 0], vec![])).unwrap();
+    assert!(send(&mut svm, &admin, open_account_ix(&admin, ledger, "carol", &codes, &[1, 0, 0], vec![])).is_err());
+    assert_eq!(balance(&svm, "carol", code("HLX")), 500);
+    assert_eq!(supply(&svm, code("HLX")), 500);
 }

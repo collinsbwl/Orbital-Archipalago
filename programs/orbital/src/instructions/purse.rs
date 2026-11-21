@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount, Transfer};
 
-use crate::{constants::*, error::ErrorCode, state::Config};
+use crate::{constants::*, error::ErrorCode, state::{mint_supply, Config, CurrencyBook}};
 
 /// A purse is an SPL token account at ["purse", owner, code] whose token-owner is
 /// ITSELF. Self-owned means no wallet key can spend it; only this program can sign
 /// for the PDA, and only inside `transfer`.
 #[derive(Accounts)]
-#[instruction(owner: [u8; 32], code: [u8; 3])]
+#[instruction(owner: [u8; 32], code: [u8; 5])]
 pub struct OpenPurse<'info> {
     #[account(mut, address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -28,13 +28,13 @@ pub struct OpenPurse<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_open_purse(_ctx: Context<OpenPurse>, _owner: [u8; 32], _code: [u8; 3]) -> Result<()> {
+pub fn handle_open_purse(_ctx: Context<OpenPurse>, _owner: [u8; 32], _code: [u8; 5]) -> Result<()> {
     Ok(())
 }
 
 /// Genesis mint into a purse (starting cash). Later, `borrow` will be the only other minter.
 #[derive(Accounts)]
-#[instruction(owner: [u8; 32], code: [u8; 3])]
+#[instruction(owner: [u8; 32], code: [u8; 5])]
 pub struct Issue<'info> {
     #[account(address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -45,12 +45,14 @@ pub struct Issue<'info> {
     pub mint_authority: UncheckedAccount<'info>,
     #[account(mut, seeds = [MINT_SEED, code.as_ref()], bump)]
     pub mint: Account<'info, Mint>,
+    #[account(mut, seeds = [CURRENCY_SEED, code.as_ref()], bump)]
+    pub book: Account<'info, CurrencyBook>,
     #[account(mut, seeds = [PURSE_SEED, owner.as_ref(), code.as_ref()], bump)]
     pub purse: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
 }
 
-pub fn handle_issue(ctx: Context<Issue>, _owner: [u8; 32], _code: [u8; 3], amount: u64) -> Result<()> {
+pub fn handle_issue(ctx: Context<Issue>, _owner: [u8; 32], _code: [u8; 5], amount: u64) -> Result<()> {
     require!(amount > 0, ErrorCode::InvalidAmount);
     let seeds: &[&[u8]] = &[MINT_AUTHORITY_SEED, &[ctx.bumps.mint_authority]];
     token::mint_to(
@@ -64,11 +66,14 @@ pub fn handle_issue(ctx: Context<Issue>, _owner: [u8; 32], _code: [u8; 3], amoun
             &[seeds],
         ),
         amount,
-    )
+    )?;
+    ctx.accounts.book.record_mint(amount)?;
+    require!(mint_supply(&ctx.accounts.mint.to_account_info())? == ctx.accounts.book.expected_supply(), ErrorCode::SupplyMismatch);
+    Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(from_owner: [u8; 32], to_owner: [u8; 32], code: [u8; 3])]
+#[instruction(from_owner: [u8; 32], to_owner: [u8; 32], code: [u8; 5])]
 pub struct TransferFunds<'info> {
     #[account(address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -81,7 +86,7 @@ pub struct TransferFunds<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn handle_transfer(ctx: Context<TransferFunds>, from_owner: [u8; 32], _to_owner: [u8; 32], code: [u8; 3], amount: u64) -> Result<()> {
+pub fn handle_transfer(ctx: Context<TransferFunds>, from_owner: [u8; 32], _to_owner: [u8; 32], code: [u8; 5], amount: u64) -> Result<()> {
     // A transfer of 0 is allowed (the ledger contract pins this); only issue and cargo lines require > 0.
     require!(ctx.accounts.from_purse.amount >= amount, ErrorCode::InsufficientFunds);
     let seeds: &[&[u8]] = &[PURSE_SEED, from_owner.as_ref(), code.as_ref(), &[ctx.bumps.from_purse]];

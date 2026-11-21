@@ -1,15 +1,23 @@
 pub mod create_currency;
+pub mod credit;
 pub mod create_planet;
 pub mod fx_orders;
 pub mod initialize;
 pub mod inventory;
+pub mod open_account;
 pub mod orders;
+pub mod policy;
+pub mod shipping;
 pub mod purse;
 
 pub use create_currency::*;
+pub use credit::*;
 pub use create_planet::*;
 pub use fx_orders::*;
 pub use initialize::*;
 pub use inventory::*;
+pub use open_account::*;
 pub use orders::*;
+pub use policy::*;
+pub use shipping::*;
 pub use purse::*;

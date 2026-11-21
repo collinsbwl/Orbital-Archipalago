@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{constants::{MAX_ORDERS, MAX_SLOTS}, error::ErrorCode};
+use crate::{constants::{MAX_EMBARGOES, MAX_ORDERS, MAX_POLICY_GOODS, MAX_SLOTS}, error::ErrorCode};
 
 /// Singleton: who may create currencies and operate the ledger (the sim engine).
 #[account]
@@ -9,6 +9,10 @@ pub struct Config {
     pub admin: Pubkey,
     /// Next order sequence number (local and FX orders share it). Ids are "o<seq>", starting at 1.
     pub next_order: u64,
+    /// Next shipment id; ids are "s<n>", starting at 1.
+    pub next_shipment: u64,
+    /// Next loan id; ids are "l<n>", starting at 1.
+    pub next_loan: u64,
 }
 
 /// One line of cargo in an instruction: `good` is sha256(goodId), computed client-side.
@@ -34,8 +38,8 @@ pub struct InventorySlot {
 pub struct PlanetLedger {
     /// sha256(planetId)
     pub planet: [u8; 32],
-    pub currency: [u8; 3],
-    pub _pad: [u8; 5],
+    pub currency: [u8; 5],
+    pub _pad: [u8; 3],
     pub len: u64,
     pub slots: [InventorySlot; MAX_SLOTS],
 }
@@ -129,4 +133,129 @@ impl OrderBook {
         }
         self.len = w as u64;
     }
+}
+
+/// One cargo line inside a shipment.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Default, InitSpace)]
+pub struct CargoLine {
+    pub good: [u8; 32],
+    pub qty: u64,
+}
+
+/// Goods in flight between planets. Kept after arrival (arrived = true) so a second arrive is rejected.
+#[account]
+#[derive(InitSpace)]
+pub struct Shipment {
+    pub owner: [u8; 32],
+    pub from: [u8; 32],
+    pub to: [u8; 32],
+    pub lines: [CargoLine; 8],
+    pub n_lines: u8,
+    pub depart_cycle: u64,
+    pub arrive_cycle: u64,
+    pub arrived: bool,
+}
+
+/// Everything a planet's government decides about one good, plus the prices tariffs are charged against.
+#[zero_copy]
+pub struct GoodPolicy {
+    pub good: [u8; 32],
+    /// Tariff in basis points on imports of this good; 0 = none.
+    pub tariff_bp: u64,
+    pub quota_max: u64,
+    /// Units imported so far in `quota_cycle` (resets when a new cycle arrives).
+    pub quota_used: u64,
+    pub quota_cycle: u64,
+    /// Last non-null local clearing price on this planet.
+    pub last_price: u64,
+    /// The good's base price, the tariff price until the first auction clears.
+    pub base_price: u64,
+    pub has_quota: u8,
+    pub has_price: u8,
+    pub _pad: [u8; 6],
+}
+
+/// One planet's trade policy: tariffs, quotas, embargoes, the central-bank rate, and last prices.
+#[account(zero_copy)]
+pub struct PlanetPolicy {
+    /// sha256(planetId)
+    pub planet: [u8; 32],
+    pub policy_rate_bp: u64,
+    pub n_goods: u64,
+    pub n_embargoes: u64,
+    pub embargoes: [[u8; 32]; MAX_EMBARGOES],
+    pub goods: [GoodPolicy; MAX_POLICY_GOODS],
+}
+
+impl PlanetPolicy {
+    pub fn find(&self, good: &[u8; 32]) -> Option<usize> {
+        self.goods[..self.n_goods as usize].iter().position(|g| g.good == *good)
+    }
+
+    /// The entry for `good`, created (all zero) if it does not exist yet.
+    pub fn entry(&mut self, good: &[u8; 32]) -> Result<&mut GoodPolicy> {
+        let i = match self.find(good) {
+            Some(i) => i,
+            None => {
+                let i = self.n_goods as usize;
+                require!(i < MAX_POLICY_GOODS, ErrorCode::PolicyFull);
+                self.goods[i].good = *good;
+                self.n_goods += 1;
+                i
+            }
+        };
+        Ok(&mut self.goods[i])
+    }
+
+    pub fn embargoes_planet(&self, planet: &[u8; 32]) -> bool {
+        self.embargoes[..self.n_embargoes as usize].contains(planet)
+    }
+}
+
+/// The program's own record of how much of a currency exists: everything it ever minted minus everything it ever burned.
+/// The SPL mint's supply must equal this after every mint or burn; if it ever does not, that transaction fails.
+#[account]
+#[derive(InitSpace)]
+pub struct CurrencyBook {
+    pub minted: u64,
+    pub burned: u64,
+}
+
+impl CurrencyBook {
+    pub fn expected_supply(&self) -> u64 {
+        self.minted - self.burned
+    }
+
+    pub fn record_mint(&mut self, amount: u64) -> Result<()> {
+        self.minted = self.minted.checked_add(amount).ok_or(ErrorCode::Overflow)?;
+        Ok(())
+    }
+
+    pub fn record_burn(&mut self, amount: u64) -> Result<()> {
+        self.burned = self.burned.checked_add(amount).ok_or(ErrorCode::Overflow)?;
+        Ok(())
+    }
+}
+
+/// SPL mint layout: mint_authority (36 bytes: a 4-byte option tag and a key), then supply as u64.
+pub fn mint_supply(mint: &AccountInfo) -> Result<u64> {
+    let data = mint.try_borrow_data()?;
+    Ok(u64::from_le_bytes(data[36..44].try_into().unwrap()))
+}
+
+/// A loan. Kept after it is repaid (outstanding = 0) so a second repay is rejected.
+#[account]
+#[derive(InitSpace)]
+pub struct Loan {
+    pub borrower: [u8; 32],
+    /// sha256(lending planet id)
+    pub planet: [u8; 32],
+    pub currency: [u8; 5],
+    pub principal: u64,
+    pub outstanding: u64,
+    /// The planet's policy rate when the loan was made, per cycle.
+    pub rate_bp: u64,
+    pub issued_cycle: u64,
+    pub due_cycle: u64,
+    pub last_accrual: u64,
 }

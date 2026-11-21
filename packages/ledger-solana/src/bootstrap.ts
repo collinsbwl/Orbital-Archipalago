@@ -1,3 +1,4 @@
+import BN from 'bn.js';
 import { SystemProgram, Transaction } from '@solana/web3.js';
 import { SolanaLedger, type SolanaLedgerOptions } from './solana-ledger.js';
 import { codeBytes, idKey } from './keys.js';
@@ -25,7 +26,7 @@ export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<Solana
     if (!(await exists(ledger.addr.mint(code)))) {
       await run(new Transaction().add(
         await program.methods.createCurrency(codeBytes(code)).accountsPartial({
-          admin: admin.publicKey, config: ledger.addr.config(), mintAuthority: ledger.addr.mintAuthority(), mint: ledger.addr.mint(code),
+          admin: admin.publicKey, config: ledger.addr.config(), mintAuthority: ledger.addr.mintAuthority(), mint: ledger.addr.mint(code), book: ledger.addr.currencyBook(code),
         }).instruction(),
       ));
     }
@@ -36,6 +37,20 @@ export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<Solana
           admin: admin.publicKey, config: ledger.addr.config(), mint: ledger.addr.mint(code), vault: ledger.addr.vault(code),
         }).instruction(),
       ));
+    }
+
+    // Every planet gets a policy account, seeded with each good's base price (tariffs are charged against it).
+    if (!(await exists(ledger.addr.policy(planet.id)))) {
+      await run(new Transaction().add(
+        await program.methods.createPolicy(idKey(planet.id)).accountsPartial({
+          admin: admin.publicKey, config: ledger.addr.config(), policy: ledger.addr.policy(planet.id),
+        }).instruction(),
+      ));
+      const prices = await Promise.all(world.goods.map((g) =>
+        program.methods.applyPolicy({ setBasePrice: { good: idKey(g.id), price: new BN(g.basePrice) } }).accountsPartial({
+          admin: admin.publicKey, config: ledger.addr.config(), policy: ledger.addr.policy(planet.id),
+        }).instruction()));
+      for (let i = 0; i < prices.length; i += 4) await run(new Transaction().add(...prices.slice(i, i + 4)));
     }
 
     const ledgerAddr = await ledger.addr.ledger(planet.id);

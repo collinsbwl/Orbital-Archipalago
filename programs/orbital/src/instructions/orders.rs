@@ -12,7 +12,7 @@ use crate::{
 
 /// The vault holds every buy order's escrowed currency. Like a purse it is a self-owned token account.
 #[derive(Accounts)]
-#[instruction(code: [u8; 3])]
+#[instruction(code: [u8; 5])]
 pub struct CreateVault<'info> {
     #[account(mut, address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -26,7 +26,7 @@ pub struct CreateVault<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_create_vault(_ctx: Context<CreateVault>, _code: [u8; 3]) -> Result<()> {
+pub fn handle_create_vault(_ctx: Context<CreateVault>, _code: [u8; 5]) -> Result<()> {
     Ok(())
 }
 
@@ -59,7 +59,7 @@ pub fn handle_create_book(ctx: Context<CreateBook>, planet: [u8; 32], good: [u8;
 
 /// Everything needed to escrow or refund one owner's order on one book.
 #[derive(Accounts)]
-#[instruction(owner: [u8; 32], code: [u8; 3])]
+#[instruction(owner: [u8; 32], code: [u8; 5])]
 pub struct OrderOp<'info> {
     #[account(address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -76,12 +76,12 @@ pub struct OrderOp<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-fn check_book(book: &OrderBook, ledger: &PlanetLedger, code: &[u8; 3]) -> Result<()> {
+fn check_book(book: &OrderBook, ledger: &PlanetLedger, code: &[u8; 5]) -> Result<()> {
     require!(book.planet == ledger.planet && ledger.currency == *code, ErrorCode::AccountMismatch);
     Ok(())
 }
 
-pub fn handle_place_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 3], side: u8, qty: u64, limit: u64, cycle: u64) -> Result<()> {
+pub fn handle_place_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 5], side: u8, qty: u64, limit: u64, cycle: u64) -> Result<()> {
     require!(qty > 0, ErrorCode::InvalidAmount);
     let mut book = ctx.accounts.book.load_mut()?;
     let mut ledger = ctx.accounts.ledger.load_mut()?;
@@ -115,7 +115,7 @@ pub fn handle_place_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 3],
     book.push(OrderSlot { seq, owner, qty, limit, cycle, side, _pad: [0; 7] })
 }
 
-pub fn handle_cancel_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 3], seq: u64) -> Result<()> {
+pub fn handle_cancel_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 5], seq: u64) -> Result<()> {
     let mut book = ctx.accounts.book.load_mut()?;
     let mut ledger = ctx.accounts.ledger.load_mut()?;
     check_book(&book, &ledger, &code)?;
@@ -149,7 +149,7 @@ pub fn handle_cancel_order(ctx: Context<OrderOp>, owner: [u8; 32], code: [u8; 3]
 // ---- The auction ----------------------------------------------------------------------------------------
 
 #[derive(Accounts)]
-#[instruction(code: [u8; 3])]
+#[instruction(code: [u8; 5])]
 pub struct ClearLocalAuction<'info> {
     #[account(address = config.admin @ ErrorCode::Unauthorized)]
     pub admin: Signer<'info>,
@@ -159,6 +159,9 @@ pub struct ClearLocalAuction<'info> {
     pub book: AccountLoader<'info, OrderBook>,
     #[account(mut)]
     pub ledger: AccountLoader<'info, PlanetLedger>,
+    /// The planet's policy keeps the last clearing price per good (tariffs are charged against it).
+    #[account(mut)]
+    pub policy: AccountLoader<'info, PlanetPolicy>,
     #[account(mut, seeds = [VAULT_SEED, code.as_ref()], bump)]
     pub vault: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
@@ -167,7 +170,7 @@ pub struct ClearLocalAuction<'info> {
 }
 
 /// Pays `amount` from the vault to `to` (a purse). Zero is skipped.
-fn pay_from_vault<'info>(ctx: &Context<'info, ClearLocalAuction<'info>>, code: &[u8; 3], to: &AccountInfo<'info>, amount: u64) -> Result<()> {
+fn pay_from_vault<'info>(ctx: &Context<'info, ClearLocalAuction<'info>>, code: &[u8; 5], to: &AccountInfo<'info>, amount: u64) -> Result<()> {
     if amount == 0 {
         return Ok(());
     }
@@ -187,7 +190,7 @@ fn pay_from_vault<'info>(ctx: &Context<'info, ClearLocalAuction<'info>>, code: &
 }
 
 /// `buys` and `sells` are the book's buy and sell orders as indices, best first (the client sorts, this verifies).
-pub fn handle_clear_local_auction<'info>(ctx: Context<'info, ClearLocalAuction<'info>>, code: [u8; 3], buys: Vec<u8>, sells: Vec<u8>) -> Result<()> {
+pub fn handle_clear_local_auction<'info>(ctx: Context<'info, ClearLocalAuction<'info>>, code: [u8; 5], buys: Vec<u8>, sells: Vec<u8>) -> Result<()> {
     let mut book = ctx.accounts.book.load_mut()?;
     let mut ledger = ctx.accounts.ledger.load_mut()?;
     check_book(&book, &ledger, &code)?;
@@ -201,6 +204,13 @@ pub fn handle_clear_local_auction<'info>(ctx: Context<'info, ClearLocalAuction<'
     let outcome = auction::clear_sorted(&bids, &buys, &sells).map_err(|_| error!(ErrorCode::BadSortOrder))?;
     let Some(price) = outcome.price else { return Ok(()) };
     require!(ctx.remaining_accounts.len() == outcome.fills.len(), ErrorCode::AccountMismatch);
+    {
+        let mut policy = ctx.accounts.policy.load_mut()?;
+        require!(policy.planet == ledger.planet, ErrorCode::AccountMismatch);
+        let entry = policy.entry(&book.good)?;
+        entry.last_price = price;
+        entry.has_price = 1;
+    }
 
     let good = book.good;
     for (k, &(i, q)) in outcome.fills.iter().enumerate() {

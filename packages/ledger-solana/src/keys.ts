@@ -11,18 +11,22 @@ const PURSE_SEED = enc('purse');
 const VAULT_SEED = enc('vault');
 const BOOK_SEED = enc('book');
 const FX_BOOK_SEED = enc('fxbook');
+const POLICY_SEED = enc('policy');
+const SHIPMENT_SEED = enc('shipment');
+const CURRENCY_SEED = enc('currency');
+const LOAN_SEED = enc('loan');
 
 /** Owners and goods are stored on-chain as sha256(id): fixed size, any id length. */
 export function idKey(id: string): number[] {
   return Array.from(createHash('sha256').update(id, 'utf8').digest());
 }
 
-/** Currency codes are exactly 3 ASCII capitals on-chain (the contract schema allows 2-5). */
+/** Currency codes are 2 to 5 capitals (the contract's rule), stored in 5 bytes padded with zeros: "HX" is H X 0 0 0. */
 export function codeBytes(code: string): number[] {
-  if (!/^[A-Z]{3}$/.test(code)) {
-    throw new LedgerError('invalid_state', `currency code "${code}" must be exactly 3 capitals on-chain`);
+  if (!/^[A-Z]{2,5}$/.test(code)) {
+    throw new LedgerError('invalid_state', `currency code "${code}" must be 2-5 capital letters`);
   }
-  return Array.from(enc(code));
+  return Array.from(Buffer.concat([enc(code), Buffer.alloc(5 - code.length)]));
 }
 
 export class Addresses {
@@ -40,6 +44,22 @@ export class Addresses {
   /** FX book for an unordered currency pair; the codes must be in alphabetical order (a < b). */
   fxBook = (a: string, b: string) =>
     PublicKey.findProgramAddressSync([FX_BOOK_SEED, Buffer.from(codeBytes(a)), Buffer.from(codeBytes(b))], this.programId)[0];
+  /** The program's record of how much of a currency it has minted and burned. */
+  currencyBook = (code: string) => PublicKey.findProgramAddressSync([CURRENCY_SEED, Buffer.from(codeBytes(code))], this.programId)[0];
+  /** Loan "l<n>" lives at the PDA ["loan", n as u64 little-endian]. */
+  loan = (n: number) => {
+    const le = Buffer.alloc(8);
+    le.writeBigUInt64LE(BigInt(n));
+    return PublicKey.findProgramAddressSync([LOAN_SEED, le], this.programId)[0];
+  };
+  /** A planet's policy account: tariffs, quotas, embargoes, policy rate and last clearing prices. */
+  policy = (planet: string) => PublicKey.findProgramAddressSync([POLICY_SEED, Buffer.from(idKey(planet))], this.programId)[0];
+  /** Shipment "s<n>" lives at the PDA ["shipment", n as u64 little-endian]. */
+  shipment = (n: number) => {
+    const le = Buffer.alloc(8);
+    le.writeBigUInt64LE(BigInt(n));
+    return PublicKey.findProgramAddressSync([SHIPMENT_SEED, le], this.programId)[0];
+  };
   book = (planet: string, good: string) =>
     PublicKey.findProgramAddressSync([BOOK_SEED, Buffer.from(idKey(planet)), Buffer.from(idKey(good))], this.programId)[0];
 
