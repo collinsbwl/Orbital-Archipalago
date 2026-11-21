@@ -1,0 +1,48 @@
+import { SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { SolanaLedger, type SolanaLedgerOptions } from './solana-ledger.js';
+import { codeBytes, idKey } from './keys.js';
+
+// PlanetLedger account size: 8 discriminator + 48 header + 1024 slots * 72 bytes (programs/orbital/src/state.rs).
+const PLANET_LEDGER_SPACE = 8 + 48 + 1024 * 72;
+
+/**
+ * One-time setup of a fresh cluster, safe to re-run: records the admin, creates the currency
+ * mints and one ledger account per planet. Returns a ready SolanaLedger.
+ */
+export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<SolanaLedger> {
+  const ledger = new SolanaLedger(opts);
+  const { connection, admin, world } = opts;
+  const exists = async (pk: Parameters<typeof connection.getAccountInfo>[0]) => (await connection.getAccountInfo(pk, 'confirmed')) !== null;
+  const run = (tx: Transaction) => sendAndConfirmTransaction(connection, tx, [admin], { commitment: 'confirmed' });
+  const { program } = ledger;
+
+  if (!(await exists(ledger.addr.config()))) {
+    await run(new Transaction().add(await program.methods.initialize().accountsPartial({ admin: admin.publicKey, config: ledger.addr.config() }).instruction()));
+  }
+
+  for (const planet of world.planets) {
+    const code = planet.currency;
+    if (!(await exists(ledger.addr.mint(code)))) {
+      await run(new Transaction().add(
+        await program.methods.createCurrency(codeBytes(code)).accountsPartial({
+          admin: admin.publicKey, config: ledger.addr.config(), mintAuthority: ledger.addr.mintAuthority(), mint: ledger.addr.mint(code),
+        }).instruction(),
+      ));
+    }
+
+    const ledgerAddr = await ledger.addr.ledger(planet.id);
+    if (!(await exists(ledgerAddr))) {
+      const lamports = await connection.getMinimumBalanceForRentExemption(PLANET_LEDGER_SPACE);
+      await run(new Transaction().add(
+        SystemProgram.createAccountWithSeed({
+          fromPubkey: admin.publicKey, newAccountPubkey: ledgerAddr, basePubkey: admin.publicKey,
+          seed: planet.id, lamports, space: PLANET_LEDGER_SPACE, programId: ledger.addr.programId,
+        }),
+        await program.methods.createPlanet(idKey(planet.id), codeBytes(code)).accountsPartial({
+          admin: admin.publicKey, config: ledger.addr.config(), ledger: ledgerAddr,
+        }).instruction(),
+      ));
+    }
+  }
+  return ledger;
+}
