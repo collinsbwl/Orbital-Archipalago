@@ -134,4 +134,14 @@ pub mod orbital {
     pub fn open_account<'info>(ctx: Context<'info, OpenAccount<'info>>, owner: [u8; 32], codes: Vec<[u8; 5]>, amounts: Vec<u64>, cargo: Vec<Cargo>) -> Result<()> {
         crate::instructions::open_account::handle_open_account(ctx, owner, codes, amounts, cargo)
     }
+
+    /// Mints a loan into the borrower's purse and records it. The planet's policy rate is snapshotted.
+    pub fn borrow(ctx: Context<Borrow>, owner: [u8; 32], planet: [u8; 32], code: [u8; 5], amount: u64, term_cycles: u64, cycle: u64) -> Result<()> {
+        crate::instructions::credit::handle_borrow(ctx, owner, planet, code, amount, term_cycles, cycle)
+    }
+
+    /// Accrues interest on a loan and burns the payment from the borrower's purse.
+    pub fn repay(ctx: Context<Repay>, loan_id: u64, code: [u8; 5], amount: u64, cycle: u64) -> Result<()> {
+        crate::instructions::credit::handle_repay(ctx, loan_id, code, amount, cycle)
+    }
 }

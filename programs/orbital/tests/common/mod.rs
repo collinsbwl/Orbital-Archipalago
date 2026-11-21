@@ -31,6 +31,15 @@ pub fn authority_pda() -> Pubkey {
 pub fn mint_pda(code: &[u8; 5]) -> Pubkey {
     Pubkey::find_program_address(&[orbital::constants::MINT_SEED, code], &orbital::id()).0
 }
+pub fn book_pda(code: &[u8; 5]) -> Pubkey {
+    Pubkey::find_program_address(&[orbital::constants::CURRENCY_SEED, code], &orbital::id()).0
+}
+pub fn policy_pda(planet: &str) -> Pubkey {
+    Pubkey::find_program_address(&[orbital::constants::POLICY_SEED, &key(planet)], &orbital::id()).0
+}
+pub fn loan_pda(id: u64) -> Pubkey {
+    Pubkey::find_program_address(&[orbital::constants::LOAN_SEED, &id.to_le_bytes()], &orbital::id()).0
+}
 pub fn purse_pda(owner: &[u8; 32], code: &[u8; 5]) -> Pubkey {
     Pubkey::find_program_address(&[orbital::constants::PURSE_SEED, owner, code], &orbital::id()).0
 }
@@ -75,6 +84,7 @@ pub fn create_currency_ix(admin: &Keypair, code: [u8; 5]) -> Instruction {
             config: config_pda(),
             mint_authority: authority_pda(),
             mint: mint_pda(&code),
+            book: book_pda(&code),
             token_program: TOKEN_PROGRAM,
             system_program: system_program::ID,
         }
@@ -107,6 +117,7 @@ pub fn issue_ix(admin: &Keypair, owner: [u8; 32], code: [u8; 5], amount: u64) ->
             config: config_pda(),
             mint_authority: authority_pda(),
             mint: mint_pda(&code),
+            book: book_pda(&code),
             purse: purse_pda(&owner, &code),
             token_program: TOKEN_PROGRAM,
         }
@@ -205,10 +216,79 @@ pub fn open_account_ix(admin: &Keypair, ledger: Pubkey, owner: &str, codes: &[[u
     for c in codes {
         metas.push(anchor_lang::prelude::AccountMeta::new(mint_pda(c), false));
         metas.push(anchor_lang::prelude::AccountMeta::new(purse_pda(&key(owner), c), false));
+        metas.push(anchor_lang::prelude::AccountMeta::new(book_pda(c), false));
     }
     Instruction::new_with_bytes(
         orbital::id(),
         &orbital::instruction::OpenAccount { owner: key(owner), codes: codes.to_vec(), amounts: amounts.to_vec(), cargo }.data(),
         metas,
     )
+}
+
+pub fn create_policy_ix(admin: &Keypair, planet: &str) -> Instruction {
+    Instruction::new_with_bytes(
+        orbital::id(),
+        &orbital::instruction::CreatePolicy { planet: key(planet) }.data(),
+        orbital::accounts::CreatePolicy { admin: admin.pubkey(), config: config_pda(), policy: policy_pda(planet), system_program: system_program::ID }
+            .to_account_metas(None),
+    )
+}
+
+pub fn apply_policy_ix(admin: &Keypair, planet: &str, op: orbital::PolicyOp) -> Instruction {
+    Instruction::new_with_bytes(
+        orbital::id(),
+        &orbital::instruction::ApplyPolicy { op }.data(),
+        orbital::accounts::ApplyPolicy { admin: admin.pubkey(), config: config_pda(), policy: policy_pda(planet) }.to_account_metas(None),
+    )
+}
+
+pub fn borrow_ix(admin: &Keypair, ledger: Pubkey, owner: &str, planet: &str, code: [u8; 5], amount: u64, term: u64, cycle: u64, loan_id: u64) -> Instruction {
+    Instruction::new_with_bytes(
+        orbital::id(),
+        &orbital::instruction::Borrow { owner: key(owner), planet: key(planet), code, amount, term_cycles: term, cycle }.data(),
+        orbital::accounts::Borrow {
+            admin: admin.pubkey(),
+            config: config_pda(),
+            loan: loan_pda(loan_id),
+            policy: policy_pda(planet),
+            ledger,
+            mint_authority: authority_pda(),
+            mint: mint_pda(&code),
+            book: book_pda(&code),
+            purse: purse_pda(&key(owner), &code),
+            token_program: TOKEN_PROGRAM,
+            system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    )
+}
+
+pub fn repay_ix(admin: &Keypair, owner: &str, code: [u8; 5], loan_id: u64, amount: u64, cycle: u64) -> Instruction {
+    Instruction::new_with_bytes(
+        orbital::id(),
+        &orbital::instruction::Repay { loan_id, code, amount, cycle }.data(),
+        orbital::accounts::Repay {
+            admin: admin.pubkey(),
+            config: config_pda(),
+            loan: loan_pda(loan_id),
+            mint: mint_pda(&code),
+            book: book_pda(&code),
+            purse: purse_pda(&key(owner), &code),
+            token_program: TOKEN_PROGRAM,
+        }
+        .to_account_metas(None),
+    )
+}
+
+/// (minted, burned) from a currency's supply record.
+pub fn minted_burned(svm: &LiteSVM, code: [u8; 5]) -> (u64, u64) {
+    let d = svm.get_account(&book_pda(&code)).unwrap().data;
+    (u64::from_le_bytes(d[8..16].try_into().unwrap()), u64::from_le_bytes(d[16..24].try_into().unwrap()))
+}
+
+/// (principal, outstanding, rate_bp, issued, due, last_accrual) from a loan account.
+pub fn loan(svm: &LiteSVM, id: u64) -> (u64, u64, u64, u64, u64, u64) {
+    let d = svm.get_account(&loan_pda(id)).unwrap().data;
+    let u = |at: usize| u64::from_le_bytes(d[at..at + 8].try_into().unwrap());
+    (u(77), u(85), u(93), u(101), u(109), u(117))
 }

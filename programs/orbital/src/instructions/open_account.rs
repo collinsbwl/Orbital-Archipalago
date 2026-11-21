@@ -20,7 +20,7 @@ pub struct OpenAccount<'info> {
     pub ledger: AccountLoader<'info, PlanetLedger>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
-    // remaining_accounts: for each currency, in order, [its mint, the owner's new purse (not yet created)].
+    // remaining_accounts: for each currency, in order, [its mint, the owner's new purse (not yet created), its supply record].
 }
 
 /// Opens an owner completely in one transaction: a purse in every currency, the starting cash minted into them, and the
@@ -29,14 +29,16 @@ pub struct OpenAccount<'info> {
 pub fn handle_open_account<'info>(
     ctx: Context<'info, OpenAccount<'info>>, owner: [u8; 32], codes: Vec<[u8; 5]>, amounts: Vec<u64>, cargo: Vec<Cargo>,
 ) -> Result<()> {
-    require!(codes.len() == amounts.len() && ctx.remaining_accounts.len() == codes.len() * 2, ErrorCode::AccountMismatch);
+    require!(codes.len() == amounts.len() && ctx.remaining_accounts.len() == codes.len() * 3, ErrorCode::AccountMismatch);
     check_lines(&cargo)?;
 
     let rent = Rent::get()?.minimum_balance(TOKEN_ACCOUNT_LEN as usize);
     for (i, (code, amount)) in codes.iter().zip(&amounts).enumerate() {
-        let (mint, purse) = (&ctx.remaining_accounts[2 * i], &ctx.remaining_accounts[2 * i + 1]);
+        let (mint, purse, book) = (&ctx.remaining_accounts[3 * i], &ctx.remaining_accounts[3 * i + 1], &ctx.remaining_accounts[3 * i + 2]);
         let expected_mint = Pubkey::find_program_address(&[MINT_SEED, code.as_ref()], &crate::ID).0;
         require_keys_eq!(mint.key(), expected_mint, ErrorCode::AccountMismatch);
+        let expected_book = Pubkey::find_program_address(&[CURRENCY_SEED, code.as_ref()], &crate::ID).0;
+        require_keys_eq!(book.key(), expected_book, ErrorCode::AccountMismatch);
         let (expected_purse, bump) = Pubkey::find_program_address(&[PURSE_SEED, owner.as_ref(), code.as_ref()], &crate::ID);
         require_keys_eq!(purse.key(), expected_purse, ErrorCode::AccountMismatch);
 
@@ -67,6 +69,10 @@ pub fn handle_open_account<'info>(
                 ),
                 *amount,
             )?;
+            let mut record = Account::<CurrencyBook>::try_from(book)?;
+            record.record_mint(*amount)?;
+            require!(mint_supply(mint)? == record.expected_supply(), ErrorCode::SupplyMismatch);
+            record.exit(&crate::ID)?; // not a declared account, so write it back ourselves
         }
     }
 

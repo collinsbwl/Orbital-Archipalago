@@ -21,5 +21,6 @@ pub fn handle_initialize(ctx: Context<Initialize>) -> Result<()> {
     ctx.accounts.config.admin = ctx.accounts.admin.key();
     ctx.accounts.config.next_order = 1;
     ctx.accounts.config.next_shipment = 1;
+    ctx.accounts.config.next_loan = 1;
     Ok(())
 }

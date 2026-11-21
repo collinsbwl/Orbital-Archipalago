@@ -2,7 +2,7 @@ import { AnchorProvider, BN, Program, Wallet } from '@anchor-lang/core';
 import { ComputeBudgetProgram, Connection, type Keypair, type PublicKey, Transaction, type TransactionInstruction } from '@solana/web3.js';
 import {
   AgentIdSchema, LedgerError, type AuctionResult, type BorrowRequest, type Cargo, type CurrencyId, type DepartRequest, type GoodId,
-  type FxAuctionResult, type FxOrder, type InvariantReport, type Ledger, type MinorUnits, type OpenAccountRequest, type Order, type OrderId, type OrderRecord, type OwnerId,
+  type FxAuctionResult, type FxOrder, type InvariantReport, type Ledger, type Loan, type MinorUnits, type OpenAccountRequest, type Order, type OrderId, type OrderRecord, type OwnerId,
   type ArriveResult, type PlaceOrdersResult, type PlanetId, type PolicyInstruction, type PolicyState, type RepayRequest, type Shipment,
   type ShipmentId, type WorldConfig,
 } from '@orbital/contracts';
@@ -37,6 +37,11 @@ const INVENTORY_COMPUTE_UNITS = 600_000;
 // Config account (after the discriminator): admin[32], next_order u64.
 const CONFIG_NEXT_ORDER_OFFSET = 8 + 32;
 const CONFIG_NEXT_SHIPMENT_OFFSET = 8 + 40;
+const CONFIG_NEXT_LOAN_OFFSET = 8 + 48;
+// CurrencyBook (after the discriminator): minted u64, burned u64.
+// Loan (after the discriminator): borrower[32] planet[32] currency[5] principal u64 outstanding u64 rate_bp u64 issued u64 due u64 last_accrual u64.
+const LOAN_CURRENCY_OFFSET = 8 + 64;
+const LOAN_NUMBERS_OFFSET = LOAN_CURRENCY_OFFSET + 5;
 // PlanetPolicy (after the discriminator): planet[32] policy_rate u64 n_goods u64 n_embargoes u64, 16 embargo keys[32],
 // then goods of 88 bytes: good[32] tariff u64 quota_max u64 quota_used u64 quota_cycle u64 last_price u64 base_price u64 has_quota u8 has_price u8 pad[6].
 const POLICY_RATE_OFFSET = 8 + 32;
@@ -90,10 +95,6 @@ interface BookOrder {
   cycle: number;
 }
 
-
-const notYet = (what: string): never => {
-  throw new LedgerError('invalid_state', `SolanaLedger.${what} is not implemented yet (C2-C4)`);
-};
 
 export class SolanaLedger implements Ledger {
   readonly addr: Addresses;
@@ -150,11 +151,12 @@ export class SolanaLedger implements Ledger {
         mintAuthority: this.addr.mintAuthority(),
         ledger: await this.addr.ledger(req.planet),
       })
-      // For each currency: its mint, then the purse the program will create.
+      // For each currency: its mint, the purse the program will create, and its supply record.
       .remainingAccounts(
         this.currencies.flatMap((c) => [
           { pubkey: this.addr.mint(c), isSigner: false, isWritable: true },
           { pubkey: this.addr.purse(req.owner, c), isSigner: false, isWritable: true },
+          { pubkey: this.addr.currencyBook(c), isSigner: false, isWritable: true },
         ]),
       )
       .instruction();
@@ -231,7 +233,8 @@ export class SolanaLedger implements Ledger {
   /**
    * Totals are read from the chain: currency = mint supply (purses + escrow vault), goods = every planet ledger plus the
    * goods held in sell orders. Checks that supply == purses + vault and that the vault equals the buy orders' escrow.
-   * Purses are summed over the owners opened through this instance; C4 replaces that with an on-chain total.
+   * The program itself fails any transaction that leaves the supply different from minted - burned; this also compares purses
+   * (summed over the owners opened through this instance) with the supply.
    */
   async checkInvariants(): Promise<InvariantReport> {
     const currency: Record<string, number> = {};
@@ -260,6 +263,11 @@ export class SolanaLedger implements Ledger {
       currency[code] = supply;
       const vaultData = await this.chain.getAccountData(this.addr.vault(code));
       const vault = vaultData ? toSafeNumber(vaultData.readBigUInt64LE(TOKEN_AMOUNT_OFFSET)) : 0;
+      const book = await this.chain.getAccountData(this.addr.currencyBook(code));
+      if (book) {
+        const expected = book.readBigUInt64LE(8) - book.readBigUInt64LE(16); // minted - burned, tracked by the program
+        if (BigInt(supply) !== expected) violations.push({ code: 'currency_supply_mismatch', message: `${code}: supply ${supply} != minted - burned ${expected}` });
+      }
       let purses = 0;
       for (const owner of this.owners) purses += await this.getPurse(owner, code);
       if (purses + vault !== supply) violations.push({ code: 'currency_supply_mismatch', message: `${code}: supply ${supply} != purses ${purses} + escrow ${vault}` });
@@ -531,7 +539,57 @@ export class SolanaLedger implements Ledger {
     };
   }
 
-  // ---- Later milestones ---------------------------------------------------------------------
+  // ---- C4: credit --------------------------------------------------------------------------------
+
+  /** A loan mints the planet's currency into the borrower's purse. The planet's current policy rate is snapshotted. */
+  async borrow(req: BorrowRequest): Promise<Loan> {
+    this.checkPlanet(req.planet);
+    this.checkAmount(req.amount, 'loan amount', false);
+    this.checkAmount(req.termCycles, 'termCycles', false);
+    this.checkAmount(req.cycle, 'cycle', true);
+    this.checkOwner(req.borrower);
+    await this.requireOpen(req.borrower);
+
+    const n = await this.counter(CONFIG_NEXT_LOAN_OFFSET);
+    const code = this.currencyOf(req.planet);
+    const ix = await this.program.methods
+      .borrow(idKey(req.borrower), idKey(req.planet), codeBytes(code), new BN(req.amount), new BN(req.termCycles), new BN(req.cycle))
+      .accountsPartial({
+        admin: this.admin.publicKey,
+        config: this.addr.config(),
+        loan: this.addr.loan(n),
+        policy: this.addr.policy(req.planet),
+        ledger: await this.addr.ledger(req.planet),
+        mintAuthority: this.addr.mintAuthority(),
+        mint: this.addr.mint(code),
+        book: this.addr.currencyBook(code),
+        purse: this.addr.purse(req.borrower, code),
+      })
+      .instruction();
+    await this.send([ix]);
+    return (await this.readLoan(`l${n}`))!;
+  }
+
+  /** Accrues simple interest since the last accrual, then burns min(amount, outstanding) from the borrower's purse. */
+  async repay(req: RepayRequest): Promise<Loan> {
+    const before = await this.readLoan(req.loanId);
+    if (!before) throw new LedgerError('unknown_loan', `unknown loan ${req.loanId}`);
+    this.checkAmount(req.amount, 'repay amount', false);
+    this.checkAmount(req.cycle, 'cycle', true);
+    const ix = await this.program.methods
+      .repay(new BN(Number(req.loanId.slice(1))), codeBytes(before.currency), new BN(req.amount), new BN(req.cycle))
+      .accountsPartial({
+        admin: this.admin.publicKey,
+        config: this.addr.config(),
+        loan: this.addr.loan(Number(req.loanId.slice(1))),
+        mint: this.addr.mint(before.currency),
+        book: this.addr.currencyBook(before.currency),
+        purse: this.addr.purse(before.borrower, before.currency),
+      })
+      .instruction();
+    await this.send([ix]);
+    return (await this.readLoan(req.loanId))!;
+  }
 
   // ---- C3: policy and shipping -------------------------------------------------------------------
 
@@ -678,8 +736,6 @@ export class SolanaLedger implements Ledger {
     };
   }
 
-  borrow = async (_req: BorrowRequest) => notYet('borrow'); // C4
-  repay = async (_req: RepayRequest) => notYet('repay'); // C4
 
   // ---- Validation ------------------------------------------------------------------------------
 
@@ -769,6 +825,28 @@ export class SolanaLedger implements Ledger {
       if (policy.subarray(at, at + 32).equals(key)) return true;
     }
     return false;
+  }
+
+  private async counter(offset: number): Promise<number> {
+    const data = await this.chain.getAccountData(this.addr.config());
+    if (!data) throw new LedgerError('invalid_state', 'ledger is not bootstrapped (no config account)');
+    return toSafeNumber(data.readBigUInt64LE(offset));
+  }
+
+  /** A loan by id ("l<n>"), or null if there is none. */
+  private async readLoan(id: string): Promise<Loan | null> {
+    const m = /^l(\d+)$/.exec(id);
+    if (!m) return null;
+    const data = await this.chain.getAccountData(this.addr.loan(Number(m[1])));
+    if (!data) return null;
+    const planetByHash = new Map(this.world.planets.map((p) => [Buffer.from(idKey(p.id)).toString('hex'), p.id]));
+    const borrowerKey = data.subarray(8, 40).toString('hex');
+    const u = (i: number) => toSafeNumber(data.readBigUInt64LE(LOAN_NUMBERS_OFFSET + i * 8));
+    return {
+      id, borrower: this.ownerByHash.get(borrowerKey) ?? borrowerKey, planet: planetByHash.get(data.subarray(40, 72).toString('hex'))!,
+      currency: data.subarray(LOAN_CURRENCY_OFFSET, LOAN_CURRENCY_OFFSET + 5).toString('ascii').replace(/\0+$/, ''),
+      principal: u(0), outstanding: u(1), rateBp: u(2), issuedCycle: u(3), dueCycle: u(4),
+    };
   }
 
   private async nextShipmentId(): Promise<number> {

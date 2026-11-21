@@ -172,6 +172,229 @@ export const IDL = {
       ]
     },
     {
+      "name": "borrow",
+      "docs": [
+        "Mints a loan into the borrower's purse and records it. The planet's policy rate is snapshotted."
+      ],
+      "discriminator": [
+        228,
+        253,
+        131,
+        202,
+        207,
+        116,
+        89,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_loan",
+                "account": "Config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "policy",
+          "docs": [
+            "The lending planet's policy: its current rate is snapshotted into the loan."
+          ]
+        },
+        {
+          "name": "ledger",
+          "docs": [
+            "Proves `code` is that planet's currency."
+          ]
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "purse",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "owner",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "planet",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "code",
+          "type": {
+            "array": [
+              "u8",
+              5
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "term_cycles",
+          "type": "u64"
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "cancel_fx_order",
       "docs": [
         "Cancels an FX order and refunds its escrow."
@@ -922,6 +1145,34 @@ export const IDL = {
           }
         },
         {
+          "name": "book",
+          "docs": [
+            "Starts at zero minted, zero burned."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
           "name": "token_program",
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         },
@@ -1588,6 +1839,31 @@ export const IDL = {
                   105,
                   110,
                   116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
                 ]
               },
               {
@@ -2271,6 +2547,167 @@ export const IDL = {
       ]
     },
     {
+      "name": "repay",
+      "docs": [
+        "Accrues interest on a loan and burns the payment from the borrower's purse."
+      ],
+      "discriminator": [
+        234,
+        103,
+        67,
+        82,
+        208,
+        234,
+        219,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "loan_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  117,
+                  114,
+                  114,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "purse",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan.borrower",
+                "account": "Loan"
+              },
+              {
+                "kind": "arg",
+                "path": "code"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "loan_id",
+          "type": "u64"
+        },
+        {
+          "name": "code",
+          "type": {
+            "array": [
+              "u8",
+              5
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "cycle",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "transfer",
       "docs": [
         "Moves currency between two purses of the same currency."
@@ -2412,6 +2849,32 @@ export const IDL = {
         250,
         204,
         130
+      ]
+    },
+    {
+      "name": "CurrencyBook",
+      "discriminator": [
+        70,
+        232,
+        218,
+        53,
+        37,
+        172,
+        192,
+        78
+      ]
+    },
+    {
+      "name": "Loan",
+      "discriminator": [
+        20,
+        195,
+        70,
+        117,
+        165,
+        227,
+        182,
+        1
       ]
     },
     {
@@ -2557,6 +3020,21 @@ export const IDL = {
       "code": 6017,
       "name": "InvalidRate",
       "msg": "Rate must be 0..=10000 basis points"
+    },
+    {
+      "code": 6018,
+      "name": "LoanSettled",
+      "msg": "Loan is already repaid"
+    },
+    {
+      "code": 6019,
+      "name": "CycleBeforeAccrual",
+      "msg": "Repayment cycle is before the last accrual"
+    },
+    {
+      "code": 6020,
+      "name": "SupplyMismatch",
+      "msg": "Token supply does not match the minted minus burned record"
     }
   ],
   "types": [
@@ -2632,6 +3110,33 @@ export const IDL = {
             "docs": [
               "Next shipment id; ids are \"s<n>\", starting at 1."
             ],
+            "type": "u64"
+          },
+          {
+            "name": "next_loan",
+            "docs": [
+              "Next loan id; ids are \"l<n>\", starting at 1."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CurrencyBook",
+      "docs": [
+        "The program's own record of how much of a currency exists: everything it ever minted minus everything it ever burned.",
+        "The SPL mint's supply must equal this after every mint or burn; if it ever does not, that transaction fails."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minted",
+            "type": "u64"
+          },
+          {
+            "name": "burned",
             "type": "u64"
           }
         ]
@@ -2747,6 +3252,74 @@ export const IDL = {
           },
           {
             "name": "qty",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Loan",
+      "docs": [
+        "A loan. Kept after it is repaid (outstanding = 0) so a second repay is rejected."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "borrower",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "planet",
+            "docs": [
+              "sha256(lending planet id)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "currency",
+            "type": {
+              "array": [
+                "u8",
+                5
+              ]
+            }
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "outstanding",
+            "type": "u64"
+          },
+          {
+            "name": "rate_bp",
+            "docs": [
+              "The planet's policy rate when the loan was made, per cycle."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "issued_cycle",
+            "type": "u64"
+          },
+          {
+            "name": "due_cycle",
+            "type": "u64"
+          },
+          {
+            "name": "last_accrual",
             "type": "u64"
           }
         ]
@@ -3173,6 +3746,14 @@ export const IDL = {
       "value": "[99, 111, 110, 102, 105, 103]"
     },
     {
+      "name": "CURRENCY_SEED",
+      "docs": [
+        "Seed of each currency's supply record: [\"currency\", currency_code]."
+      ],
+      "type": "bytes",
+      "value": "[99, 117, 114, 114, 101, 110, 99, 121]"
+    },
+    {
       "name": "FX_BOOK_SEED",
       "docs": [
         "Seed prefix of each FX order book, one per unordered currency pair: [\"fxbook\", first_code, second_code]",
@@ -3180,6 +3761,14 @@ export const IDL = {
       ],
       "type": "bytes",
       "value": "[102, 120, 98, 111, 111, 107]"
+    },
+    {
+      "name": "LOAN_SEED",
+      "docs": [
+        "Seed of each loan: [\"loan\", id as u64 little-endian]."
+      ],
+      "type": "bytes",
+      "value": "[108, 111, 97, 110]"
     },
     {
       "name": "MINT_AUTHORITY_SEED",

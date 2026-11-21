@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount, Transfer};
 
-use crate::{constants::*, error::ErrorCode, state::Config};
+use crate::{constants::*, error::ErrorCode, state::{mint_supply, Config, CurrencyBook}};
 
 /// A purse is an SPL token account at ["purse", owner, code] whose token-owner is
 /// ITSELF. Self-owned means no wallet key can spend it; only this program can sign
@@ -45,6 +45,8 @@ pub struct Issue<'info> {
     pub mint_authority: UncheckedAccount<'info>,
     #[account(mut, seeds = [MINT_SEED, code.as_ref()], bump)]
     pub mint: Account<'info, Mint>,
+    #[account(mut, seeds = [CURRENCY_SEED, code.as_ref()], bump)]
+    pub book: Account<'info, CurrencyBook>,
     #[account(mut, seeds = [PURSE_SEED, owner.as_ref(), code.as_ref()], bump)]
     pub purse: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
@@ -64,7 +66,10 @@ pub fn handle_issue(ctx: Context<Issue>, _owner: [u8; 32], _code: [u8; 5], amoun
             &[seeds],
         ),
         amount,
-    )
+    )?;
+    ctx.accounts.book.record_mint(amount)?;
+    require!(mint_supply(&ctx.accounts.mint.to_account_info())? == ctx.accounts.book.expected_supply(), ErrorCode::SupplyMismatch);
+    Ok(())
 }
 
 #[derive(Accounts)]

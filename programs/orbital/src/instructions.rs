@@ -1,4 +1,5 @@
 pub mod create_currency;
+pub mod credit;
 pub mod create_planet;
 pub mod fx_orders;
 pub mod initialize;
@@ -10,6 +11,7 @@ pub mod shipping;
 pub mod purse;
 
 pub use create_currency::*;
+pub use credit::*;
 pub use create_planet::*;
 pub use fx_orders::*;
 pub use initialize::*;

@@ -38,4 +38,10 @@ pub enum ErrorCode {
     PolicyFull,
     #[msg("Rate must be 0..=10000 basis points")]
     InvalidRate,
+    #[msg("Loan is already repaid")]
+    LoanSettled,
+    #[msg("Repayment cycle is before the last accrual")]
+    CycleBeforeAccrual,
+    #[msg("Token supply does not match the minted minus burned record")]
+    SupplyMismatch,
 }

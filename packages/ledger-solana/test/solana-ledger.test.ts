@@ -91,8 +91,17 @@ describe.skipIf(!hasValidator)('inventories', () => {
   });
 });
 
-describe.skipIf(!hasValidator)('later milestones', () => {
-  it('fail loudly instead of pretending', async () => {
-    await rejects(ledger.borrow({ borrower: 'x', planet: 'helion', amount: 1, termCycles: 1, cycle: 1 }), 'invalid_state');
+describe.skipIf(!hasValidator)('credit', () => {
+  it('borrow mints into the purse and repay burns, on a real validator', async () => {
+    const a = id('frank');
+    await ledger.openAccount({ owner: a, planet: 'helion', purse: { HLX: 100 } });
+    const loan = await ledger.borrow({ borrower: a, planet: 'helion', amount: 500, termCycles: 5, cycle: 1 });
+    expect(loan).toMatchObject({ borrower: a, planet: 'helion', currency: 'HLX', principal: 500, outstanding: 500, dueCycle: 6 });
+    expect(await ledger.getPurse(a, 'HLX')).toBe(600);
+    expect((await ledger.repay({ loanId: loan.id, amount: 500, cycle: 2 })).outstanding).toBe(0);
+    expect(await ledger.getPurse(a, 'HLX')).toBe(100);
+    await rejects(ledger.repay({ loanId: loan.id, amount: 1, cycle: 3 }), 'invalid_state');
+    await rejects(ledger.repay({ loanId: 'l9999', amount: 1, cycle: 3 }), 'unknown_loan');
+    expect((await ledger.checkInvariants()).ok).toBe(true);
   });
 });

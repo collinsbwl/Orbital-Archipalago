@@ -11,6 +11,8 @@ pub struct Config {
     pub next_order: u64,
     /// Next shipment id; ids are "s<n>", starting at 1.
     pub next_shipment: u64,
+    /// Next loan id; ids are "l<n>", starting at 1.
+    pub next_loan: u64,
 }
 
 /// One line of cargo in an instruction: `good` is sha256(goodId), computed client-side.
@@ -208,4 +210,52 @@ impl PlanetPolicy {
     pub fn embargoes_planet(&self, planet: &[u8; 32]) -> bool {
         self.embargoes[..self.n_embargoes as usize].contains(planet)
     }
+}
+
+/// The program's own record of how much of a currency exists: everything it ever minted minus everything it ever burned.
+/// The SPL mint's supply must equal this after every mint or burn; if it ever does not, that transaction fails.
+#[account]
+#[derive(InitSpace)]
+pub struct CurrencyBook {
+    pub minted: u64,
+    pub burned: u64,
+}
+
+impl CurrencyBook {
+    pub fn expected_supply(&self) -> u64 {
+        self.minted - self.burned
+    }
+
+    pub fn record_mint(&mut self, amount: u64) -> Result<()> {
+        self.minted = self.minted.checked_add(amount).ok_or(ErrorCode::Overflow)?;
+        Ok(())
+    }
+
+    pub fn record_burn(&mut self, amount: u64) -> Result<()> {
+        self.burned = self.burned.checked_add(amount).ok_or(ErrorCode::Overflow)?;
+        Ok(())
+    }
+}
+
+/// SPL mint layout: mint_authority (36 bytes: a 4-byte option tag and a key), then supply as u64.
+pub fn mint_supply(mint: &AccountInfo) -> Result<u64> {
+    let data = mint.try_borrow_data()?;
+    Ok(u64::from_le_bytes(data[36..44].try_into().unwrap()))
+}
+
+/// A loan. Kept after it is repaid (outstanding = 0) so a second repay is rejected.
+#[account]
+#[derive(InitSpace)]
+pub struct Loan {
+    pub borrower: [u8; 32],
+    /// sha256(lending planet id)
+    pub planet: [u8; 32],
+    pub currency: [u8; 5],
+    pub principal: u64,
+    pub outstanding: u64,
+    /// The planet's policy rate when the loan was made, per cycle.
+    pub rate_bp: u64,
+    pub issued_cycle: u64,
+    pub due_cycle: u64,
+    pub last_accrual: u64,
 }

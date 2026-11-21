@@ -61,3 +61,11 @@ pub const SHIPMENT_SEED: &[u8] = b"shipment";
 pub const MAX_POLICY_GOODS: usize = 32;
 /// Planets one planet can embargo at once.
 pub const MAX_EMBARGOES: usize = 16;
+
+/// Seed of each currency's supply record: ["currency", currency_code].
+#[constant]
+pub const CURRENCY_SEED: &[u8] = b"currency";
+
+/// Seed of each loan: ["loan", id as u64 little-endian].
+#[constant]
+pub const LOAN_SEED: &[u8] = b"loan";

@@ -26,7 +26,7 @@ export async function bootstrapLedger(opts: SolanaLedgerOptions): Promise<Solana
     if (!(await exists(ledger.addr.mint(code)))) {
       await run(new Transaction().add(
         await program.methods.createCurrency(codeBytes(code)).accountsPartial({
-          admin: admin.publicKey, config: ledger.addr.config(), mintAuthority: ledger.addr.mintAuthority(), mint: ledger.addr.mint(code),
+          admin: admin.publicKey, config: ledger.addr.config(), mintAuthority: ledger.addr.mintAuthority(), mint: ledger.addr.mint(code), book: ledger.addr.currencyBook(code),
         }).instruction(),
       ));
     }

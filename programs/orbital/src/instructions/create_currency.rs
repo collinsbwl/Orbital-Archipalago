@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
 
-use crate::{constants::*, error::ErrorCode, state::Config};
+use crate::{constants::*, error::ErrorCode, state::{Config, CurrencyBook}};
 
 #[derive(Accounts)]
 #[instruction(code: [u8; 5])]
@@ -23,6 +23,9 @@ pub struct CreateCurrency<'info> {
         // No freeze authority: nobody can freeze a purse.
     )]
     pub mint: Account<'info, Mint>,
+    /// Starts at zero minted, zero burned.
+    #[account(init, payer = admin, space = 8 + CurrencyBook::INIT_SPACE, seeds = [CURRENCY_SEED, code.as_ref()], bump)]
+    pub book: Account<'info, CurrencyBook>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
