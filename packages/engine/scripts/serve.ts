@@ -1,4 +1,4 @@
-// Usage: tsx scripts/serve.ts [--port 8787] [--interval 1000] [--cycles N]
+// Usage: tsx scripts/serve.ts [--port 8787] [--interval 2000] [--cycles N]
 // Env: TIGER_DATABASE_URL (else in-memory series), AUTH0_ISSUER + AUTH0_AUDIENCE (else auth disabled, every caller is DEV_ROLE or 'operator').
 import { DEFAULT_WORLD } from '@orbital/contracts';
 import { InMemoryLedger } from '@orbital/ledger-memory';
@@ -30,7 +30,7 @@ const runner = new LiveRunner({
   universeId: world.universeId,
   universe,
   series: store,
-  intervalMs: arg('interval', 1000),
+  intervalMs: arg('interval', 2000),
   maxCycles: arg('cycles', world.cycles),
   ...(tiger ? { audit: (e) => tiger.recordGodModeAudit(e) } : {}),
   ...(tiger ? { onFork: (id: string) => tiger.registerUniverse(id, `${world.name} (${id})`, world.seed, { ...world, universeId: id }) } : {}),

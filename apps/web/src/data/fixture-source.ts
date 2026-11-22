@@ -23,7 +23,7 @@ export class FixtureSource implements SnapshotSource {
 
   constructor(opts: FixtureSourceOptions = {}) {
     this.url = opts.url ?? '/fixtures/snapshots.json';
-    this.intervalMs = opts.intervalMs ?? 500;
+    this.intervalMs = opts.intervalMs ?? 1000;
     this.fetchImpl = opts.fetchImpl ?? ((...a) => fetch(...a));
   }
 

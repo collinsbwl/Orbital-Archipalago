@@ -18,7 +18,7 @@ pnpm --filter @orbital/web dev          # fixtures: plays public/fixtures/snapsh
 Against a live engine:
 
 ```sh
-pnpm --filter @orbital/engine serve -- --port 8787 --interval 500
+pnpm --filter @orbital/engine serve -- --port 8787 --interval 2000
 # then open http://localhost:5173/?live=1   (ws://localhost:8787 by default)
 ```
 
