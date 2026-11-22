@@ -138,8 +138,8 @@ function ViewDirector({ transition, frame, memory, flying, focusedRef, onShown }
       camera.lookAt(orbit.target);
     }
 
-    // Steering is off whenever the view is not the idle map, checked every frame so a skipped phase cannot leave it on.
-    const free = s.phase === 'idle' && s.view.kind === 'map';
+    // Steering is off during any transition, checked every frame so a skipped phase cannot leave it on.
+    const free = s.phase === 'idle'; // on the map or on the ground: you steer whenever nothing is transitioning
     if (!free) {
       if (orbit.enabled) orbit.enabled = false;
     } else if (!prev.free && !flying.current) {

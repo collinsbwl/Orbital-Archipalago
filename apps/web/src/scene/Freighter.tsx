@@ -116,7 +116,7 @@ export function FreighterModel({ groupRef, trail, id, scale = SHIP_SCALE, hovere
         </mesh>
         {/* An invisible, bigger target so a tiny ship is easy to point at. */}
         <mesh
-          raycast={interactive ? undefined : noRaycast}
+          raycast={interactive ? THREE.Mesh.prototype.raycast : noRaycast}
           onPointerOver={interactive ? (e) => {
             e.stopPropagation();
             onHover(id);

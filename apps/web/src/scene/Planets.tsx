@@ -96,7 +96,7 @@ function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlig
         ref={body}
         geometry={geometry}
         scale={look.radius}
-        raycast={interactive ? undefined : noRaycast}
+        raycast={interactive ? THREE.Mesh.prototype.raycast : noRaycast}
         onPointerOver={(e) => {
           e.stopPropagation();
           onHover(look.id);
