@@ -10,6 +10,8 @@
 //   RUN_BUDGET_USD                       hard per-run spend cap, DEFAULT 15
 //   FLASH_RPM / FLASH_CONCURRENCY        DEFAULT 1000 / 32
 //   DECISION_RPM / DECISION_CONCURRENCY  DEFAULT 2000 / 64
+//   DECISION_INPUT_TPM                   gemini-decision-1 input-token quota per minute, as AI Studio shows it
+//                                        (ai.dev/rate-limit), DEFAULT 1000000 (Tier 1); see decisionInputBudget
 //   MIN_CHOICE_CONFIDENCE                below this, traders/governments defer to Flash, DEFAULT 0.4
 //   RECORD_DIR                           if set, every call is appended to <dir>/<universe>/calls.jsonl
 //   CACHE_SCOPE=role|planet_cycle        explicit Flash cache scope, DEFAULT role
@@ -31,6 +33,19 @@ const num = (name: string, dflt: number): number => {
 
 /** Cycles between spend / decision-source log lines. */
 const LOG_EVERY = 10;
+
+/** Tier 1 input-token quota of gemini-decision-1 (from its 429 body: "1000000 input tokens per minute on Tier 1"). */
+export const DEFAULT_DECISION_INPUT_TPM = 1_000_000;
+/**
+ * Share of the real quota the limiter may reserve. The gateway reserves chars/4 per call, which runs ~1.3x below
+ * Gemini's real count (measured on live colonist calls), so 70% of the quota keeps real usage just under it.
+ */
+const DECISION_QUOTA_SHARE = 0.7;
+
+/** The decision limiter's input-token budget, in the gateway's chars/4 units, for a real quota of `quotaTpm`. */
+export function decisionInputBudget(quotaTpm: number): number {
+  return Math.floor(quotaTpm * DECISION_QUOTA_SHARE);
+}
 
 /** Adapts DefaultAgentRuntime to the engine's DecisionProvider (no caller signal; the runtime enforces per-task deadlines). */
 export class GeminiAgents implements DecisionProvider {
@@ -142,7 +157,13 @@ export function makeAgents(world: WorldConfig, opts: MakeAgentsOpts = {}): Decis
   const decisionGateway = createDecisionGateway(profile, {
     gemini: {
       client: client.decisions,
-      limiter: new Limiter({ concurrency: num('DECISION_CONCURRENCY', 64), rpm: num('DECISION_RPM', 2_000), inputTpm: 20_000_000, outputTpm: 1_000_000 }),
+      // Sized to the real quota: past it Gemini answers 429 and the agent falls back to standing orders.
+      limiter: new Limiter({
+        concurrency: num('DECISION_CONCURRENCY', 64),
+        rpm: num('DECISION_RPM', 2_000),
+        inputTpm: decisionInputBudget(num('DECISION_INPUT_TPM', DEFAULT_DECISION_INPUT_TPM)),
+        outputTpm: 1_000_000,
+      }),
       cost,
     },
     ...(recording ? { recording } : {}),

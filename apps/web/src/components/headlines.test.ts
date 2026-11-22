@@ -21,6 +21,8 @@ describe('classify', () => {
     ['[god mode] Helion policy rate set to 500 bp (reserve-bank rule suspended 20 cycles)', 'rateSet', { planet: 'Helion', rate: '5' }],
     ['Verdan policy rate 0 -> 370 bp (inflation 1111 bp, output gap 1659 bp)', 'rateHike', { planet: 'Verdan', from: '0', rate: '3.7' }],
     ['Helion policy rate 220 -> 0 bp (inflation 0 bp, output gap -2012 bp)', 'rateCut', { planet: 'Helion', from: '2.2', rate: '0' }],
+    ['Exodus: 4 colonists leave Helion for Verdan (hungry for grain and water); Helion population 22, Verdan 38', 'exodus', { n: '4', people: '4 colonists', from: 'Helion', to: 'Verdan', goods: 'grain and water' }],
+    ['Exodus: 1 colonist leaves Tethys for Verdan (hungry for grain); Tethys population 26, Verdan 31', 'exodus', { n: '1', people: '1 colonist', from: 'Tethys', to: 'Verdan', goods: 'grain' }],
   ])('%s', (text, type, vars) => {
     expect(classify(ev(text))).toEqual({ type, vars });
   });
@@ -67,6 +69,8 @@ describe('toNews glance', () => {
     ['[god mode] Helion embargoes Verdan', { planets: ['Helion', 'Verdan'], what: 'Trade', direction: 'down', change: 'blocked', tone: 'bad', category: 'Trade', breaking: true }],
     ['Currency crisis: HLX/VRD moved +25% in 5 cycles (VRD depreciated)', { planets: [], currency: 'VRD', what: 'VRD value', direction: 'down', change: '-25%', tone: 'bad', category: 'Markets', breaking: true }],
     ['Confidence collapse: Tethys business confidence fell 23 points in 10 cycles', { planets: ['Tethys'], what: 'Business confidence', direction: 'down', change: '-23 pts', tone: 'bad', category: 'Economy', breaking: false }],
+    ['Exodus: 4 colonists leave Helion for Verdan (hungry for grain and water); Helion population 22, Verdan 38', { planets: ['Helion', 'Verdan'], what: 'Helion population', direction: 'down', change: '-4', tone: 'bad', category: 'Migration', breaking: true }],
+    ['Exodus: 1 colonist leaves Tethys for Verdan (hungry for grain); Tethys population 26, Verdan 31', { planets: ['Tethys', 'Verdan'], what: 'Tethys population', direction: 'down', change: '-1', tone: 'bad', category: 'Migration', breaking: false }],
   ])('%s', (text, glance) => {
     expect(toNews(ev(text))?.glance).toEqual(glance);
   });

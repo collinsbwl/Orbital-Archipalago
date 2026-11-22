@@ -38,6 +38,8 @@ export interface MetricsInput {
   /** Survey answers of agents acting on this planet this cycle. */
   surveys: readonly SurveyAnswer[];
   prev?: Pick<PlanetMetrics, 'consumerConfidence' | 'businessConfidence'>;
+  /** Colonists living on the planet now (migration moves them); default: its configured colonist count. */
+  population?: number;
 }
 
 export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: MetricsInput): PlanetMetrics {
@@ -45,7 +47,7 @@ export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: Me
     gdp: valueAdded(inp.produced, inp.used, inp.price),
     cpi: basketCpi(world, inp.price),
     tradeBalance: tradeBalance(inp.flow),
-    population: planet.agents.colonist,
+    population: inp.population ?? planet.agents.colonist,
     consumerConfidence: confidence(inp.surveys, 'consumer', inp.prev?.consumerConfidence ?? INITIAL_CONFIDENCE),
     businessConfidence: confidence(inp.surveys, 'business', inp.prev?.businessConfidence ?? INITIAL_CONFIDENCE),
   };

@@ -1,5 +1,5 @@
 import { LedgerError } from '@orbital/contracts';
-import type { Ledger, Recipe, WorldConfig } from '@orbital/contracts';
+import type { AgentId, Ledger, PlanetConfig, PlanetId, Recipe, WorldConfig } from '@orbital/contracts';
 import { agentId } from '../agents.js';
 
 /** planet -> good -> units produced. */
@@ -9,13 +9,38 @@ export type Counts = Record<string, Record<string, number>>;
 export type Multipliers = ReadonlyMap<string, number>;
 export const multKey = (planet: string, good: string): string => `${planet}|${good}`;
 
+/** Colonists living on each planet, in a fixed order (they may have moved there from another planet). */
+export type Residents = ReadonlyMap<PlanetId, readonly AgentId[]>;
+
+/** Every colonist on its home planet: the world before anyone migrates. */
+export function homeResidents(world: WorldConfig): Residents {
+  return new Map(world.planets.map((p) => [p.id, Array.from({ length: p.agents.colonist }, (_, i) => agentId(p.id, 'colonist', i))]));
+}
+
 /**
- * Each planet runs each recipe up to batchesPerCycle. Batches go round-robin to the planet's colonists (start rotates
- * with the cycle). A batch whose owner lacks the inputs on that planet is skipped. `used`, when given, is filled with
- * the input units consumed per planet/good (for value-added GDP). `outputMult` scales the output of a good on a planet
- * (floored; inputs are still consumed, and an output scaled to 0 is simply not produced).
+ * Output elasticity of labour. A planet's batches per cycle scale with (residents / configured colonists) to this
+ * power: more hands make more, each extra one a bit less (land and equipment stay fixed), and an emptied planet keeps
+ * more output per head. 1 would be linear.
  */
-export async function runProduction(world: WorldConfig, ledger: Ledger, cycle: number, used: Counts = {}, outputMult?: Multipliers): Promise<Counts> {
+export const LABOR_EXPONENT = 0.7;
+
+/** Batches of one recipe a planet runs with `residents` colonists; exactly `batchesPerCycle` at its configured size. */
+export function batchesFor(planet: PlanetConfig, batchesPerCycle: number, residents: number): number {
+  const base = planet.agents.colonist;
+  if (residents === base || base === 0) return batchesPerCycle;
+  return Math.round(batchesPerCycle * (residents / base) ** LABOR_EXPONENT);
+}
+
+/**
+ * Each planet runs each recipe up to its batches per cycle (see `batchesFor`). Batches go round-robin to the colonists
+ * living there (start rotates with the cycle). A batch whose owner lacks the inputs on that planet is skipped. `used`,
+ * when given, is filled with the input units consumed per planet/good (for value-added GDP). `outputMult` scales the
+ * output of a good on a planet (floored; inputs are still consumed, and an output scaled to 0 is simply not produced).
+ * `residents` defaults to each planet's own colonists.
+ */
+export async function runProduction(
+  world: WorldConfig, ledger: Ledger, cycle: number, used: Counts = {}, outputMult?: Multipliers, residents: Residents = homeResidents(world),
+): Promise<Counts> {
   const recipes = new Map(world.recipes.map((r) => [r.id, r]));
   const produced: Counts = {};
   // Batches grouped by owner: one owner's batches run in order (a later one may need an earlier one's output), while
@@ -24,14 +49,16 @@ export async function runProduction(world: WorldConfig, ledger: Ledger, cycle: n
   for (const p of world.planets) {
     produced[p.id] = {};
     used[p.id] = {};
-    const n = p.agents.colonist;
+    const here = residents.get(p.id) ?? [];
+    const n = here.length;
     if (n === 0) continue;
-    const total = p.recipes.reduce((s, r) => s + r.batchesPerCycle, 0);
+    const batches = p.recipes.map((pr) => batchesFor(p, pr.batchesPerCycle, n));
+    const total = batches.reduce((s, b) => s + b, 0);
     let k = (cycle * total) % n;
-    for (const pr of p.recipes) {
+    for (const [r, pr] of p.recipes.entries()) {
       const recipe = recipes.get(pr.recipe)!;
-      for (let b = 0; b < pr.batchesPerCycle; b++, k = (k + 1) % n) {
-        const owner = agentId(p.id, 'colonist', k);
+      for (let b = 0; b < batches[r]!; b++, k = (k + 1) % n) {
+        const owner = here[k]!;
         const list = byOwner.get(owner) ?? [];
         list.push({ planet: p.id, recipe });
         byOwner.set(owner, list);

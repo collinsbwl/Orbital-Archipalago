@@ -39,7 +39,7 @@ const snapshot: Snapshot = {
 };
 
 describe('contracts', () => {
-  it('exposes a version', () => expect(CONTRACTS_VERSION).toBe('0.3.0'));
+  it('exposes a version', () => expect(CONTRACTS_VERSION).toBe('0.4.0'));
 
   it('DEFAULT_WORLD parses and is stable', () => {
     expect(WorldConfigSchema.parse(DEFAULT_WORLD)).toEqual(DEFAULT_WORLD);

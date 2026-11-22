@@ -82,6 +82,8 @@ export const ObservationSchema = z.object({
   /** Governments: balanced briefing text. */
   briefing: z.string().max(4_000).optional(),
   memo: z.string().max(200).optional(),
+  /** Colonists: per need good, how many cycles in a row it went unmet (a met need is absent). */
+  hunger: z.record(GoodIdSchema, z.number().int().positive()).optional(),
 });
 export type Observation = z.infer<typeof ObservationSchema>;
 

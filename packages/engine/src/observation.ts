@@ -1,4 +1,4 @@
-import type { AgentTask, Ledger, Loan, PlanetId, PolicyState, Shipment, WorldConfig } from '@orbital/contracts';
+import type { AgentId, AgentTask, GoodId, Ledger, Loan, PlanetId, PolicyState, Shipment, WorldConfig } from '@orbital/contracts';
 import type { AgentInfo } from './agents.js';
 import type { FxView } from './fx.js';
 import type { MarketBook } from './market-book.js';
@@ -19,6 +19,8 @@ export interface TaskContext {
   loans: readonly Loan[];
   /** Governments: short per-planet briefing text built from recent metrics. */
   briefings?: ReadonlyMap<PlanetId, string>;
+  /** Colonists: per need good, cycles in a row it went unmet (see `Observation.hunger`). */
+  hunger?: ReadonlyMap<AgentId, Readonly<Record<GoodId, number>>>;
 }
 
 /** Builds one cycle's tasks. `agents[].planet` is where the agent acts (docked planet for traders). Policy is read once per planet. */
@@ -57,6 +59,7 @@ export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[])
       }
     }
     const briefing = a.role === 'government' ? ctx.briefings?.get(a.planet) : undefined;
+    const hunger = a.role === 'colonist' ? ctx.hunger?.get(a.id) : undefined;
     tasks.push({
       universeId: world.universeId,
       cycle,
@@ -76,6 +79,7 @@ export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[])
         ...(elsewhere.length > 0 ? { elsewhere: elsewhere.slice(0, 8) } : {}),
         ...(briefing ? { briefing: briefing.slice(0, 4_000) } : {}),
         ...(memo !== undefined ? { memo } : {}),
+        ...(hunger && Object.keys(hunger).length > 0 ? { hunger: { ...hunger } } : {}),
       },
       allowedActions: allowedActionsFor(a.role),
       deadlineMs: world.cycleDeadlineMs,

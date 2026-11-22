@@ -7,7 +7,9 @@ import { DefaultAgentRuntime } from '@orbital/agents';
 import { CostMeter, StubDecisionGateway, StubGateway } from '@orbital/gateway';
 import { RandomValidPolicy, Universe } from '@orbital/engine';
 import { InMemoryLedger } from '@orbital/ledger-memory';
-import { GeminiAgents, makeAgents, RecordedDecisions, resolveProfile } from '../src/agents.js';
+import {
+  DEFAULT_DECISION_INPUT_TPM, decisionInputBudget, GeminiAgents, makeAgents, RecordedDecisions, resolveProfile,
+} from '../src/agents.js';
 
 /** Stand-in for Decision 1: prefer moving cargo, then buying for a route, then a policy move. */
 function preferActive(req: DecisionRequest): Record<string, DecisionAnswer> {
@@ -51,7 +53,8 @@ describe('GeminiAgents in a live Universe', () => {
     expect(departures).toBeGreaterThan(0); // buy-then-ship across turns works
     expect(rejections).toBe(0); // every candidate passes the engine validator
     const snap = await universe.snapshot({ series: [] });
-    expect(snap.events.some((e) => e.kind === 'policy' && e.text.includes('Verdan government sets a 15% tariff on grain'))).toBe(true);
+    // Which tariff moves depends on the market (prices now respond to scarcity and gluts); the pick must take effect.
+    expect(snap.events.some((e) => e.kind === 'policy' && /^Verdan government sets a \d+% tariff on \w+$/.test(e.text))).toBe(true);
   }, 30_000);
 
   it('forks into an independent provider', () => {
@@ -102,5 +105,14 @@ describe('makeAgents', () => {
     expect(() => makeAgents(DEFAULT_WORLD)).toThrow(/GEMINI_API_KEY/);
     process.env.GATEWAY_PROFILE = 'pro';
     expect(() => resolveProfile()).toThrow(/GATEWAY_PROFILE/);
+  });
+});
+
+describe('decisionInputBudget', () => {
+  it('keeps the chars/4 reservation ~30% under the real quota, so Gemini\'s ~1.3x larger count stays below it', () => {
+    expect(DEFAULT_DECISION_INPUT_TPM).toBe(1_000_000);
+    const budget = decisionInputBudget(DEFAULT_DECISION_INPUT_TPM);
+    expect(budget).toBe(700_000);
+    expect(budget * 1.32).toBeLessThan(DEFAULT_DECISION_INPUT_TPM);
   });
 });

@@ -3,13 +3,15 @@ import type { AgentDecision, ArriveResult, PolicyInstruction } from '@orbital/co
 import type { CycleReport } from '../src/index.js';
 import { makeUniverse, scripted } from './helpers.js';
 
+// Treasury balances are asserted to the unit, and migration grants also draw on treasuries: keep everyone home.
+
 const TRADER = 'helion:trader:0';
 const dec = (actions: AgentDecision['actions']): AgentDecision => ({ agentId: TRADER, actions, reason: 'x', source: 'stub' });
 
 /** helion trader holds 10 iron and 5000 VRD, ships all iron to verdan at cycle 0 (10 cycles away), then idles. */
 async function shipIron(policy: PolicyInstruction[]) {
   const agents = scripted((tasks) => (tasks[0]!.cycle === 0 ? [dec([{ kind: 'ship', to: 'verdan', cargo: [{ good: 'iron', qty: 10 }] }])] : []));
-  const { universe, ledger } = makeUniverse({ agents });
+  const { universe, ledger } = makeUniverse({ agents, migration: false });
   await universe.init();
   await ledger.produce({ owner: TRADER, planet: 'helion', inputs: [], outputs: [{ good: 'iron', qty: 10 }] });
   await ledger.transfer({ from: 'verdan', to: TRADER, currency: 'VRD', amount: 5_000 });
@@ -70,7 +72,7 @@ describe('freighters and customs', () => {
         { kind: 'cancel_order', orderId: 'o999' }, // not own order -> validator rejection
       ]),
     ]);
-    const { universe } = makeUniverse({ agents });
+    const { universe } = makeUniverse({ agents, migration: false });
     await universe.init();
     const r = await universe.step(); // invariants are checked inside step
     expect(r).toMatchObject({ rejections: 1, ledgerRejections: 1, fxOrdersRejected: 1, departures: [] });
@@ -87,7 +89,7 @@ describe('freighters and customs', () => {
           ])]
         : [],
     );
-    const { universe, ledger } = makeUniverse({ agents });
+    const { universe, ledger } = makeUniverse({ agents, migration: false });
     await universe.init();
     await ledger.produce({ owner: TRADER, planet: 'helion', inputs: [], outputs: [{ good: 'iron', qty: 10 }] });
     const r = await universe.step();

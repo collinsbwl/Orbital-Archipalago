@@ -4,11 +4,15 @@ import { InMemoryLedger } from '@orbital/ledger-memory';
 import { RandomValidPolicy, Universe } from '../src/index.js';
 import type { DecisionProvider } from '../src/index.js';
 
-export function makeUniverse(opts: { world?: WorldConfig; agents?: DecisionProvider; seed?: number; checkInvariants?: boolean } = {}) {
+export function makeUniverse(opts: { world?: WorldConfig; agents?: DecisionProvider; seed?: number; checkInvariants?: boolean; migration?: boolean } = {}) {
   const world = opts.world ?? DEFAULT_WORLD;
   const ledger = new InMemoryLedger(world);
   const agents = opts.agents ?? new RandomValidPolicy(world, opts.seed ?? world.seed);
-  const universe = new Universe({ world, ledger, agents, ...(opts.checkInvariants !== undefined ? { checkInvariants: opts.checkInvariants } : {}) });
+  const universe = new Universe({
+    world, ledger, agents,
+    ...(opts.checkInvariants !== undefined ? { checkInvariants: opts.checkInvariants } : {}),
+    ...(opts.migration !== undefined ? { migration: opts.migration } : {}),
+  });
   return { world, ledger, universe };
 }
 

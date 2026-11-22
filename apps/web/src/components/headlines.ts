@@ -98,6 +98,12 @@ export const HEADLINE_TEMPLATES = {
     (v) => `Emergency move: ${v.planet} rates fixed at ${v.rate}%`,
     (v) => `${v.planet} takes the reins on rates: ${v.rate}% by decree`,
   ],
+  exodus: [
+    (v) => `Exodus from ${v.from}: hungry settlers pack up for ${v.to}`,
+    (v) => `${v.from} loses ${v.people} to ${v.to} amid a ${v.goods} shortage`,
+    (v) => `Hunger drives ${v.people} from ${v.from} to ${v.to}`,
+    (v) => `${v.to} takes in ${v.people} fleeing ${v.from}`,
+  ],
 } satisfies Record<string, Template[]>;
 
 export type HeadlineType = keyof typeof HEADLINE_TEMPLATES;
@@ -134,6 +140,10 @@ export function classify(e: SimEvent): { type: HeadlineType; vars: Vars } | null
     if (m[1] !== 'demand_surge' && m[1] !== 'windfall' && STAPLE_GOODS.has(vars.good) && cut >= FAMINE_CUT_PCT)
       return { type: 'famine', vars: { ...vars, cause: m[1]! } };
     return { type: SHOCK_TYPE[m[1]!]!, vars };
+  }
+  if ((m = text.match(/^Exodus: (\d+) colonists? leaves? (.+?) for (.+?) \(hungry for (.+?)\)/))) {
+    const n = Number(m[1]);
+    return { type: 'exodus', vars: { n: m[1]!, people: `${n} colonist${n === 1 ? '' : 's'}`, from: m[2]!, to: m[3]!, goods: m[4]! } };
   }
   if ((m = text.match(/^(.+?) sets a ([\d.]+)% tariff on (\w+)/))) return { type: 'tariff', vars: { planet: m[1]!, rate: m[2]!, good: m[3]! } };
   if ((m = text.match(/^(.+?) lifts the embargo on (.+)$/))) return { type: 'embargoLifted', vars: { planet: m[1]!, target: m[2]! } };
@@ -176,16 +186,18 @@ const CATEGORY: Record<HeadlineType, string> = {
   recession: 'Economy', confidence: 'Economy', currency: 'Markets', tradeWar: 'Trade', tradeDiversion: 'Trade',
   tariff: 'Trade', embargo: 'Trade', embargoLifted: 'Trade', famine: 'Famine', drought: 'Disaster', strike: 'Disaster',
   blight: 'Disaster', windfall: 'Business', demandSurge: 'Business', rateHike: 'Central bank', rateCut: 'Central bank', rateSet: 'Central bank',
+  exodus: 'Migration',
 };
 
 /** Thresholds for breaking news among event types that are only sometimes huge. Rate moves and tariffs are never breaking. */
-export const BREAKING = { recessionPct: 10, confidencePts: 30, shockPct: 50 } as const;
+export const BREAKING = { recessionPct: 10, confidencePts: 30, shockPct: 50, exodusPeople: 4 } as const;
 
 function isBreaking(type: HeadlineType, v: Vars): boolean {
   switch (type) {
     case 'tradeWar': case 'currency': case 'embargo': case 'famine': return true;
     case 'recession': return Number(v.pct) >= BREAKING.recessionPct;
     case 'confidence': return Number(v.pts) >= BREAKING.confidencePts;
+    case 'exodus': return Number(v.n) >= BREAKING.exodusPeople;
     case 'drought': case 'strike': case 'blight': case 'windfall': case 'demandSurge': return Math.abs(parseFloat(v.pct!)) >= BREAKING.shockPct;
     default: return false;
   }
@@ -213,6 +225,7 @@ function facts(type: HeadlineType, v: Vars): Omit<Glance, 'category' | 'breaking
     case 'rateHike': return { planets: one, what: 'Interest rate', direction: 'up', change: `${v.from}% → ${v.rate}%`, tone: 'neutral' };
     case 'rateCut': return { planets: one, what: 'Interest rate', direction: 'down', change: `${v.from}% → ${v.rate}%`, tone: 'neutral' };
     case 'rateSet': return { planets: one, what: 'Interest rate', direction: 'none', change: `set to ${v.rate}%`, tone: 'neutral' };
+    case 'exodus': return { planets: [v.from!, v.to!], what: `${v.from} population`, direction: 'down', change: `-${v.n}`, tone: 'bad' };
   }
 }
 

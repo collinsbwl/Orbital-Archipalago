@@ -10,6 +10,7 @@ export * from './validator.js';
 export * from './universe.js';
 export * from './fork.js';
 export * from './metrics.js';
+export * from './migration.js';
 export * from './reserve-bank.js';
 export * from './series-memory.js';
 export type * from './ports.js';

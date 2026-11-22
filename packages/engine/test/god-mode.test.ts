@@ -57,7 +57,8 @@ function inFlightAtFork(): { from: string; to: string; good: string; qty: number
 beforeAll(async () => {
   const { world, ledger } = makeUniverse();
   spy = new SpyPolicy(new RandomValidPolicy(world, world.seed));
-  base = new Universe({ world, ledger, agents: spy });
+  // Shock effects are measured against a control fork; migration would move workers between them and blur the ratios.
+  base = new Universe({ world, ledger, agents: spy, migration: false });
   await base.init();
   await run(base, WARM);
   control = await run(await base.fork('control'), N);

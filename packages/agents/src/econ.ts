@@ -22,8 +22,13 @@ export function producedGoods(world: WorldConfig, planet: string): string[] {
   return [...outputs];
 }
 
+/**
+ * `reference` moved by `bp` basis points, floored to whole units (min 1). A non-zero band always moves the price by at
+ * least one unit: flooring alone would turn +1% on a price under 100 into +0, and prices could never creep up.
+ */
 export function applyBand(reference: number, bp: number): number {
-  return Math.max(1, Math.floor((reference * (10_000 + bp)) / 10_000));
+  const moved = Math.floor((reference * (10_000 + bp)) / 10_000);
+  return Math.max(1, bp > 0 ? Math.max(moved, reference + 1) : moved);
 }
 
 export function confidenceFromTrend(trend: number[]): number {

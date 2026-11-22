@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ChartSeriesSchema, DEFAULT_WORLD, SnapshotSchema } from '@orbital/contracts';
 import type { Loan, Snapshot } from '@orbital/contracts';
 import { InMemoryLedger } from '@orbital/ledger-memory';
-import { InMemorySeries, RESERVE_BANK_CONFIG, RandomValidPolicy, Universe, basketCpi, confidence, inflationBp, outputGapBp, taylorRateBp, tradeBalance, valueAdded } from '../src/index.js';
+import { InMemorySeries, MIGRATION_CONFIG, RESERVE_BANK_CONFIG, RandomValidPolicy, Universe, basketCpi, confidence, inflationBp, outputGapBp, taylorRateBp, tradeBalance, valueAdded } from '../src/index.js';
 import type { CycleReport } from '../src/index.js';
 import { initialSupply } from './helpers.js';
 
@@ -142,10 +142,14 @@ describe('200-cycle economy on DEFAULT_WORLD', () => {
   it('reports integer metrics, with CPI near base and confidence from surveys', async () => {
     const { reports, world } = await run42();
     for (const r of reports) {
+      // Colonists migrate, so populations move, but nobody is created or lost, and planets stay within the floor and cap.
+      const total = world.planets.reduce((s, p) => s + r.metrics[p.id]!.population, 0);
+      expect(total).toBe(world.planets.reduce((s, p) => s + p.agents.colonist, 0));
       for (const p of world.planets) {
         const m = r.metrics[p.id]!;
         for (const v of Object.values(m)) expect(Number.isInteger(v)).toBe(true);
-        expect(m.population).toBe(p.agents.colonist);
+        expect(m.population).toBeGreaterThanOrEqual(Math.min(p.agents.colonist, MIGRATION_CONFIG.minPopulation));
+        expect(m.population).toBeLessThanOrEqual(p.agents.colonist * MIGRATION_CONFIG.maxPopulationMultiple);
         expect(m.consumerConfidence).toBeGreaterThanOrEqual(0);
         expect(m.businessConfidence).toBeLessThanOrEqual(100);
       }

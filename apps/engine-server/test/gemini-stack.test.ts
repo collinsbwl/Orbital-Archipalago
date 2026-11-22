@@ -150,6 +150,8 @@ describe('the real Gemini stack against a strict fake SDK', () => {
     delete process.env.GEMINI_API_KEY;
     delete process.env.GOOGLE_API_KEY;
     delete process.env.RECORD_DIR;
+    // Cycles run back to back against the fake SDK; a real-tier token budget would make the limiter queue them.
+    process.env.DECISION_INPUT_TPM = '1000000000';
   });
   afterEach(() => {
     process.env = { ...env };

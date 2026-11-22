@@ -1,7 +1,7 @@
-import { LedgerError } from '@orbital/contracts';
+import { LedgerError, RATE_SCALE } from '@orbital/contracts';
 import type {
-  ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyInstruction, PolicyState, Shipment, SimEvent, Snapshot,
-  SurveyAnswer, UniverseId, WorldConfig,
+  AgentId, ArriveResult, AuctionResult, ChartSeries, CurrencyId, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, MinorUnits, PlanetId, PolicyInstruction,
+  PolicyState, Shipment, SimEvent, Snapshot, SurveyAnswer, UniverseId, WorldConfig,
 } from '@orbital/contracts';
 import { listAgents } from './agents.js';
 import type { AgentInfo, DecisionProvider } from './agents.js';
@@ -13,11 +13,13 @@ import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
+import { MIGRATION_CONFIG, planMigrations } from './migration.js';
+import type { PlannedMove } from './migration.js';
 import { buildTasks } from './observation.js';
 import { orbitPhase, travelCycles } from './orbits.js';
 import { runConsumption } from './phases/consumption.js';
 import { multKey, runProduction, settleAll } from './phases/production.js';
-import type { Counts, Multipliers } from './phases/production.js';
+import type { Counts, Multipliers, Residents } from './phases/production.js';
 import type { MetricsSink } from './ports.js';
 import { RESERVE_BANK_CONFIG, inflationBp, outputGapBp, taylorRateBp } from './reserve-bank.js';
 import { schedule } from './scheduler.js';
@@ -28,6 +30,11 @@ import type { KnownIds } from './validator.js';
 export interface TradeFlow {
   exports: number;
   imports: number;
+}
+
+/** A colonist who moved this cycle, and the savings grant it got on arrival (destination currency). */
+export interface Migration extends PlannedMove {
+  grant: MinorUnits;
 }
 
 /** Plain data, JSON-safe. */
@@ -53,6 +60,8 @@ export interface CycleReport {
   metrics: Record<PlanetId, PlanetMetrics>;
   /** Loans that went unpaid past their due cycle for the first time this cycle. */
   defaults: number;
+  /** Colonists who left a planet this cycle (see `migration.ts`). */
+  migrations: Migration[];
 }
 
 /** Cycles of metrics kept in memory, and the number of events in `Snapshot.events`. */
@@ -87,6 +96,8 @@ export interface UniverseOptions {
   checkInvariants?: boolean;
   /** If present, `step()` writes the cycle's snapshot (with empty `series`) to it. */
   sink?: MetricsSink;
+  /** Hungry colonists move to planets that feed their people (see `migration.ts`). Default true. */
+  migration?: boolean;
 }
 
 export class Universe {
@@ -100,8 +111,11 @@ export class Universe {
   private readonly roster: AgentInfo[];
   private readonly known: KnownIds;
   private readonly memos = new Map<string, string>();
-  /** Where each trader's freighter is: a planet id when docked, null while in flight. */
+  /** Where each trader's freighter is (a planet id when docked, null while in flight) and where each colonist lives. */
   private readonly location = new Map<string, PlanetId | null>();
+  /** Per colonist, per need good: cycles in a row it went unmet. A fed colonist has no entry. */
+  private readonly hunger = new Map<AgentId, Record<GoodId, number>>();
+  private readonly migration: boolean;
   /** In-flight shipments in departure (= shipment id) order. */
   private readonly flights = new Map<string, Shipment>();
   /** Last non-null clearing rate (ppm quote per base) per canonical pair. */
@@ -129,6 +143,7 @@ export class Universe {
     this.check = opts.checkInvariants ?? true;
     this.orderTtl = opts.orderTtlCycles ?? DEFAULT_ORDER_TTL_CYCLES;
     this.sink = opts.sink;
+    this.migration = opts.migration ?? true;
     this.borrowCaps = borrowCapsOf(opts.world);
     this.roster = listAgents(opts.world);
     this.known = {
@@ -137,7 +152,7 @@ export class Universe {
       currencies: new Set(opts.world.planets.map((p) => p.currency)),
       borrowCaps: this.borrowCaps,
     };
-    for (const a of this.roster) if (a.role === 'trader') this.location.set(a.id, a.planet);
+    for (const a of this.roster) if (a.role === 'trader' || a.role === 'colonist') this.location.set(a.id, a.planet);
   }
 
   get cycle(): number {
@@ -174,7 +189,7 @@ export class Universe {
     if (!this.provider.fork) throw new Error('decision provider does not support fork(); cannot fork');
     const u = new Universe({
       world: { ...this.world, universeId }, ledger: await this.ledger.clone(), agents: this.provider.fork(), checkInvariants: this.check, orderTtlCycles: this.orderTtl,
-      ...(this.sink ? { sink: this.sink } : {}),
+      migration: this.migration, ...(this.sink ? { sink: this.sink } : {}),
     });
     const fill = <K, V>(to: Map<K, V>, from: ReadonlyMap<K, V>) => {
       to.clear();
@@ -182,7 +197,7 @@ export class Universe {
     };
     u.book = this.book.clone();
     fill(u.memos, this.memos); fill(u.location, this.location); fill(u.flights, this.flights); fill(u.fxRates, this.fxRates);
-    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride);
+    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride); fill(u.hunger, this.hunger);
     for (const id of this.defaulted) u.defaulted.add(id);
     u.history.push(...structuredClone(this.history));
     u.events.push(...structuredClone(this.events));
@@ -194,9 +209,21 @@ export class Universe {
     return u;
   }
 
-  /** Docked planet of a trader, or null while in flight. */
-  locationOf(traderId: string): PlanetId | null | undefined {
-    return this.location.get(traderId);
+  /** Docked planet of a trader (null while in flight), or the planet a colonist lives on. */
+  locationOf(agentId: string): PlanetId | null | undefined {
+    return this.location.get(agentId);
+  }
+
+  /** Colonists living on each planet, in roster order (home colonists and newcomers alike). */
+  residents(): Map<PlanetId, AgentId[]> {
+    const out = new Map(this.world.planets.map((p) => [p.id, [] as AgentId[]]));
+    for (const a of this.roster) if (a.role === 'colonist') out.get(this.location.get(a.id) ?? a.planet)?.push(a.id);
+    return out;
+  }
+
+  /** Per need good, cycles in a row a colonist went unmet (empty when fed). */
+  hungerOf(colonistId: AgentId): Readonly<Record<GoodId, number>> {
+    return this.hunger.get(colonistId) ?? {};
   }
 
   /** Metrics of the last `HISTORY_CYCLES` completed cycles, oldest first. */
@@ -336,6 +363,90 @@ export class Universe {
     }
   }
 
+  /** A colonist's run of unmet cycles grows for each need it went without this cycle and resets once fed. */
+  private updateHunger(residents: Residents, unmetByAgent: ReadonlyMap<AgentId, Record<GoodId, number>>): void {
+    for (const ids of residents.values()) {
+      for (const id of ids) {
+        const unmet = unmetByAgent.get(id);
+        if (!unmet) {
+          this.hunger.delete(id);
+          continue;
+        }
+        const prev = this.hunger.get(id) ?? {};
+        this.hunger.set(id, Object.fromEntries(Object.keys(unmet).map((g) => [g, (prev[g] ?? 0) + 1])));
+      }
+    }
+  }
+
+  /** Moves the colonists `planMigrations` picks, then reports each route as one exodus event. */
+  private async runMigration(cycle: number, residents: Residents, unmetByAgent: ReadonlyMap<AgentId, Record<GoodId, number>>): Promise<Migration[]> {
+    const done: Migration[] = [];
+    for (const m of planMigrations(this.world, residents, this.hunger, unmetByAgent)) done.push({ ...m, grant: await this.relocate(m) });
+    if (done.length === 0) return done;
+
+    const name = (id: PlanetId) => this.world.planets.find((p) => p.id === id)!.name;
+    const pop = this.residents();
+    const routes = new Map<string, Migration[]>();
+    for (const m of done) routes.set(`${m.from}>${m.to}`, [...(routes.get(`${m.from}>${m.to}`) ?? []), m]);
+    for (const ms of routes.values()) {
+      const { from, to } = ms[0]!;
+      const goods = [...new Set(ms.flatMap((m) => m.hungryFor))];
+      const n = ms.length;
+      this.addEvent(cycle, 'crisis',
+        `Exodus: ${n} colonist${n === 1 ? ' leaves' : 's leave'} ${name(from)} for ${name(to)} (hungry for ${goods.join(' and ') || 'food'}); ` +
+        `${name(from)} population ${pop.get(from)!.length}, ${name(to)} ${pop.get(to)!.length}`, from);
+    }
+    return done;
+  }
+
+  /**
+   * Moves one colonist: cancels its resting orders (escrow comes back), hands its savings in other currencies to their
+   * planets' treasuries, and has the destination treasury pay it the same value (FX at the last clearing rate, else
+   * parity) less the moving cost. Money only moves between accounts, so every currency's supply is unchanged. Goods stay
+   * behind on the old planet. Ledger refusals are skipped: the colonist still moves, with what it has. Returns the grant.
+   */
+  private async relocate(m: PlannedMove): Promise<MinorUnits> {
+    const { ledger, world } = this;
+    const tolerate = async (op: () => Promise<unknown>) => {
+      try {
+        await op();
+        return true;
+      } catch (e) {
+        if (!(e instanceof LedgerError)) throw e;
+        return false;
+      }
+    };
+    for (const o of this.book.ordersOf(m.agentId)) {
+      await tolerate(() => ledger.cancelOrder(o.orderId));
+      this.book.remove(o.orderId);
+    }
+    const dest = world.planets.find((p) => p.id === m.to)!;
+    let value = 0;
+    for (const p of world.planets) {
+      if (p.currency === dest.currency) continue;
+      const amount = await ledger.getPurse(m.agentId, p.currency);
+      if (amount > 0 && (await tolerate(() => ledger.transfer({ from: m.agentId, to: p.id, currency: p.currency, amount })))) {
+        value += this.convert(amount, p.currency, dest.currency);
+      }
+    }
+    const want = Math.floor((value * (10_000 - MIGRATION_CONFIG.movingCostBp)) / 10_000);
+    const grant = Math.min(want, await ledger.getPurse(dest.id, dest.currency));
+    const paid = grant > 0 && (await tolerate(() => ledger.transfer({ from: dest.id, to: m.agentId, currency: dest.currency, amount: grant })));
+    this.location.set(m.agentId, m.to);
+    this.hunger.delete(m.agentId);
+    return paid ? grant : 0;
+  }
+
+  /** `amount` of `from` in `to` at the last clearing rate of the pair, else at parity (no rate yet). */
+  private convert(amount: MinorUnits, from: CurrencyId, to: CurrencyId): MinorUnits {
+    if (from === to) return amount;
+    const direct = this.fxRates.get(fxKey(from, to)); // ppm of `to` per `from`
+    if (direct) return Math.floor((amount * direct) / RATE_SCALE);
+    const inverse = this.fxRates.get(fxKey(to, from));
+    if (inverse) return Math.floor((amount * RATE_SCALE) / inverse);
+    return amount;
+  }
+
   /**
    * Cancels every resting order that has reached its lifetime. Refunds go back through the ledger. Each cancel touches
    * only its own order and refunds its own owner, so they run concurrently (one transaction each on a chain ledger).
@@ -361,8 +472,13 @@ export class Universe {
     const { arrivals, flows } = await this.runArrivals(cycle);
     const due0 = await this.settleDueLoans(cycle);
     const used: Counts = {};
-    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false));
-    const unmet = await runConsumption(world, ledger, this.multipliers(true));
+    const residents = this.residents();
+    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false), residents);
+    const unmetByAgent = new Map<AgentId, Record<GoodId, number>>();
+    const unmet = await runConsumption(world, ledger, this.multipliers(true), { residents, unmetByAgent });
+    this.updateHunger(residents, unmetByAgent);
+    const migrations = this.migration ? await this.runMigration(cycle, residents, unmetByAgent) : [];
+    const population = this.residents();
 
     await this.expireStaleOrders(cycle);
 
@@ -371,7 +487,7 @@ export class Universe {
     const tasks = await buildTasks(
       {
         world, ledger, book, memos: this.memos, cycle, fx: fxViews(world, this.fxRates), flights: [...this.flights.values()], loans: [...this.loans.values()],
-        ...(briefings ? { briefings } : {}),
+        hunger: this.hunger, ...(briefings ? { briefings } : {}),
       },
       due,
     );
@@ -454,7 +570,7 @@ export class Universe {
     for (const p of world.planets) {
       metrics[p.id] = computeMetrics(world, p, {
         produced: produced[p.id] ?? {}, used: used[p.id] ?? {}, price: (g) => this.priceOf(p.id, g), flow: flows[p.id]!,
-        surveys: surveys.get(p.id) ?? [], ...(prev ? { prev: prev[p.id]! } : {}),
+        surveys: surveys.get(p.id) ?? [], ...(prev ? { prev: prev[p.id]! } : {}), population: population.get(p.id)?.length ?? 0,
       });
     }
     this.history.push({ cycle, metrics });
@@ -477,7 +593,7 @@ export class Universe {
     return {
       cycle, auctions, produced, unmet, rejections: rejections.length, placeOrdersRejected: placed.rejected.length,
       fxOrdersRejected: placedFx.rejected.length, ledgerRejections, departures, arrivals, fx, tradeFlows: flows, metrics,
-      defaults: due0.defaults, detected,
+      defaults: due0.defaults, detected, migrations,
     };
   }
 

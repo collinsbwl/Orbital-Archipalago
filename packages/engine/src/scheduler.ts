@@ -16,16 +16,19 @@ export const isGovernmentReview = (cycle: number): boolean =>
   cycle >= GOVERNMENT_SCHEDULE.warmupCycles && cycle % GOVERNMENT_SCHEDULE.intervalCycles === 0;
 
 /**
- * Colonists act every cycle; traders only while docked (`docked` maps trader -> planet, null = in flight); governments on
- * review cycles (see GOVERNMENT_SCHEDULE). A scheduled agent's `planet` is where it acts: the docked planet for traders.
- * Reserve banks run as an engine rule and are never scheduled.
+ * Colonists act every cycle, on the planet they live on; traders only while docked; governments on review cycles (see
+ * GOVERNMENT_SCHEDULE). `located` maps traders to their docked planet (null = in flight) and colonists to where they
+ * live (missing = home). A scheduled agent's `planet` is where it acts. Reserve banks run as an engine rule and are
+ * never scheduled.
  */
-export function schedule(agents: readonly AgentInfo[], cycle: number, docked: ReadonlyMap<AgentId, PlanetId | null>): AgentInfo[] {
+export function schedule(agents: readonly AgentInfo[], cycle: number, located: ReadonlyMap<AgentId, PlanetId | null>): AgentInfo[] {
   const out: AgentInfo[] = [];
   for (const a of agents) {
-    if (a.role === 'colonist') out.push(a);
-    else if (a.role === 'trader') {
-      const at = docked.get(a.id);
+    if (a.role === 'colonist') {
+      const at = located.get(a.id);
+      out.push(at && at !== a.planet ? { ...a, planet: at } : a);
+    } else if (a.role === 'trader') {
+      const at = located.get(a.id);
       if (at) out.push({ ...a, planet: at });
     } else if (a.role === 'government' && isGovernmentReview(cycle)) out.push(a);
   }
