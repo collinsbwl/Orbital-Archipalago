@@ -8,11 +8,11 @@
 //   ship it. This follows comparative advantage from planet.recipes.
 // - Governments and news default to pass / a canned headline.
 
-import type { Action, AgentDecision, AgentTask, SurveyAnswer, WorldConfig } from '@orbital/contracts';
+import type { Action, AgentDecision, AgentTask, SurveyAnswer } from '@orbital/contracts';
 import type { Policy, PolicyCtx } from '../policy.js';
+import { colonistCandidates, DEFAULT_COLONIST_CANDIDATE } from '../candidates/colonist.js';
+import { baseOf, confidenceFromTrend } from '../econ.js';
 
-/** Band around reference price for colonist orders. DEFAULT: ±5%. */
-const COLONIST_BAND_BP = 500;
 /** Minimum margin a trader needs before shipping. DEFAULT: 10%. */
 const TRADER_MARGIN_BP = 1_000;
 /** RATE_SCALE = 1_000_000 for ppm; keep the local copy to avoid a runtime import cycle. */
@@ -52,44 +52,10 @@ export class StubPolicy implements Policy {
   // --------------------------------------------------------------- colonist
 
   private colonist(task: AgentTask, ctx: PolicyCtx): AgentDecision {
-    const { observation: obs } = task;
-    const planet = ctx.world.planets.find((p) => p.id === task.planet);
-    const planetProducedGoods = producedGoods(ctx.world, task.planet);
-    const purse = obs.purse[planet?.currency ?? ''] ?? 0;
-    const actions: Action[] = [];
-    let budget = purse;
-
-    // Buy each need the agent lacks, within purse.
-    if (task.allowedActions.includes('place_order')) {
-      for (const need of ctx.world.colonistNeeds) {
-        const have = obs.inventory[need.good] ?? 0;
-        if (have >= need.qty) continue;
-        const market = obs.markets.find((m) => m.good === need.good);
-        const refPrice = market?.lastPrice ?? baseOf(ctx.world, need.good) ?? 1;
-        const limit = applyBand(refPrice, +COLONIST_BAND_BP);
-        const canAfford = Math.floor(budget / limit);
-        const qty = Math.max(0, Math.min(need.qty - have, canAfford));
-        if (qty > 0) {
-          actions.push({ kind: 'place_order', good: need.good, side: 'buy', qty, limitPrice: limit });
-          budget -= qty * limit;
-        }
-      }
-
-      // Sell surplus of goods the planet produces.
-      for (const good of planetProducedGoods) {
-        const stock = obs.inventory[good] ?? 0;
-        if (stock <= 2) continue;
-        const market = obs.markets.find((m) => m.good === good);
-        const bestBid = market?.bids[0]?.price ?? market?.lastPrice ?? baseOf(ctx.world, good);
-        if (!bestBid) continue;
-        const limit = applyBand(bestBid, +100); // 1% above best bid
-        const qty = Math.min(stock - 2, 5);
-        actions.push({ kind: 'place_order', good, side: 'sell', qty, limitPrice: limit });
-      }
-    }
-
-    const survey: SurveyAnswer = { type: 'consumer', confidence: confidenceFromTrend(obs.markets.flatMap((m) => m.trend)) };
-    if (actions.length === 0) actions.push({ kind: 'pass' });
+    // Same bundle the pre-refactor stub built: needs at +5% within purse, plus surplus sales.
+    const pick = colonistCandidates(task, ctx.world).find((c) => c.id === DEFAULT_COLONIST_CANDIDATE);
+    const actions: Action[] = pick ? pick.actions : [{ kind: 'pass' }];
+    const survey: SurveyAnswer = { type: 'consumer', confidence: confidenceFromTrend(task.observation.markets.flatMap((m) => m.trend)) };
     return {
       agentId: task.agentId,
       actions,
@@ -150,36 +116,6 @@ export class StubPolicy implements Policy {
 
 function pass(task: AgentTask, reason: string): AgentDecision {
   return { agentId: task.agentId, actions: [{ kind: 'pass' }], reason, source: 'stub' };
-}
-
-function baseOf(world: WorldConfig, good: string): number | null {
-  const g = world.goods.find((x) => x.id === good);
-  return g ? g.basePrice : null;
-}
-
-function producedGoods(world: WorldConfig, planet: string): string[] {
-  const p = world.planets.find((x) => x.id === planet);
-  if (!p) return [];
-  const outputs = new Set<string>();
-  for (const pr of p.recipes) {
-    const recipe = world.recipes.find((r) => r.id === pr.recipe);
-    if (recipe) outputs.add(recipe.output.good);
-  }
-  return [...outputs];
-}
-
-function applyBand(reference: number, bp: number): number {
-  return Math.max(1, Math.floor((reference * (10_000 + bp)) / 10_000));
-}
-
-function confidenceFromTrend(trend: number[]): number {
-  if (trend.length < 2) return 50;
-  const first = trend[0]!;
-  const last = trend[trend.length - 1]!;
-  if (first === 0) return 50;
-  const changeBp = Math.floor(((last - first) * 10_000) / first);
-  // Falling prices raise consumer confidence; cap to [0, 100].
-  return Math.max(0, Math.min(100, 50 - Math.floor(changeBp / 100)));
 }
 
 function findFxRate(

@@ -14,6 +14,12 @@ export const MODEL_IDS: Record<TierName, string> = {
   stub: 'stub',
 };
 
+/**
+ * Pinned Gemini Decision model (closed-set, non-generative). Used by the
+ * DecisionGateway for colonist choices and trader/government escalation checks.
+ */
+export const DECISION_MODEL_ID = 'gemini-decision-1';
+
 /** Role → route (§3.3). */
 export const ROUTES: Record<Role, Route> = {
   colonist: { tier: 'small', maxTurns: 1, effort: 'low', maxTokens: 1_000, mode: 'structured' },

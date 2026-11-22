@@ -8,17 +8,24 @@
 //   runtime, with agentId forced to the task's id (the engine never trusts
 //   whatever the model returns).
 // - On budget_exhausted the runtime switches the rest of the run to StubPolicy.
+// - With a DecisionGateway (Gemini Decision 1): colonists pick from rule-built
+//   candidate bundles, and traders/governments only call the LLM when a cheap
+//   yes/no check says their plan needs revising.
 // - The last decision per (universeId, agentId) is the only in-memory state,
 //   and it is reconstructible from the recorder.
 
-import type { AgentDecision, AgentRuntime, AgentTask, ModelGateway, Profile, Role, ToolDeclaration, WorldConfig } from '@orbital/contracts';
+import type {
+  AgentDecision, AgentRuntime, AgentTask, DecisionGateway, ModelGateway, Profile, Role, ToolDeclaration, WorldConfig,
+} from '@orbital/contracts';
 import { AgentDecisionSchema } from '@orbital/contracts';
 import type { Policy, PolicyCtx } from './policy.js';
 import { RandomValidPolicy } from './policies/random.js';
 import { StubPolicy } from './policies/stub.js';
 import { RulePolicy } from './policies/rule.js';
 import { StandingOrdersPolicy } from './policies/standing-orders.js';
-import { LlmPolicy, LlmPolicyError } from './policies/llm.js';
+import { GatewayPolicyError, LlmPolicy } from './policies/llm.js';
+import { DecisionPolicy } from './policies/decision.js';
+import { EscalatingPolicy, type EscalatingPolicyOpts } from './policies/escalating.js';
 import { rngFor } from './rng.js';
 
 export interface DefaultAgentRuntimeConfig {
@@ -34,7 +41,21 @@ export interface DefaultAgentRuntimeConfig {
   profile?: Profile;
   /** Called when the budget switches us to stub for the rest of the run. */
   onDegrade?: (reason: 'budget_exhausted') => void;
+  /**
+   * Gemini Decision 1. When set (on `cheap` / `full`), colonists use DecisionPolicy
+   * and the `escalate` roles check with it before calling the LLM.
+   */
+  decisionGateway?: DecisionGateway;
+  /** Which roles use the decision model. DEFAULT: colonist choice; trader + government escalation. */
+  decisionRoles?: { choice?: Role[]; escalate?: Role[] };
+  /** Escalation threshold and telemetry hook. */
+  escalation?: EscalatingPolicyOpts;
 }
+
+const DEFAULT_DECISION_ROLES: Required<NonNullable<DefaultAgentRuntimeConfig['decisionRoles']>> = {
+  choice: ['colonist'],
+  escalate: ['trader', 'government'],
+};
 
 export class DefaultAgentRuntime implements AgentRuntime {
   private readonly world: WorldConfig;
@@ -46,6 +67,10 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly rule = new RulePolicy();
   private readonly random = new RandomValidPolicy();
   private readonly llm?: LlmPolicy;
+  private readonly decision?: DecisionPolicy;
+  private readonly escalating?: EscalatingPolicy;
+  private readonly choiceRoles: ReadonlySet<Role>;
+  private readonly escalateRoles: ReadonlySet<Role>;
   private readonly previous = new Map<string, AgentDecision>();
   private readonly onDegrade?: (reason: 'budget_exhausted') => void;
   private degraded = false;
@@ -58,6 +83,13 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.onDegrade = cfg.onDegrade;
     if (this.profile !== 'stub' && this.gateway) {
       this.llm = new LlmPolicy(this.gateway, this.profile, cfg.toolsFor, cfg.runTool);
+    }
+    const roles = { ...DEFAULT_DECISION_ROLES, ...cfg.decisionRoles };
+    this.choiceRoles = new Set(roles.choice);
+    this.escalateRoles = new Set(roles.escalate);
+    if (this.profile !== 'stub' && cfg.decisionGateway) {
+      this.decision = new DecisionPolicy(cfg.decisionGateway);
+      if (this.llm) this.escalating = new EscalatingPolicy(cfg.decisionGateway, this.llm, this.standing, cfg.escalation);
     }
   }
 
@@ -80,7 +112,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
     try {
       decision = await policy.decide(task, ctx);
     } catch (err) {
-      if (err instanceof LlmPolicyError && err.failure === 'budget_exhausted' && !this.degraded) {
+      if (err instanceof GatewayPolicyError && err.failure === 'budget_exhausted' && !this.degraded) {
         this.degraded = true;
         this.onDegrade?.('budget_exhausted');
       }
@@ -99,6 +131,9 @@ export class DefaultAgentRuntime implements AgentRuntime {
     if (this.degraded) return this.stub;
     if (role === 'reserve_bank') return this.rule;
     if (this.profile === 'stub') return this.stub;
+    // DecisionPolicy only knows how to build colonist candidates.
+    if (this.decision && role === 'colonist' && this.choiceRoles.has(role)) return this.decision;
+    if (this.escalating && this.escalateRoles.has(role)) return this.escalating;
     if (this.llm) return this.llm;
     return this.stub;
   }

@@ -4,7 +4,9 @@
 // a map and returns the recorded result; ForkGateway replays the parent's
 // calls up to a fork cycle and goes live after it.
 
-import type { AgentId, GatewayRequest, GatewayResult, ModelGateway } from '@orbital/contracts';
+import type {
+  AgentId, DecisionGateway, DecisionRequest, DecisionResult, GatewayRequest, GatewayResult, ModelGateway,
+} from '@orbital/contracts';
 import { appendFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -86,7 +88,8 @@ export class ReplayGateway implements ModelGateway {
     const text = readFileSync(path, 'utf8');
     for (const line of text.split('\n')) {
       if (!line.trim()) continue;
-      const row = JSON.parse(line) as RecorderRow;
+      const row = JSON.parse(line) as RecorderRow & { kind?: string };
+      if (row.kind === 'decision') continue;
       this.rows.set(keyOf(row), row);
     }
     return this;
@@ -124,5 +127,77 @@ export class ForkGateway implements ModelGateway {
     return req.cycle < this.forkCycle
       ? this.parent.invoke(req, signal)
       : this.live.invoke(req, signal);
+  }
+}
+
+// ---- Decision calls --------------------------------------------------------
+// Same calls.jsonl, rows tagged `kind: 'decision'`. ReplayGateway skips them
+// (they have no `request.prefix`), so one file feeds both replays.
+
+export interface DecisionRecorderRow {
+  kind: 'decision';
+  cycle: number;
+  agentId: AgentId;
+  turn: number;
+  universeId: string;
+  request: DecisionRequest;
+  result: DecisionResult;
+}
+
+export interface DecisionRecorderSink {
+  write(row: DecisionRecorderRow): void;
+}
+
+/** FileRecorderSink accepts decision rows too. */
+export class FileDecisionRecorderSink implements DecisionRecorderSink {
+  constructor(private readonly path: string) {
+    mkdirSync(dirname(this.path), { recursive: true });
+  }
+  write(row: DecisionRecorderRow): void {
+    appendFileSync(this.path, JSON.stringify(row) + '\n');
+  }
+}
+
+export class RecordingDecisionGateway implements DecisionGateway {
+  private readonly turnCounter = new Map<string, number>();
+
+  constructor(private readonly inner: DecisionGateway, private readonly sink: DecisionRecorderSink) {}
+
+  async decide(req: DecisionRequest, signal: AbortSignal): Promise<DecisionResult> {
+    const result = await this.inner.decide(req, signal);
+    const key = `${req.universeId}:${req.cycle}:${req.agentId}`;
+    const turn = this.turnCounter.get(key) ?? 0;
+    this.turnCounter.set(key, turn + 1);
+    this.sink.write({ kind: 'decision', cycle: req.cycle, agentId: req.agentId, turn, universeId: req.universeId, request: req, result });
+    return result;
+  }
+}
+
+export class ReplayDecisionGateway implements DecisionGateway {
+  private readonly rows = new Map<string, DecisionRecorderRow>();
+  private readonly turnCounter = new Map<string, number>();
+
+  loadFile(path: string): this {
+    if (!existsSync(path)) return this;
+    for (const line of readFileSync(path, 'utf8').split('\n')) {
+      if (!line.trim()) continue;
+      const row = JSON.parse(line) as { kind?: string };
+      if (row.kind === 'decision') this.loadRows([row as DecisionRecorderRow]);
+    }
+    return this;
+  }
+
+  loadRows(rows: Iterable<DecisionRecorderRow>): this {
+    for (const row of rows) this.rows.set(`${row.universeId}:${row.cycle}:${row.agentId}:${row.turn}`, row);
+    return this;
+  }
+
+  async decide(req: DecisionRequest, _signal: AbortSignal): Promise<DecisionResult> {
+    const callKey = `${req.universeId}:${req.cycle}:${req.agentId}`;
+    const turn = this.turnCounter.get(callKey) ?? 0;
+    this.turnCounter.set(callKey, turn + 1);
+    const row = this.rows.get(`${callKey}:${turn}`);
+    if (!row) return { ok: false, failure: 'error', message: `no recorded decision for ${callKey} turn ${turn}` };
+    return row.result;
   }
 }

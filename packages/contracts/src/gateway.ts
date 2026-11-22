@@ -78,3 +78,38 @@ export interface ModelGateway {
 // Re-exported for implementers that key recorder rows.
 export type RecorderKey = { cycle: number; agentId: AgentId; turn: number };
 export const RecorderKeySchema = z.object({ cycle: CycleSchema, agentId: AgentIdSchema, turn: z.number().int().nonnegative() });
+
+// ---- Decision gateway (closed-set, non-generative) -----------------------
+// Gemini Decision 1 scores caller-supplied options in one pass instead of
+// generating text. Question shapes mirror the API (`noul` = yes/no).
+
+export type DecisionQuestion =
+  | { type: 'noul'; instructions: string; criteria?: { true_description?: string; false_description?: string } }
+  | { type: 'choice'; instructions: string; /** Option id → description (2-255 options). */ criteria: Record<string, string> }
+  | { type: 'score'; instructions: string; /** Rubric levels, lowest first (2-255). */ criteria: string[] };
+
+export type DecisionAnswer =
+  | { type: 'noul'; /** Calibrated P(true), 0.01-0.99. */ noul: number; confidence: number }
+  | { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
+  | { type: 'score'; /** Probability-weighted level index; may be fractional. */ score: number; probabilities: Record<string, number>; confidence: number };
+
+export interface DecisionRequest {
+  universeId: UniverseId;
+  cycle: number;
+  agentId: AgentId;
+  role: Role;
+  planet: PlanetId;
+  /** Shared context every question is evaluated against. */
+  input: string;
+  /** Keyed by caller-defined ids matching [A-Za-z0-9_-]{1,64}. 1-1,000 questions. */
+  questions: Record<string, DecisionQuestion>;
+  deadlineMs: number;
+}
+
+export type DecisionResult =
+  | { ok: true; answers: Record<string, DecisionAnswer>; usage: Usage }
+  | { ok: false; failure: GatewayFailure; message?: string; usage?: Usage };
+
+export interface DecisionGateway {
+  decide(req: DecisionRequest, signal: AbortSignal): Promise<DecisionResult>;
+}

@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@orbital/contracts": "workspace:*",
-    "@google/genai": "0.14.0",
+    "@google/genai": "3.2.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

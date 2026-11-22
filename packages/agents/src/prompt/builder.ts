@@ -29,7 +29,7 @@ function responseSchemaFor(task: AgentTask): Record<string, unknown> {
 }
 
 /** Planet + cycle context: the shared block for everyone on this planet this cycle. */
-function contextBlockFor(task: AgentTask): string {
+export function contextBlockFor(task: AgentTask): string {
   const o = task.observation;
   const marketLines = o.markets.map((m) => {
     const bid = m.bids[0];
@@ -64,7 +64,7 @@ function contextBlockFor(task: AgentTask): string {
 }
 
 /** Per-agent, uncached suffix. Keep it compact and stable-sorted. */
-function stateBlockFor(task: AgentTask): string {
+export function stateBlockFor(task: AgentTask): string {
   const o = task.observation;
   // Sort every record so the serialisation is stable. Memos are tiny but remind
   // the model where it was; that is the whole continuity story.

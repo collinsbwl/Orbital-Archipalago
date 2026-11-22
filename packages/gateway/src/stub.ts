@@ -1,7 +1,9 @@
 // StubGateway: a ModelGateway that never talks to a model.
 // Used by the `stub` profile, tests, and B1 before GeminiGateway lands.
 
-import type { GatewayRequest, GatewayResult, ModelGateway, Usage } from '@orbital/contracts';
+import type {
+  DecisionAnswer, DecisionGateway, DecisionRequest, DecisionResult, GatewayRequest, GatewayResult, ModelGateway, Usage,
+} from '@orbital/contracts';
 
 export type StubResponder = (req: GatewayRequest) => unknown | Promise<unknown>;
 
@@ -29,6 +31,26 @@ export class StubGateway implements ModelGateway {
         failure: 'error',
         message: err instanceof Error ? err.message : String(err),
       };
+    }
+  }
+}
+
+// ---- Decisions -----------------------------------------------------------
+
+export type StubDecisionResponder = (req: DecisionRequest) => Record<string, DecisionAnswer> | Promise<Record<string, DecisionAnswer>>;
+
+/** A DecisionGateway that never calls a model. Tests and the `stub` profile. */
+export class StubDecisionGateway implements DecisionGateway {
+  constructor(private readonly respond: StubDecisionResponder) {}
+
+  async decide(req: DecisionRequest, signal: AbortSignal): Promise<DecisionResult> {
+    if (signal.aborted) return { ok: false, failure: 'timeout', message: 'aborted before decide' };
+    try {
+      const answers = await this.respond(req);
+      if (signal.aborted) return { ok: false, failure: 'timeout', message: 'aborted during decide' };
+      return { ok: true, answers, usage: { ...ZERO_USAGE } };
+    } catch (err) {
+      return { ok: false, failure: 'error', message: err instanceof Error ? err.message : String(err) };
     }
   }
 }
