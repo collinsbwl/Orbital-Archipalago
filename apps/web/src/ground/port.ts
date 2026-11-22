@@ -111,7 +111,7 @@ export function portPieces(port: Port): Piece[] {
     out.push({ shape: 'cyl', x: p.x, y: p.y + 0.42, z: p.z, rotY: 0, size: [PAD_RADIUS * 1.2, 0.04, PAD_RADIUS * 1.2], color: PAD_MARK });
     for (let k = 0; k < 4; k++) {
       const a = Math.PI / 4 + (k * Math.PI) / 2;
-      out.push({ shape: 'box', x: p.x + Math.sin(a) * (PAD_RADIUS - 0.4), y: p.y + 0.42, z: p.z + Math.cos(a) * (PAD_RADIUS - 0.4), rotY: a, size: [0.5, 0.2, 0.5], color: LIGHT_GREEN, glow: true });
+      out.push({ shape: 'box', x: p.x + Math.sin(a) * (PAD_RADIUS - 0.4), y: p.y + 0.42, z: p.z + Math.cos(a) * (PAD_RADIUS - 0.4), rotY: a, size: [0.5, 0.2, 0.5], color: LIGHT_GREEN, glow: true, lamp: true });
     }
   });
   // Control tower: shaft, glazed cab, roof, mast and a red beacon.
@@ -119,7 +119,7 @@ export function portPieces(port: Port): Piece[] {
   const ty = port.y + 0.3;
   out.push({ shape: 'cyl', x: tx, y: ty, z: tz, rotY: 0, size: [2.6, 15, 2.6], color: '#b9bec6' });
   out.push({ shape: 'box', x: tx, y: ty + 15, z: tz, rotY: 0, size: [6, 2.4, 6], color: '#7d8794' });
-  out.push({ shape: 'box', x: tx, y: ty + 15.5, z: tz, rotY: 0, size: [6.2, 0.9, 6.2], color: '#ffe9a8', glow: true });
+  out.push({ shape: 'box', x: tx, y: ty + 15.5, z: tz, rotY: 0, size: [6.2, 0.9, 6.2], color: '#ffe9a8', glow: true, lamp: true });
   out.push({ shape: 'box', x: tx, y: ty + 17.4, z: tz, rotY: 0, size: [7, 0.4, 7], color: '#5c636e' });
   out.push({ shape: 'cyl', x: tx, y: ty + 17.8, z: tz, rotY: 0, size: [0.5, 2.5, 0.5], color: '#999da5' });
   out.push({ shape: 'box', x: tx, y: ty + 20.1, z: tz, rotY: 0, size: [0.9, 0.9, 0.9], color: '#ff3b3b', glow: true });
@@ -130,7 +130,7 @@ export function portPieces(port: Port): Piece[] {
     const z = port.z + Math.cos(a) * (APRON_RADIUS - 0.8);
     if (Math.hypot(x - port.gate[0], z - port.gate[1]) < 4.5) continue;
     out.push({ shape: 'cyl', x, y: port.y + 0.3, z, rotY: 0, size: [0.35, 2.2, 0.35], color: '#4a4f57' });
-    out.push({ shape: 'box', x, y: port.y + 2.5, z, rotY: 0, size: [0.8, 0.5, 0.8], color: LIGHT_WARM, glow: true });
+    out.push({ shape: 'box', x, y: port.y + 2.5, z, rotY: 0, size: [0.8, 0.5, 0.8], color: LIGHT_WARM, glow: true, lamp: true });
   }
   return out;
 }

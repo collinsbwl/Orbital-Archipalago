@@ -19,6 +19,13 @@ describe('groundLookFor', () => {
     }
   });
 
+  it('gives each look the precipitation of its planet', () => {
+    expect(groundLookFor('verdan').precip).toBe('rain');
+    expect(groundLookFor('helion').precip).toBe('dust');
+    expect(groundLookFor('tethys').precip).toBe('snow');
+    expect(['rain', 'dust', 'snow']).toContain(groundLookFor('zzz').precip);
+  });
+
   it('makes verdan blue and green, helion orange, tethys pale', () => {
     const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
     const [vr, , vb] = rgb(groundLookFor('verdan').skyTop);

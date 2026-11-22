@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PLAZA_RADIUS, ROAD_WIDTH, SIDEWALK_WIDTH } from './city-layout';
+import type { AtmosphereRef } from './atmosphere-ref';
 import type { CityLayout } from './city-layout';
 import { shownHeight, stepGrowth } from './growth';
 import type { GrowthState } from './growth';
@@ -24,6 +25,77 @@ function useFlatMaterial(roughness = 0.9) {
   return material;
 }
 
+/** A little noise from a vec3, 0 to 1. */
+const WINDOW_HASH = /* glsl */ `
+  float winHash(vec3 p) {
+    p = fract(p * 0.1031);
+    p += dot(p, p.zyx + 31.32);
+    return fract((p.x + p.y) * p.z);
+  }
+`;
+
+/**
+ * The wall material: flat-shaded like the rest, with a grid of windows painted in the shader. Each window has its own
+ * seeded number, and lights up once the shared `uGlow` (0 by day to 1 at night) passes it, so the city fills with
+ * lights gradually at dusk and no two buildings glow alike. Reads the atmosphere's `windows` level every frame.
+ */
+function useWallMaterial(atmo?: AtmosphereRef) {
+  const glow = useMemo(() => ({ value: 0 }), []);
+  const material = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.9, metalness: 0.02 });
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.uGlow = glow;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWinPos;\nvarying vec3 vWinNormal;\nvarying vec3 vWinSeed;')
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          #ifdef USE_INSTANCING
+            mat4 winM = modelMatrix * instanceMatrix;
+          #else
+            mat4 winM = modelMatrix;
+          #endif
+          vWinPos = (winM * vec4(transformed, 1.0)).xyz;
+          vWinNormal = normalize(mat3(winM) * objectNormal);
+          vWinSeed = (winM * vec4(0.0, 0.0, 0.0, 1.0)).xyz;`,
+        );
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', `#include <common>\nvarying vec3 vWinPos;\nvarying vec3 vWinNormal;\nvarying vec3 vWinSeed;\nuniform float uGlow;\n${WINDOW_HASH}`)
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          float winInside = 0.0;
+          float winLit = 0.0;
+          float winTone = 0.0;
+          {
+            vec3 wn = normalize(vWinNormal);
+            if (abs(wn.y) < 0.5 && vWinPos.y > 1.2) {
+              vec3 wt = normalize(cross(vec3(0.0, 1.0, 0.0), wn));
+              vec2 wc = vec2(dot(vWinPos, wt) / 2.4, vWinPos.y / 3.2);
+              vec2 wf = fract(wc);
+              winInside = step(0.25, wf.x) * step(wf.x, 0.75) * step(0.3, wf.y) * step(wf.y, 0.75);
+              float wh = winHash(vec3(floor(wc), dot(vWinSeed.xz, vec2(0.0731, 0.1183))));
+              winLit = step(wh, uGlow * 0.7);
+              winTone = fract(wh * 7.0);
+              diffuseColor.rgb *= 1.0 - 0.4 * winInside;
+            }
+          }`,
+        )
+        .replace(
+          '#include <emissivemap_fragment>',
+          `#include <emissivemap_fragment>
+          totalEmissiveRadiance += mix(vec3(1.0, 0.8, 0.45), vec3(1.0, 0.95, 0.8), winTone) * winInside * winLit * 1.3;`,
+        );
+    };
+    return m;
+  }, [glow]);
+  useEffect(() => () => material.dispose(), [material]);
+  useFrame(() => {
+    if (atmo) glow.value = atmo.current.atmosphere.windows;
+  });
+  return material;
+}
+
 const INDUSTRIAL = { wall: '#8d9096', roof: '#4a4d52' };
 const RING_ROAD_Y = 0.05;
 const RING_WALK_Y = 0.07;
@@ -33,10 +105,11 @@ const RING_WALK_Y = 0.07;
  * streets that appear as the city spreads, and instanced buildings in the planet's colours that rise out of the ground
  * as the population grows.
  */
-export function City({ layout, look }: { layout: CityLayout; look: GroundLook }) {
+export function City({ layout, look, atmo }: { layout: CityLayout; look: GroundLook; atmo?: AtmosphereRef }) {
   const box = useMemo(() => groundedBox(), []);
   useEffect(() => () => box.dispose(), [box]);
   const material = useFlatMaterial();
+  const wallMaterial = useWallMaterial(atmo);
 
   const roads = useMemo<Placement[]>(
     () => layout.roads.map((r) => ({ x: (r.dir[0] * r.length) / 2, y: 0, z: (r.dir[1] * r.length) / 2, rotY: r.angle, scale: [ROAD_WIDTH, ROAD_TOP, r.length], color: '#3a3d44' })),
@@ -71,20 +144,20 @@ export function City({ layout, look }: { layout: CityLayout; look: GroundLook })
       <InstancedGroup geometry={box} material={material} items={sidewalks} />
       <InstancedGroup geometry={box} material={material} items={dashes} />
       <RingStreets streets={layout.ringStreets} />
-      <GrowingBuildings key={layout.options.planet} layout={layout} look={look} box={box} material={material} />
+      <GrowingBuildings key={layout.options.planet} layout={layout} look={look} box={box} material={material} wallMaterial={wallMaterial} />
       <Plaza />
     </group>
   );
 }
 
 /** Buildings that rise out of the ground when they first appear and grow when the city grows. One instanced mesh for walls, one for roofs. */
-function GrowingBuildings({ layout, look, box, material }: { layout: CityLayout; look: GroundLook; box: THREE.BufferGeometry; material: THREE.Material }) {
+function GrowingBuildings({ layout, look, box, material, wallMaterial }: { layout: CityLayout; look: GroundLook; box: THREE.BufferGeometry; material: THREE.Material; wallMaterial: THREE.Material }) {
   const capacity = Math.max(1, layout.capacity);
   const walls = useMemo(() => {
-    const m = new THREE.InstancedMesh(box, material, capacity);
+    const m = new THREE.InstancedMesh(box, wallMaterial, capacity);
     m.frustumCulled = false;
     return m;
-  }, [box, material, capacity]);
+  }, [box, wallMaterial, capacity]);
   const roofs = useMemo(() => {
     const m = new THREE.InstancedMesh(box, material, capacity);
     m.frustumCulled = false;

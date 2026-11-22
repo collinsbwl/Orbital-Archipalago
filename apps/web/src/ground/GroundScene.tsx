@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { PerspectiveCamera, Vector3 } from 'three';
 import type { Snapshot } from '@orbital/contracts';
@@ -8,8 +8,16 @@ import { City } from './City';
 import { CITY_FLAT_RADIUS, layoutCity, populationTier } from './city-layout';
 import { Crops } from './CropFields';
 import { clampAboveTerrain, clampPanTarget, GROUND_LIMITS, landingPose } from './ground-camera';
-import { goodsOf, groundLookFor, sunDirection } from './ground-look';
+import { initialAtmosphere } from './atmosphere-ref';
+import type { AtmosphereState } from './atmosphere-ref';
+import { Festival } from './FestivalShow';
+import { goodsOf, groundLookFor } from './ground-look';
 import { Industry, useIndustryModels } from './IndustrySites';
+import { streetLampPieces } from './lamps';
+import { Pieces } from './PieceMeshes';
+import { Precipitation } from './Precipitation';
+import { SkyRig } from './SkyRig';
+import type { MoodView } from './SkyRig';
 import { industryEmitters } from './industry';
 import { lifeLevels } from './life';
 import { Market } from './MarketStalls';
@@ -50,7 +58,7 @@ export interface GroundSceneProps {
   snapshot?: Snapshot;
   /** The shared frame (smooth cycle). Without it the scene uses the snapshot's whole cycle and nothing glides. */
   frame?: { current: FrameState };
-  /** 0 to 1 multiplier on how many people, vehicles, stalls and puffs there are. The mood system turns it down in a storm or crisis. Default 1. */
+  /** 0 to 1 multiplier on how many people, vehicles, stalls and puffs there are, on top of the mood's own (a storm or crisis empties the streets). Default 1. */
   busyness?: number;
 }
 
@@ -76,7 +84,7 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
     [planet, goodsKey, look],
   );
   const streets = useMemo(() => layoutCity({ planet }), [planet]);
-  const sunDir = useMemo(() => sunDirection(planet, look), [planet, look]);
+  const lamps = useMemo(() => streetLampPieces(layout), [layout]);
   const alienPopulation = 10 ** (layout.tier / 4);
 
   // The shared frame, or a still one made from the snapshot when the caller has none.
@@ -84,7 +92,15 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
   still.current.cycle = snapshot?.cycle ?? 0;
   const frameRef = frame ?? still;
 
-  const levels = lifeLevels(snapshot?.planets.find((p) => p.planet === planet)?.metrics, busyness);
+  // One shared sky/light state, written each frame by SkyRig and read by the sky, weather, windows and lamps. The mood
+  // reaches React only as a coarse view (busyness steps, festive on/off).
+  const atmo = useRef<AtmosphereState>(null as unknown as AtmosphereState);
+  if (!atmo.current) atmo.current = initialAtmosphere(look);
+  const [moodView, setMoodView] = useState<MoodView>({ kind: 'calm', busyness: 1, festive: false });
+  const otherPlanets = (snapshot?.planets ?? []).map((p) => p.planet).filter((id) => id !== planet).join(',');
+  const planetIds = useMemo(() => (otherPlanets ? otherPlanets.split(',') : []), [otherPlanets]);
+
+  const levels = lifeLevels(snapshot?.planets.find((p) => p.planet === planet)?.metrics, busyness * moodView.busyness);
   const models = useIndustryModels(terrain);
   const emitters = useMemo(() => industryEmitters(models), [models]);
   const port = useMemo(() => layoutPort(streets, terrain), [streets, terrain]);
@@ -142,21 +158,21 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
 
   return (
     <>
-      <color attach="background" args={[look.sky]} />
-      <fog attach="fog" args={[look.sky, look.fogNear, look.fogFar]} />
-      <Sky look={look} sunDir={sunDir} />
-      <hemisphereLight args={[look.skyTop, look.ground, 0.85]} />
-      <directionalLight position={[sunDir[0] * 200, sunDir[1] * 200, sunDir[2] * 200]} color={look.sunColor} intensity={1.5} />
+      <SkyRig key={planet} planet={planet} look={look} snapshot={snapshot} frame={frameRef} atmo={atmo} onMood={setMoodView} />
+      <Sky atmo={atmo} planetIds={planetIds} />
+      <Precipitation kind={look.precip} atmo={atmo} />
       <Terrain terrain={terrain} look={look} />
       <WaterBodies terrain={terrain} />
       <Industry models={models} />
       <Smoke planet={planet} emitters={emitters} density={levels.smoke} />
       <Crops planet={planet} fields={terrain.fields} events={snapshot?.events ?? NO_EVENTS} frame={frameRef} />
       <Trees planet={planet} terrain={treeField} layout={streets} />
-      <City layout={layout} look={look} />
+      <City layout={layout} look={look} atmo={atmo} />
+      <Pieces pieces={lamps} atmo={atmo} />
+      {moodView.festive && <Festival planet={planet} layout={layout} atmo={atmo} />}
       <Market stalls={stalls} share={levels.stalls} />
       <PowerLines pylons={pylons} />
-      <Spaceport port={port} />
+      <Spaceport port={port} atmo={atmo} />
       <PortShips planet={planet} port={port} shipments={shipments} frame={frameRef} />
       <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />
       <Aliens planet={planet} layout={layout} population={alienPopulation} busyness={levels.busyness} />

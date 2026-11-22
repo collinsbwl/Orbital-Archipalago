@@ -35,17 +35,22 @@ export const fieldPhase = (fieldId: string): number => (hashString(`crop:${field
 /** Words in a headline that mean the crops have failed. */
 const FAILURE = /drought|blight|famine|crop fail|harvest fail/i;
 
+/** True when an event is about a planet: it names it in its `planet` field or its text (fixture events often lack the field). */
+export function eventAboutPlanet(e: Pick<SimEvent, 'planet' | 'text'>, planet: string): boolean {
+  const name = planet.toLowerCase();
+  return (e.planet ?? '').toLowerCase() === name || e.text.toLowerCase().includes(name);
+}
+
 /**
  * How badly crops on a planet are hit, 0 to 1: the strongest recent drought or blight event that names the planet
  * (in its `planet` field or its text). Full for the first half of `BLIGHT_CYCLES`, then easing off to nothing.
  */
 export function blightLevel(events: Pick<SimEvent, 'cycle' | 'kind' | 'planet' | 'text'>[], planet: string, cycle: number): number {
   let worst = 0;
-  const name = planet.toLowerCase();
   for (const e of events) {
     if (e.kind === 'policy') continue;
     if (!FAILURE.test(e.text)) continue;
-    if ((e.planet ?? '').toLowerCase() !== name && !e.text.toLowerCase().includes(name)) continue;
+    if (!eventAboutPlanet(e, planet)) continue;
     const age = cycle - e.cycle;
     if (age < 0 || age > BLIGHT_CYCLES) continue;
     worst = Math.max(worst, 1 - smoothstep(BLIGHT_CYCLES / 2, BLIGHT_CYCLES, age));

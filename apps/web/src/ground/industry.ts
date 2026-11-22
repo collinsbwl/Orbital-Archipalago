@@ -22,6 +22,8 @@ export interface Piece {
   color: string;
   /** Drawn bright, unaffected by light (furnaces, flames). */
   glow?: boolean;
+  /** A light that follows the time of day: dim by day, bright after dark (street lamps, port lights). Furnaces and flames glow always. */
+  lamp?: boolean;
 }
 
 export type EmitterKind = 'chimney' | 'flare' | 'forge';
