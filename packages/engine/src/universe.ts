@@ -1,6 +1,6 @@
 import { LedgerError } from '@orbital/contracts';
 import type {
-  ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyState, Shipment, SimEvent, Snapshot,
+  AgentId, ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyState, Shipment, SimEvent, Snapshot,
   SurveyAnswer, UniverseId, WorldConfig,
 } from '@orbital/contracts';
 import { listAgents } from './agents.js';
@@ -11,13 +11,13 @@ import { Detectors } from './detectors/index.js';
 import type { DetectedEvent } from './detectors/index.js';
 import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
-import { GROWTH_CONFIG, GROWTH_TRAIL } from './growth.js';
+import { GROWTH_CONFIG, GROWTH_TRAIL, accrueWear, capacityMultiplierPpm, scaleBatches } from './growth.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
 import { orbitPhase, travelCycles } from './orbits.js';
 import { runConsumption } from './phases/consumption.js';
-import { multKey, runProduction } from './phases/production.js';
+import { batchKey, multKey, runProduction } from './phases/production.js';
 import type { Counts, Multipliers } from './phases/production.js';
 import type { MetricsSink } from './ports.js';
 import { RESERVE_BANK_CONFIG, inflationBp, outputGapBp, taylorRateBp } from './reserve-bank.js';
@@ -122,6 +122,10 @@ export class Universe {
   private shocks: ActiveShock[] = [];
   /** Reserve-bank rule suspended for a planet until this cycle (exclusive), after a god-mode `policy_rate`. */
   private readonly rateOverride = new Map<PlanetId, number>();
+  /** Fractional capital-scaled batches (ppm) carried to the next cycle, per `planet|recipe`. */
+  private readonly batchCarry = new Map<string, number>();
+  /** Capital wear accrued but not yet a whole unit (ppm), per planet. */
+  private readonly wearPpm = new Map<PlanetId, number>();
 
   constructor(opts: UniverseOptions) {
     this.world = opts.world;
@@ -183,7 +187,7 @@ export class Universe {
     };
     u.book = this.book.clone();
     fill(u.memos, this.memos); fill(u.location, this.location); fill(u.flights, this.flights); fill(u.fxRates, this.fxRates);
-    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride);
+    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride); fill(u.batchCarry, this.batchCarry); fill(u.wearPpm, this.wearPpm);
     for (const id of this.defaulted) u.defaulted.add(id);
     u.history.push(...structuredClone(this.history));
     u.events.push(...structuredClone(this.events));
@@ -339,7 +343,9 @@ export class Universe {
     const { arrivals, flows } = await this.runArrivals(cycle);
     const due0 = await this.settleDueLoans(cycle);
     const used: Counts = {};
-    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false));
+    const capital = await this.capitalStocks();
+    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false), this.capacityBatches(capital));
+    await this.wearCapital(capital);
     const unmet = await runConsumption(world, ledger, this.multipliers(true));
 
     await this.expireStaleOrders(cycle);
@@ -453,6 +459,49 @@ export class Universe {
     let total = 0;
     for (const a of this.roster) if (a.planet === planet) total += await this.ledger.getInventory(a.id, planet, good);
     return total;
+  }
+
+  /** Capital stock per planet at the start of production (empty when capital does not affect production). */
+  private async capitalStocks(): Promise<Map<PlanetId, number>> {
+    const out = new Map<PlanetId, number>();
+    if (!GROWTH_CONFIG.capitalAffectsProduction) return out;
+    for (const p of this.world.planets) out.set(p.id, await this.capitalStockOf(p.id));
+    return out;
+  }
+
+  /** Effective batches per `planet|recipe`: floor(batchesPerCycle * m + carry), the remainder kept in `batchCarry`. */
+  private capacityBatches(capital: ReadonlyMap<PlanetId, number>): Map<string, number> {
+    const out = new Map<string, number>();
+    for (const p of this.world.planets) {
+      const m = capacityMultiplierPpm(capital.get(p.id) ?? 0);
+      for (const pr of p.recipes) {
+        const k = batchKey(p.id, pr.recipe);
+        const r = scaleBatches(pr.batchesPerCycle, m, this.batchCarry.get(k) ?? 0);
+        this.batchCarry.set(k, r.carryPpm);
+        out.set(k, r.batches);
+      }
+    }
+    return out;
+  }
+
+  /** Wears out capital: accrues K * depreciationPpm per planet and destroys whole units, largest holder first (ties: roster order). */
+  private async wearCapital(capital: ReadonlyMap<PlanetId, number>): Promise<void> {
+    const good = GROWTH_CONFIG.capitalGood;
+    for (const p of this.world.planets) {
+      const w = accrueWear(capital.get(p.id) ?? 0, this.wearPpm.get(p.id) ?? 0);
+      this.wearPpm.set(p.id, w.accPpm);
+      if (w.units <= 0) continue;
+      const holders: { id: AgentId; qty: number }[] = [];
+      for (const a of this.roster) if (a.planet === p.id) holders.push({ id: a.id, qty: await this.ledger.getInventory(a.id, p.id, good) });
+      holders.sort((x, y) => y.qty - x.qty); // stable: ties stay in roster order
+      let left = w.units;
+      for (const h of holders) {
+        if (left <= 0 || h.qty <= 0) break;
+        const take = Math.min(left, h.qty);
+        await this.ledger.consume({ owner: h.id, planet: p.id, cargo: [{ good, qty: take }] });
+        left -= take;
+      }
+    }
   }
 
   /** Last clearing price of a good on a planet, else its base price. */

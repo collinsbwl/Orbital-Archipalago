@@ -17,6 +17,12 @@ export const GROWTH_CONFIG = {
   /** Each mean is taken over this many cycles, to damp cycle-to-cycle noise. */
   smoothCycles: 10,
   cyclesPerYear: RESERVE_BANK_CONFIG.cyclesPerYear,
+  /** Installed capital every planet starts with, in units of the capital good; the scale against which stock K is read. */
+  baseCapital: 50,
+  /** Share of the planet's capital stock that wears out each cycle, in ppm (5_000 = 0.5%). */
+  depreciationPpm: 5_000,
+  /** When false, capital neither raises production nor wears out (Phase 1 behaviour: measurement only). */
+  capitalAffectsProduction: true,
 };
 
 /** How many earlier cycles `computeMetrics` wants in `trail` (the current cycle makes up the rest). */
@@ -32,6 +38,31 @@ export interface GrowthBp {
 }
 
 export const ZERO_GROWTH: GrowthBp = { realGdpGrowthBp: 0, labourContribBp: 0, capitalContribBp: 0, tfpContribBp: 0 };
+
+const PPM = 1_000_000;
+
+/** Production multiplier ((baseCapital + K) / baseCapital)^alpha as integer ppm. K = 0 gives exactly 1_000_000. */
+export function capacityMultiplierPpm(capital: number, cfg: GrowthConfig = GROWTH_CONFIG): number {
+  if (!cfg.capitalAffectsProduction || !(capital > 0) || !(cfg.baseCapital > 0)) return PPM;
+  return Math.round(Math.pow((cfg.baseCapital + capital) / cfg.baseCapital, cfg.capitalShareBp / 10_000) * PPM);
+}
+
+/**
+ * Whole batches to run this cycle: floor(base * m + carry), the fractional remainder (ppm) carried to the next cycle.
+ * Integer ppm math, so a multiplier of exactly 1 never creates or loses a batch.
+ */
+export function scaleBatches(base: number, multiplierPpm: number, carryPpm: number): { batches: number; carryPpm: number } {
+  const total = base * multiplierPpm + carryPpm;
+  const batches = Math.floor(total / PPM);
+  return { batches, carryPpm: total - batches * PPM };
+}
+
+/** Wear on a stock of `capital` units: accrue capital * depreciationPpm, release whole units, keep the remainder (ppm). */
+export function accrueWear(capital: number, accPpm: number, cfg: GrowthConfig = GROWTH_CONFIG): { units: number; accPpm: number } {
+  const total = accPpm + Math.max(0, capital) * cfg.depreciationPpm;
+  const units = Math.min(Math.floor(total / PPM), Math.max(0, capital));
+  return { units, accPpm: total - units * PPM };
+}
 
 /** Real GDP: one cycle's value added at the world's base prices, so price movements do not count as growth. */
 export const realGdp = (produced: Record<string, number>, used: Record<string, number>, world: WorldConfig): number => {

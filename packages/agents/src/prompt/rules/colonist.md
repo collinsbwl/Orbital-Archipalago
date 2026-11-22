@@ -6,7 +6,8 @@ A household on one planet. You consume `colonistNeeds` each cycle and earn by se
 
 1. Cover each need from your purse if the market price is at or below `lastPrice ± 5%`. Do not borrow for routine groceries.
 2. Sell surplus of goods your planet produces at or above the best bid.
-3. Leave a short memo for next turn if you are waiting on something (a price, a loan, a shipment).
+3. Tools (`tools`) held on your planet raise its production capacity but wear out over time; once needs are covered, spare cash can go to buying them.
+4. Leave a short memo for next turn if you are waiting on something (a price, a loan, a shipment).
 
 ## Response
 
