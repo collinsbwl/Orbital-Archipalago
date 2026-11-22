@@ -115,8 +115,8 @@ export function makeAliens(loops: Loop[], count: number, planet: string, pairs =
 /** Metres either side of a walker that its heading looks at, so it turns smoothly round bends instead of snapping at corners. */
 const LOOK = 0.4;
 
-/** Seconds per turn of speaking inside a pair: each speaks for half of it. */
-const TURN_RATE = 1.1;
+/** How fast a pair trade turns speaking, radians per second: the speaker changes every π / TURN_RATE seconds (about 2.9 s). */
+export const TURN_RATE = 1.1;
 
 export interface AlienPose {
   x: number;
@@ -162,4 +162,15 @@ export function alienPose(loops: Loop[], spec: AlienSpec, time: number): AlienPo
     speak: spec.role === 0 ? 1 : smoothstep(-0.25, 0.25, spec.role * Math.sin(time * TURN_RATE + spec.pairPhase)),
     paired: spec.role !== 0,
   };
+}
+
+/** How much `talk` counts as stopped to chat; below it the pair are still slowing down or already walking off. */
+const CONVERSING_THRESHOLD = 0.05;
+
+/**
+ * True while this alien is in a conversation: a member of a pair, stopped and talking. Loners stop and gesture too, but
+ * have no one to talk to, so they never count. Use `pose.speak` to tell which member of the pair is speaking.
+ */
+export function isConversing(pose: AlienPose): boolean {
+  return pose.paired && pose.talk > CONVERSING_THRESHOLD;
 }

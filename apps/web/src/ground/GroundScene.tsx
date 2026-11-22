@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type { PerspectiveCamera, Vector3 } from 'three';
 import type { Shipment, Snapshot } from '@orbital/contracts';
 import type { FrameState } from '../scene/frame';
+import { AlienChatter } from './AlienChatter';
 import { Aliens } from './AlienCrowd';
 import { Camp } from './Camp';
 import { CAMP_SITE_RADIUS, isCampPlanet } from './camp-layout';
@@ -196,6 +197,7 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
       <PortShips planet={planet} port={port} shipments={shipments} frame={frameRef} />
       {!camp && <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />}
       <Aliens planet={planet} layout={layout} />
+      <AlienChatter planet={planet} layout={layout} />
     </>
   );
 }

@@ -55,6 +55,14 @@ body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #04050b; col
 .planet-card dd { font-weight: 600; font-variant-numeric: tabular-nums; }
 .ship-tip { background: rgba(8, 10, 18, 0.92); border: 1px solid #3a4a80; border-radius: 6px; padding: 6px 9px; font-size: 12px; white-space: nowrap; color: #dde; }
 .ship-tip-title { font-weight: 600; color: #9cf; }
+/* Standard Galactic Alphabet, the glyphs the aliens chat in. Drop the font in public/fonts/ as sga.woff2 or sga.ttf;
+   until then the bubbles fall back to plain monospace. */
+@font-face { font-family: 'SGA'; src: url('/fonts/sga.woff2') format('woff2'), url('/fonts/sga.ttf') format('truetype'); font-display: block; }
+/* A speech bubble over a talking alien: its tail's tip sits on the anchor just above the speaker's antennae. */
+.alien-chat { position: relative; transform: translate(-50%, calc(-100% - 7px)); background: rgba(8, 10, 18, 0.82); border: 1px solid #3a4a80; border-radius: 8px; padding: 4px 9px; font: 13px/1.25 'SGA', ui-monospace, monospace; letter-spacing: 0.06em; white-space: nowrap; color: #e6ecff; pointer-events: auto; cursor: help; }
+.alien-chat::after { content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #3a4a80; border-bottom: 0; }
+/* Hovering translates it back to plain letters. */
+.alien-chat:hover { font-family: system-ui, sans-serif; letter-spacing: normal; background: rgba(8, 10, 18, 0.95); }
 .spacer { flex: 1; }
 h2 { font-size: 15px; margin: 12px 0 6px; }
 button, select, input { font: inherit; }
