@@ -63,3 +63,11 @@ th, td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid #234
 .events li.god { background: #3a2a10; border-left: 3px solid #fb3; }
 .god-panel .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
 .god-panel input[type='number'] { width: 80px; }
+
+/* Shown over the planet-ground view. Centred below the header, where the side panels leave a gap. */
+.ground-back {
+  position: absolute; top: 72px; left: 50%; transform: translateX(-50%); z-index: 5; pointer-events: auto;
+  color: #dde; font: inherit; cursor: pointer;
+}
+.ground-back:hover { background: rgba(38, 48, 92, 0.85); }
+@media (max-width: 900px) { .ground-back { top: auto; bottom: 96px; } }

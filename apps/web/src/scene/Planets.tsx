@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Snapshot } from '@orbital/contracts';
@@ -34,7 +34,13 @@ function OrbitRing({ radius }: { radius: number }) {
   return <primitive object={ring} />;
 }
 
-function Planet({ look, frame }: { look: PlanetLook; frame: FrameRef }) {
+/** A press that moved more than this many pixels was a drag of the camera, not a click on the planet. */
+const CLICK_SLOP_PX = 4;
+/** The invisible click target is this much bigger than the planet, so small planets are easy to hit. */
+const HIT_SCALE = 1.25;
+
+function Planet({ look, frame, onSelect }: { look: PlanetLook; frame: FrameRef; onSelect?: (planetId: string) => void }) {
+  const [hovered, setHovered] = useState(false);
   const group = useRef<THREE.Group>(null);
   const body = useRef<THREE.Mesh>(null);
   const geometry = useMemo(() => buildPlanetGeometry(look), [look]);
@@ -46,10 +52,40 @@ function Planet({ look, frame }: { look: PlanetLook; frame: FrameRef }) {
     if (body.current) body.current.rotation.y += dt * look.spin;
   });
 
+  // With no handler (the map is hidden), pointer-out never arrives, so drop the hover ourselves.
+  useEffect(() => {
+    if (!onSelect) setHovered(false);
+  }, [onSelect]);
+
+  useEffect(() => {
+    if (!hovered) return;
+    document.body.style.cursor = 'pointer';
+    return () => {
+      document.body.style.cursor = '';
+    };
+  }, [hovered]);
+
   return (
     <group ref={group}>
       <mesh ref={body} geometry={geometry} scale={look.radius}>
         <meshStandardMaterial vertexColors flatShading roughness={0.95} metalness={0} />
+      </mesh>
+      {/* An invisible, slightly bigger target: hover for the pointer cursor, click (not drag) to pick the planet. */}
+      <mesh
+        scale={look.radius * HIT_SCALE}
+        onPointerOver={onSelect && ((e) => {
+          e.stopPropagation();
+          setHovered(true);
+        })}
+        onPointerOut={onSelect && (() => setHovered(false))}
+        onClick={onSelect && ((e) => {
+          if (e.delta > CLICK_SLOP_PX) return;
+          e.stopPropagation();
+          onSelect(look.id);
+        })}
+      >
+        <sphereGeometry args={[1, 16, 12]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {look.atmosphere && (
         <mesh scale={look.radius * 1.14}>
@@ -67,14 +103,14 @@ function Planet({ look, frame }: { look: PlanetLook; frame: FrameRef }) {
   );
 }
 
-/** Every planet, on its orbit, with its own look. */
-export function Planets({ snapshot, frame }: { snapshot: Snapshot; frame: FrameRef }) {
+/** Every planet, on its orbit, with its own look. Clicking one calls `onSelect` with its id. */
+export function Planets({ snapshot, frame, onSelect }: { snapshot: Snapshot; frame: FrameRef; onSelect?: (planetId: string) => void }) {
   return (
     <>
       {snapshot.planets.map((p, i) => (
         <group key={p.planet}>
           <OrbitRing radius={orbitOf(p.planet, i).radius * SCALE} />
-          <Planet look={lookFor(p.planet)} frame={frame} />
+          <Planet look={lookFor(p.planet)} frame={frame} onSelect={onSelect} />
         </group>
       ))}
     </>
