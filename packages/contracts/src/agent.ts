@@ -96,7 +96,8 @@ export const SurveyAnswerSchema = z.object({
 });
 export type SurveyAnswer = z.infer<typeof SurveyAnswerSchema>;
 
-export const DECISION_SOURCES = ['llm', 'stub', 'standing_orders', 'replay'] as const;
+/** `decision_model`: picked by the closed-set Gemini Decision model (no free-form generation). */
+export const DECISION_SOURCES = ['llm', 'decision_model', 'stub', 'standing_orders', 'replay'] as const;
 
 export const AgentDecisionSchema = z.object({
   agentId: AgentIdSchema,

@@ -270,7 +270,8 @@ const TIERS: Record<Profile, Record<Tier, ModelId | 'stub'>> = {
 
 - **Role → tier → model.** Agents only name their role. Each universe picks a profile (`stub`, `cheap`, `full`), which is how "stub universes for tuning, frontier governments only for final runs" from the risk table becomes one flag.
 - **Traders default to `small`.** The build plan has traders on a mid model. Thinking tokens are billed as output, so a Pro trader at about 2,400 calls per run is the line that blows the budget (see §3.6). Start traders on Flash, run an A/B against Pro on the same seed, and promote only if trade quality clearly improves.
-- **Three Gemini jobs, matching how the model is actually good at language.** Flash and Pro *decide* (colonists, traders, governments). Pro *reads* the Tiger aggregate series and writes the economist report. Flash *writes* the news headlines. The spectator advisor is a separate, user-triggered call: personalized advice from the live snapshot plus that user's god-mode history, gated by Auth0. It is not inside the cycle loop.
+- **Decision model in front of the LLMs.** When the runtime has a `DecisionGateway` (`gemini-decision-1`, pinned as `DECISION_MODEL_ID` in `gateway/routing.ts`), colonists skip Flash entirely: the rule logic builds 2–6 candidate order bundles and Decision 1 picks one and scores the consumer-confidence survey on a rubric. Traders and governments first get one calibrated yes/no check ("has anything changed enough to revise the plan?"); below the threshold (default 0.35) they keep standing orders, otherwise the route below runs as normal. First turns and failed checks always escalate. The `colonist` route stays as the path when no decision gateway is configured.
+- **Three Gemini jobs, matching how the model is actually good at language.** Flash and Pro *decide* (traders and governments when escalated; colonists only without a decision gateway). Pro *reads* the Tiger aggregate series and writes the economist report. Flash *writes* the news headlines. The spectator advisor is a separate, user-triggered call: personalized advice from the live snapshot plus that user's god-mode history, gated by Auth0. It is not inside the cycle loop.
 - **Overrides** in god mode or config: `route.override(agentId | role | planet, tier)`, for example to give one government a different model in an experiment.
 - **One model per role for the whole run.** Explicit caches are scoped to a model, so switching a role's model mid-run throws away its cache. Downgrades happen only in the fallback path (standing orders), never by hopping models.
 
@@ -281,6 +282,7 @@ const TIERS: Record<Profile, Record<Tier, ModelId | 'stub'>> = {
 | `structured` | Colonists, news | One `generateContent`, `responseMimeType: application/json` and a `responseSchema` built from the zod `AgentDecision` schema. No tools | Cheapest and fastest. Everything a colonist needs is already in the observation. News uses the same shape with a short headline schema |
 | `tools` | Traders, governments, advisor | Function declarations (`quote_route`, `fx_quote`, `book_depth`, `briefing_detail`, and for the advisor `metric_history`) plus one terminal function `submit_turn`. Loop until `submit_turn` or `maxTurns` | Traders price routes; governments drill into briefings; the advisor pulls a continuous aggregate before it answers. The terminal function keeps the output schema-valid |
 | `text` | Economist report | One streamed request, plain prose, with the Tiger aggregate series already in the prompt | Long output, end of run only |
+| `decision` | Colonists (choice + survey score), trader/government escalation checks | One `decisions.create` on `gemini-decision-1`: a shared input (rules + context + state) and 1–1,000 closed-set questions (`noul` yes/no, `choice`, `score`). Returns calibrated probabilities, no text. No caching, tools or thinking | ~150–250 ms, $0.10/M input, $0 output. It can only pick among options we build, so quantities and prices come from the rule-built candidates |
 
 Notes the gateway must respect for Gemini:
 
@@ -319,9 +321,9 @@ Call volume is unchanged from the build plan. Recompute dollars from the cost me
 
 | Role | Calls / run | Model tier |
 | --- | --- | --- |
-| Colonists | ~11,000 | Flash |
-| Traders | ~2,400 (×1–3 turns) | Flash, A/B against Pro |
-| Governments | ~120–150 | Pro |
+| Colonists | ~11,000 | Decision 1 (Flash without a decision gateway) |
+| Traders | ~2,400 checks on Decision 1; only escalated turns (×1–3) on Flash | Flash, A/B against Pro |
+| Governments | ~120–150 checks on Decision 1; escalated turns on Pro | Pro |
 | News + economist | ~120 + 1 | Flash / Pro |
 | Advisor | user-triggered, outside the cycle | Flash, Pro if the question needs `metric_history` |
 
@@ -331,7 +333,7 @@ The government line is what to watch against the $15 target. Levers in order: a 
 
 ### 3.7 Recorder and replay
 
-Every gateway call is written to `runs/<universe>/calls.jsonl` keyed by `(cycle, agentId, turn)`, with the full request, response, usage and latency.
+Every gateway call is written to `runs/<universe>/calls.jsonl` keyed by `(cycle, agentId, turn)`, with the full request, response, usage and latency. Decision calls go to the same file as rows tagged `kind: 'decision'`; `ReplayDecisionGateway` reads only those and `ReplayGateway` skips them.
 
 - **`ReplayGateway`** returns recorded responses instead of calling the API. A recorded run replays for free and gives the same result every time, so the dashboard, detectors and Track C's on-chain diff (C5) can all use real LLM runs at no cost.
 - **Forks** replay the parent's calls up to the fork cycle and go live after it. The two branches share identical history, which is the clean counterfactual the build plan asks for.
@@ -344,6 +346,8 @@ Every gateway call is written to `runs/<universe>/calls.jsonl` keyed by `(cycle,
 | Policy | When | Notes |
 | --- | --- | --- |
 | `LlmPolicy` | Default for due agents in `cheap`/`full` profiles | Goes through the gateway |
+| `DecisionPolicy` | Colonists in `cheap`/`full` when a `DecisionGateway` is configured | Decision 1 picks one of `colonistCandidates()`; source `decision_model` |
+| `EscalatingPolicy` | Traders and governments in `cheap`/`full` with a `DecisionGateway` | Yes/no check on Decision 1; standing orders below the threshold, `LlmPolicy` above it, on the first turn, or when the check fails |
 | `StubPolicy` | `stub` profile, budget exhausted, CI | Rule-based, deterministic per seed |
 | `StandingOrdersPolicy` | Agent not due, timeout, invalid output, refusal | Repeats the last stall and shopping list. The common case for about 65% of colonists each cycle |
 | `ReplayPolicy` | Replaying a recorded run or the pre-fork part of a fork | Wraps `ReplayGateway` |

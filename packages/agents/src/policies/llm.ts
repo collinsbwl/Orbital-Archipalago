@@ -31,8 +31,7 @@ export class LlmPolicy implements Policy {
     if (!result.ok) {
       // Caller inspects .source to decide whether to fall back (standing orders)
       // or short-circuit the run (budget_exhausted → stub policy).
-      const error = new LlmPolicyError(result.failure, result.message ?? result.failure);
-      throw error;
+      throw new GatewayPolicyError(result.failure, result.message ?? result.failure);
     }
     const parsed = AgentDecisionSchema.parse({
       agentId: task.agentId,
@@ -47,12 +46,18 @@ export class LlmPolicy implements Policy {
   }
 }
 
-export class LlmPolicyError extends Error {
+/** Thrown by any gateway-backed policy (LLM or decision model) on a typed failure. */
+export class GatewayPolicyError extends Error {
   constructor(readonly failure: string, message: string) {
     super(message);
-    this.name = 'LlmPolicyError';
+    this.name = 'GatewayPolicyError';
   }
 }
+
+/** @deprecated Use GatewayPolicyError. Kept so existing imports keep working. */
+export const LlmPolicyError = GatewayPolicyError;
+/** @deprecated Use GatewayPolicyError. */
+export type LlmPolicyError = GatewayPolicyError;
 
 function isDecisionShape(x: unknown): x is {
   actions: unknown[];

@@ -24,6 +24,7 @@ import type { CacheManager } from './cache.js';
 import { CostMeter } from './cost.js';
 import { price } from './pricing.js';
 import { resolve, type RouteOverride } from './routing.js';
+import { combinedSignal, isAbort, isTypedError, mkError, withRetries } from './util.js';
 
 const EFFORT_BUDGET: Record<'low' | 'medium' | 'high', number> = { low: 128, medium: 512, high: 2048 };
 
@@ -38,19 +39,6 @@ export interface GeminiGatewayConfig {
   maxRetries?: number;
   /** Clock, injectable for tests. */
   now?: () => number;
-}
-
-interface RetriableError extends Error {
-  retriable: boolean;
-  /** HTTP-ish classification for mapping. */
-  kind: 'rate_limited' | 'error' | 'refused' | 'invalid_output';
-}
-
-function mkError(kind: RetriableError['kind'], retriable: boolean, message: string): RetriableError {
-  const err = new Error(message) as RetriableError;
-  err.kind = kind;
-  err.retriable = retriable;
-  return err;
 }
 
 export class GeminiGateway implements ModelGateway {
@@ -87,7 +75,7 @@ export class GeminiGateway implements ModelGateway {
       return { ok: false, failure: 'error', message: 'rule route reached a gateway' };
     }
 
-    const { signal, cleanup } = combinedSignal(callerSignal, req.deadlineMs, this.cfg.now);
+    const { signal, cleanup } = combinedSignal(callerSignal, req.deadlineMs);
     const start = this.cfg.now();
     const limiter = this.cfg.limiters[resolved.model];
     if (!limiter) {
@@ -271,38 +259,19 @@ export class GeminiGateway implements ModelGateway {
 
   /** Retry 429/5xx with jittered backoff while the deadline still covers it. */
   private async generateRetrying(args: GenerateArgs, mode: 'single' | 'stream' = 'single'): Promise<GenerateResult> {
-    let lastErr: RetriableError | null = null;
-    for (let attempt = 0; attempt <= this.cfg.maxRetries; attempt++) {
-      if (args.signal.aborted) throw mkError('error', false, 'aborted');
-      try {
-        if (mode === 'stream') {
-          let done: GenerateResult | null = null;
-          const buf: string[] = [];
-          for await (const chunk of this.cfg.client.generateStream(args)) {
-            if (args.signal.aborted) throw mkError('error', false, 'aborted');
-            if (chunk.text) buf.push(chunk.text);
-            if (chunk.done) done = chunk.done;
-          }
-          if (!done) throw mkError('error', false, 'stream ended without completion');
-          if (done.text == null && buf.length > 0) done = { ...done, text: buf.join('') };
-          return done;
-        }
-        return await this.cfg.client.generate(args);
-      } catch (err) {
-        const typed = classifyError(err);
-        lastErr = typed;
-        if (!typed.retriable) throw typed;
-        if (attempt === this.cfg.maxRetries) throw typed;
-        const backoff = Math.min(2_000, 2 ** attempt * 100) + Math.floor(Math.random() * 100);
-        try {
-          await sleepWithAbort(backoff, args.signal);
-        } catch {
-          throw mkError('error', false, 'aborted during backoff');
-        }
+    return withRetries(async () => {
+      if (mode === 'single') return this.cfg.client.generate(args);
+      let done: GenerateResult | null = null;
+      const buf: string[] = [];
+      for await (const chunk of this.cfg.client.generateStream(args)) {
+        if (args.signal.aborted) throw mkError('error', false, 'aborted');
+        if (chunk.text) buf.push(chunk.text);
+        if (chunk.done) done = chunk.done;
       }
-    }
-    // Unreachable because the loop throws.
-    throw lastErr ?? mkError('error', false, 'unknown');
+      if (!done) throw mkError('error', false, 'stream ended without completion');
+      if (done.text == null && buf.length > 0) done = { ...done, text: buf.join('') };
+      return done;
+    }, args.signal, this.cfg.maxRetries);
   }
 }
 
@@ -321,62 +290,6 @@ function parseStructured(gen: GenerateResult): { ok: true; output: unknown; turn
   } catch (err) {
     return { ok: false, failure: 'invalid_output', message: err instanceof Error ? err.message : 'json parse failed' };
   }
-}
-
-function combinedSignal(caller: AbortSignal, deadlineMs: number, now: () => number): { signal: AbortSignal; cleanup: () => void } {
-  const ctrl = new AbortController();
-  if (caller.aborted) ctrl.abort(caller.reason);
-  const onCaller = () => ctrl.abort(caller.reason);
-  caller.addEventListener('abort', onCaller);
-  const start = now();
-  const timer = setTimeout(() => ctrl.abort(new DOMException('deadline', 'TimeoutError')), Math.max(0, deadlineMs));
-  // Record start for retry budgeting; the timer handles the abort itself.
-  void start;
-  return {
-    signal: ctrl.signal,
-    cleanup: () => {
-      clearTimeout(timer);
-      caller.removeEventListener('abort', onCaller);
-    },
-  };
-}
-
-function classifyError(err: unknown): RetriableError {
-  if (isTypedError(err)) return err;
-  const message = err instanceof Error ? err.message : String(err);
-  const anyErr = err as { status?: number; code?: number; name?: string } | null;
-  const status = anyErr?.status ?? anyErr?.code ?? 0;
-  if (anyErr?.name === 'AbortError' || anyErr?.name === 'TimeoutError') {
-    return mkError('error', false, message);
-  }
-  if (status === 429) return mkError('rate_limited', true, message);
-  if (status >= 500 && status < 600) return mkError('error', true, message);
-  // Explicit safety markers from SDK errors we might see.
-  if (/safety|blocked/i.test(message)) return mkError('refused', false, message);
-  return mkError('error', false, message);
-}
-
-function isTypedError(err: unknown): err is RetriableError {
-  return (
-    err instanceof Error && typeof (err as RetriableError).retriable === 'boolean' && 'kind' in err
-  );
-}
-
-function isAbort(err: unknown, mySignal: AbortSignal, callerSignal: AbortSignal): boolean {
-  if (err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError')) return true;
-  return mySignal.aborted || callerSignal.aborted;
-}
-
-function sleepWithAbort(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal.aborted) return reject(new DOMException('aborted', 'AbortError'));
-    const timer = setTimeout(resolve, ms);
-    const onAbort = () => {
-      clearTimeout(timer);
-      reject(new DOMException('aborted', 'AbortError'));
-    };
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
 }
 
 /** Re-exported for test convenience. */

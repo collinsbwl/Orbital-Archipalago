@@ -2,7 +2,7 @@
 // an interface keeps tests fast (no network) and leaves room to pin an exact SDK
 // version without rippling through callers.
 
-import type { ToolDeclaration } from '@orbital/contracts';
+import type { DecisionQuestion, ToolDeclaration } from '@orbital/contracts';
 
 export interface GenerateArgs {
   model: string;
@@ -44,4 +44,25 @@ export interface GenerateResult {
 export interface GenaiClient {
   generate(args: GenerateArgs): Promise<GenerateResult>;
   generateStream(args: GenerateArgs): AsyncIterable<{ text?: string; done?: GenerateResult }>;
+}
+
+// ---- Decisions API (gemini-decision-1) -----------------------------------
+
+export interface DecisionCreateArgs {
+  model: string;
+  input: string;
+  questions: Record<string, DecisionQuestion>;
+  signal: AbortSignal;
+}
+
+export interface DecisionCreateResult {
+  /** Raw answers keyed like `questions`. Absent when the input was blocked. */
+  answers?: Record<string, unknown>;
+  /** Set when the content filter blocked the input. */
+  blockReason?: string;
+  usage: { inputTokens: number };
+}
+
+export interface DecisionClient {
+  create(args: DecisionCreateArgs): Promise<DecisionCreateResult>;
 }
