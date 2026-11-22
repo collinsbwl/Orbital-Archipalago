@@ -171,8 +171,8 @@ describe('200-cycle economy on DEFAULT_WORLD', () => {
     const { series, world } = await run42();
     const all = await series.readSeries(world.universeId);
     for (const s of all) ChartSeriesSchema.parse(s);
-    expect(all.length).toBe(world.planets.length * (3 + world.goods.length) + 3);
-    expect(new Set(all.map((s) => s.metric))).toEqual(new Set(['gdp', 'cpi', 'trade_balance', 'price', 'fx_rate']));
+    expect(all.length).toBe(world.planets.length * (4 + world.goods.length) + 3);
+    expect(new Set(all.map((s) => s.metric))).toEqual(new Set(['gdp', 'real_gdp', 'cpi', 'trade_balance', 'price', 'fx_rate']));
     expect(all.find((s) => s.metric === 'fx_rate')!.pair).toMatch(/^[A-Z]+\/[A-Z]+$/);
     expect(all.every((s) => s.points.length > 0 && s.points.length <= 1_000)).toBe(true);
     expect(all.find((s) => s.metric === 'gdp')!.points.length).toBe(CYCLES);

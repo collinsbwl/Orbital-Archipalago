@@ -11,6 +11,7 @@ export * from './universe.js';
 export * from './fork.js';
 export * from './metrics.js';
 export * from './reserve-bank.js';
+export * from './growth.js';
 export * from './series-memory.js';
 export type * from './ports.js';
 export * from './phases/production.js';

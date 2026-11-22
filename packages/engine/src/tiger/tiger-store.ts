@@ -72,8 +72,10 @@ export class TigerStore implements MetricsSink, SeriesSource {
     try {
       await client.query('BEGIN');
       await insertMany(client, 'planet_metrics',
-        ['universe_id', 'cycle', 'planet', 'gdp', 'cpi', 'trade_balance', 'population', 'consumer_confidence', 'business_confidence'],
-        rows.planetMetrics.map((r) => [r.universeId, r.cycle, r.planet, r.gdp, r.cpi, r.tradeBalance, r.population, r.consumerConfidence, r.businessConfidence]));
+        ['universe_id', 'cycle', 'planet', 'gdp', 'cpi', 'trade_balance', 'population', 'consumer_confidence', 'business_confidence',
+          'real_gdp', 'labour_input', 'capital_stock', 'real_gdp_growth_bp', 'labour_contrib_bp', 'capital_contrib_bp', 'tfp_contrib_bp'],
+        rows.planetMetrics.map((r) => [r.universeId, r.cycle, r.planet, r.gdp, r.cpi, r.tradeBalance, r.population, r.consumerConfidence, r.businessConfidence,
+          r.realGdp, r.labourInput, r.capitalStock, r.realGdpGrowthBp, r.labourContribBp, r.capitalContribBp, r.tfpContribBp]));
       await insertMany(client, 'prices', ['universe_id', 'cycle', 'planet', 'good', 'price'],
         rows.prices.map((r) => [r.universeId, r.cycle, r.planet, r.good, r.price]));
       await insertMany(client, 'fx_rates', ['universe_id', 'cycle', 'pair', 'rate_ppm'],
@@ -91,7 +93,7 @@ export class TigerStore implements MetricsSink, SeriesSource {
 
   /** Force-materialise the continuous aggregates (the refresh policy does this on a schedule). */
   async refreshAggregates(): Promise<void> {
-    for (const view of ['planet_metrics_5', 'prices_5', 'fx_rates_5']) {
+    for (const view of ['planet_metrics_5', 'planet_metrics_growth_5', 'prices_5', 'fx_rates_5']) {
       await this.pool.query(`CALL refresh_continuous_aggregate('${view}', NULL, NULL)`);
     }
   }
@@ -111,6 +113,17 @@ export class TigerStore implements MetricsSink, SeriesSource {
       for (const [planet, rs] of byPlanet) {
         out.push({ metric, planet, points: rs.map((r) => [Number(r.bucket), Math.round(Number(r[col]))]) });
       }
+    }
+
+    const growth = await this.pool.query(
+      `SELECT planet, bucket, real_gdp_avg::float8 AS real_gdp
+       FROM (SELECT *, row_number() OVER (PARTITION BY planet ORDER BY bucket DESC) AS rn
+             FROM planet_metrics_growth_5 WHERE universe_id = $1) t
+       WHERE rn <= $2 ORDER BY planet, bucket ASC`,
+      [universeId, MAX_POINTS],
+    );
+    for (const [planet, rs] of groupRows(growth.rows, (r) => r.planet)) {
+      out.push({ metric: 'real_gdp', planet, points: rs.map((r) => [Number(r.bucket), Math.round(Number(r.real_gdp))]) });
     }
 
     const prices = await this.pool.query(

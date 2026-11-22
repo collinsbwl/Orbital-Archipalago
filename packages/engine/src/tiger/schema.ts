@@ -26,7 +26,14 @@ const HYPERTABLES: HyperSpec[] = [
       trade_balance bigint NOT NULL,
       population integer NOT NULL,
       consumer_confidence integer NOT NULL,
-      business_confidence integer NOT NULL`,
+      business_confidence integer NOT NULL,
+      real_gdp bigint NOT NULL DEFAULT 0,
+      labour_input integer NOT NULL DEFAULT 0,
+      capital_stock bigint NOT NULL DEFAULT 0,
+      real_gdp_growth_bp integer NOT NULL DEFAULT 0,
+      labour_contrib_bp integer NOT NULL DEFAULT 0,
+      capital_contrib_bp integer NOT NULL DEFAULT 0,
+      tfp_contrib_bp integer NOT NULL DEFAULT 0`,
     primaryKey: 'universe_id, cycle, planet',
     segmentBy: 'universe_id, planet',
   },
@@ -104,6 +111,15 @@ export const CAGGS: CaggSpec[] = [
     groupBy: 'universe_id, planet, bucket',
   },
   {
+    // Separate from planet_metrics_5 on purpose: CREATE MATERIALIZED VIEW IF NOT EXISTS never alters an existing view,
+    // so a real_gdp_avg column added there would be missing on databases migrated before growth measurement.
+    view: 'planet_metrics_growth_5',
+    source: 'planet_metrics',
+    select: `universe_id, planet, time_bucket(${BUCKET_CYCLES}, cycle) AS bucket,
+      avg(real_gdp) AS real_gdp_avg`,
+    groupBy: 'universe_id, planet, bucket',
+  },
+  {
     view: 'prices_5',
     source: 'prices',
     select: `universe_id, planet, good, time_bucket(${BUCKET_CYCLES}, cycle) AS bucket,
@@ -134,6 +150,12 @@ function caggStatements(c: CaggSpec): string[] {
   ];
 }
 
+const GROWTH_COLUMNS = [
+  'real_gdp bigint NOT NULL', 'labour_input integer NOT NULL', 'capital_stock bigint NOT NULL',
+  'real_gdp_growth_bp integer NOT NULL', 'labour_contrib_bp integer NOT NULL', 'capital_contrib_bp integer NOT NULL',
+  'tfp_contrib_bp integer NOT NULL',
+];
+
 /**
  * Idempotent migration, one statement per entry. Run them one at a time and outside a transaction:
  * CREATE MATERIALIZED VIEW ... WITH (timescaledb.continuous) cannot run in a transaction block.
@@ -161,6 +183,9 @@ export const MIGRATIONS: string[] = [
     at timestamptz NOT NULL DEFAULT now()
   )`,
   ...HYPERTABLES.flatMap(hypertableStatements),
+  // Tables created before growth measurement lack these columns (CREATE TABLE IF NOT EXISTS leaves them as they were).
+  // Must precede the caggs, which read real_gdp.
+  ...GROWTH_COLUMNS.map((c) => `ALTER TABLE planet_metrics ADD COLUMN IF NOT EXISTS ${c} DEFAULT 0`),
   ...CAGGS.flatMap(caggStatements),
 ];
 

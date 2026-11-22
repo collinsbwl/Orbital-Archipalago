@@ -21,6 +21,7 @@ export class InMemorySeries implements MetricsSink, SeriesSource {
     };
     for (const p of s.planets) {
       add(`gdp|${p.planet}`, { metric: 'gdp', planet: p.planet }, p.metrics.gdp);
+      add(`real_gdp|${p.planet}`, { metric: 'real_gdp', planet: p.planet }, p.metrics.realGdp);
       add(`cpi|${p.planet}`, { metric: 'cpi', planet: p.planet }, p.metrics.cpi);
       add(`trade_balance|${p.planet}`, { metric: 'trade_balance', planet: p.planet }, p.metrics.tradeBalance);
       for (const [good, price] of Object.entries(p.prices)) add(`price|${p.planet}|${good}`, { metric: 'price', planet: p.planet, good }, price);

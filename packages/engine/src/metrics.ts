@@ -1,4 +1,5 @@
 import type { PlanetConfig, PlanetSnapshot, SurveyAnswer, WorldConfig } from '@orbital/contracts';
+import { decompose, realGdp } from './growth.js';
 import type { TradeFlow } from './universe.js';
 
 export type PlanetMetrics = PlanetSnapshot['metrics'];
@@ -38,9 +39,24 @@ export interface MetricsInput {
   /** Survey answers of agents acting on this planet this cycle. */
   surveys: readonly SurveyAnswer[];
   prev?: Pick<PlanetMetrics, 'consumerConfidence' | 'businessConfidence'>;
+  /** Total holdings of the capital good on this planet, read after production and consumption. */
+  capitalStock?: number;
+  /** This planet's earlier metrics, oldest first, excluding this cycle (only the last window + smoothing span is needed). */
+  trail?: readonly Pick<PlanetMetrics, 'realGdp' | 'labourInput' | 'capitalStock'>[];
 }
 
+
 export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: MetricsInput): PlanetMetrics {
+  const rgdp = realGdp(inp.produced, inp.used, world);
+  // Placeholder: headcount until colonist cohorts (age, skills) give a better labour measure.
+  const labourInput = planet.agents.colonist;
+  const capitalStock = inp.capitalStock ?? 0;
+  const trail = inp.trail ?? [];
+  const growth = decompose({
+    realGdp: [...trail.map((t) => t.realGdp), rgdp],
+    labour: [...trail.map((t) => t.labourInput), labourInput],
+    capital: [...trail.map((t) => t.capitalStock), capitalStock],
+  });
   return {
     gdp: valueAdded(inp.produced, inp.used, inp.price),
     cpi: basketCpi(world, inp.price),
@@ -48,6 +64,10 @@ export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: Me
     population: planet.agents.colonist,
     consumerConfidence: confidence(inp.surveys, 'consumer', inp.prev?.consumerConfidence ?? INITIAL_CONFIDENCE),
     businessConfidence: confidence(inp.surveys, 'business', inp.prev?.businessConfidence ?? INITIAL_CONFIDENCE),
+    realGdp: rgdp,
+    labourInput,
+    capitalStock,
+    ...growth,
   };
 }
 

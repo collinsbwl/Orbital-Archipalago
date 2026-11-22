@@ -11,6 +11,7 @@ import { Detectors } from './detectors/index.js';
 import type { DetectedEvent } from './detectors/index.js';
 import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
+import { GROWTH_CONFIG, GROWTH_TRAIL } from './growth.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
@@ -417,6 +418,8 @@ export class Universe {
       metrics[p.id] = computeMetrics(world, p, {
         produced: produced[p.id] ?? {}, used: used[p.id] ?? {}, price: (g) => this.priceOf(p.id, g), flow: flows[p.id]!,
         surveys: surveys.get(p.id) ?? [], ...(prev ? { prev: prev[p.id]! } : {}),
+        capitalStock: await this.capitalStockOf(p.id),
+        trail: this.history.slice(-GROWTH_TRAIL).map((h) => h.metrics[p.id]!),
       });
     }
     this.history.push({ cycle, metrics });
@@ -443,6 +446,15 @@ export class Universe {
     };
   }
 
+  /** Holdings of the capital good on a planet, summed over the agents based there (accounts are owner + planet). */
+  private async capitalStockOf(planet: PlanetId): Promise<number> {
+    const good = GROWTH_CONFIG.capitalGood;
+    if (!this.world.goods.some((g) => g.id === good)) return 0;
+    let total = 0;
+    for (const a of this.roster) if (a.planet === planet) total += await this.ledger.getInventory(a.id, planet, good);
+    return total;
+  }
+
   /** Last clearing price of a good on a planet, else its base price. */
   private priceOf(planet: PlanetId, good: GoodId): number {
     return this.book.lastPrice(planet, good) ?? this.world.goods.find((g) => g.id === good)!.basePrice;
@@ -453,7 +465,7 @@ export class Universe {
     const { world } = this;
     const cycle = Math.max(0, this._cycle - 1);
     const latest = this.history[this.history.length - 1]?.metrics;
-    const fresh = (): PlanetMetrics => ({ gdp: 0, cpi: CPI_BASE, tradeBalance: 0, population: 0, consumerConfidence: INITIAL_CONFIDENCE, businessConfidence: INITIAL_CONFIDENCE });
+    const fresh = (): PlanetMetrics => ({ gdp: 0, cpi: CPI_BASE, tradeBalance: 0, population: 0, consumerConfidence: INITIAL_CONFIDENCE, businessConfidence: INITIAL_CONFIDENCE, realGdp: 0, labourInput: 0, capitalStock: 0, realGdpGrowthBp: 0, labourContribBp: 0, capitalContribBp: 0, tfpContribBp: 0 });
     const planets = [];
     for (const p of world.planets) {
       planets.push({
@@ -461,7 +473,7 @@ export class Universe {
         currency: p.currency,
         prices: Object.fromEntries(world.goods.map((g) => [g.id, this.priceOf(p.id, g.id)])),
         policy: await this.ledger.getPolicy(p.id),
-        metrics: latest?.[p.id] ?? { ...fresh(), population: p.agents.colonist },
+        metrics: latest?.[p.id] ?? { ...fresh(), population: p.agents.colonist, labourInput: p.agents.colonist },
         orbitPhaseCycles: orbitPhase(p, cycle),
       });
     }

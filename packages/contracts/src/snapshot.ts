@@ -7,6 +7,9 @@ import { PolicyStateSchema, ShipmentSchema } from './ledger.js';
 
 const CommandIdSchema = z.string().min(1).max(64);
 
+/** Signed bp, unbounded: annualised growth can pass +-100% (SignedBp is capped at +-10_000, which fits shocks, not growth). */
+const GrowthBpSchema = z.number().int().safe();
+
 export const PlanetMetricsSchema = z.object({
   /** In the planet's currency. */
   gdp: MinorUnitsSchema,
@@ -18,6 +21,17 @@ export const PlanetMetricsSchema = z.object({
   /** 0-100. */
   consumerConfidence: z.number().int().min(0).max(100),
   businessConfidence: z.number().int().min(0).max(100),
+  /** Value added at base prices (planet currency): GDP with price movements stripped out. */
+  realGdp: MinorUnitsSchema,
+  /** Labour input; colonist headcount for now. */
+  labourInput: StockSchema,
+  /** Total holdings of the capital good (`tools`) on the planet. */
+  capitalStock: StockSchema,
+  /** Annualised growth of real GDP and the parts of it due to labour, capital and TFP (the residual), in bp. 0 until enough history. */
+  realGdpGrowthBp: GrowthBpSchema,
+  labourContribBp: GrowthBpSchema,
+  capitalContribBp: GrowthBpSchema,
+  tfpContribBp: GrowthBpSchema,
 });
 
 export const PlanetSnapshotSchema = z.object({
@@ -43,7 +57,7 @@ export const SimEventSchema = z.object({
 });
 export type SimEvent = z.infer<typeof SimEventSchema>;
 
-export const CHART_METRICS = ['gdp', 'cpi', 'trade_balance', 'price', 'fx_rate'] as const;
+export const CHART_METRICS = ['gdp', 'real_gdp', 'cpi', 'trade_balance', 'price', 'fx_rate'] as const;
 /** Filled by the engine from Tiger Data continuous aggregates. Points are [cycle, value]. */
 export const ChartSeriesSchema = z.object({
   metric: z.enum(CHART_METRICS),

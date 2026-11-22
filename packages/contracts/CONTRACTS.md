@@ -15,3 +15,7 @@ Day-0 frozen types and zod schemas shared by Track A (engine), B (agents/gateway
 - Schemas under `AgentDecision` / `Action` avoid transforms and refinements so they export to JSON schema for the model.
 - Discriminated unions use `kind` (actions, commands, policy) or `type` (WebSocket envelopes).
 - Values marked `// DEFAULT:` are placeholders the team may revise.
+
+## Changelog
+
+- **0.3.0** (additive, minor): `PlanetMetrics` gains required growth-accounting fields `realGdp`, `labourInput`, `capitalStock`, `realGdpGrowthBp`, `labourContribBp`, `capitalContribBp`, `tfpContribBp` (signed, unbounded integer bp for the growth ones); `CHART_METRICS` gains `real_gdp`. Producers of `PlanetMetrics` (engine, fixtures) must fill them. Other tracks: please acknowledge per the change rule above.

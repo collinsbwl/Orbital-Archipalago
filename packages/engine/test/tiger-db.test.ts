@@ -11,10 +11,10 @@ function snap(universeId: string, cycle: number): Snapshot {
     universeId, cycle, paused: false,
     planets: [
       { planet: 'helion', currency: 'HEL', prices: { iron: 100 + cycle }, policy,
-        metrics: { gdp: 1_000 + cycle, cpi: 10_000 + cycle, tradeBalance: cycle % 2 === 0 ? 10 : -4, population: 500, consumerConfidence: 60, businessConfidence: 55 },
+        metrics: { gdp: 1_000 + cycle, cpi: 10_000 + cycle, tradeBalance: cycle % 2 === 0 ? 10 : -4, population: 500, consumerConfidence: 60, businessConfidence: 55, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90 },
         orbitPhaseCycles: 0 },
       { planet: 'vesta', currency: 'VES', prices: { iron: 90 }, policy,
-        metrics: { gdp: 2_000, cpi: 9_900, tradeBalance: 40, population: 800, consumerConfidence: 70, businessConfidence: 65 },
+        metrics: { gdp: 2_000, cpi: 9_900, tradeBalance: 40, population: 800, consumerConfidence: 70, businessConfidence: 65, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90 },
         orbitPhaseCycles: 0 },
     ],
     fx: [{ base: 'HEL', quote: 'VES', ratePpm: 1_000_000 + cycle }],
@@ -56,6 +56,7 @@ describe.skipIf(!url)('TigerStore (TimescaleDB integration)', () => {
     expect(find('trade_balance', { planet: 'helion' })?.points[0]?.[1]).toBe(10 - 4 + 10 - 4 + 10); // cycles 0..4
     expect(find('price', { planet: 'helion', good: 'iron' })?.points[5]?.[1]).toBe(129);
     expect(find('fx_rate', { pair: 'HEL/VES' })?.points.at(-1)).toEqual([25, 1_000_029]);
+    expect(find('real_gdp', { planet: 'helion' })?.points[0]?.[1]).toBe(900);
     expect(find('gdp', { planet: 'vesta' })).toBeDefined();
   };
 
