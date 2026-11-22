@@ -61,6 +61,7 @@ const KNOWN: Record<string, GroundLook> = {
     fogNear: 55, fogFar: 400, precip: 'snow',
     buildings: ['#cfe3ee', '#9fc4da', '#eef6fa', '#7fa6c0'],
     relief: { hills: 2.5, hillScale: 120, mountains: 120, mountainStart: 160 },
+    style: 'crystal',
   },
 };
 
