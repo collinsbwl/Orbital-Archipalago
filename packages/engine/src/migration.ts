@@ -4,9 +4,9 @@ import type { Residents } from './phases/production.js';
 /** DEFAULT: tuning for colonist migration. */
 export const MIGRATION_CONFIG = {
   /** A colonist leaves once a need has gone unmet this many cycles in a row. */
-  hungerToLeave: 3,
+  hungerToLeave: 2,
   /** At most this many colonists leave one planet per cycle. */
-  maxLeavingPerCycle: 4,
+  maxLeavingPerCycle: 10,
   /** Nobody leaves a planet with this many residents or fewer. */
   minPopulation: 5,
   /** A planet takes no newcomers at this multiple of its configured colonists. */

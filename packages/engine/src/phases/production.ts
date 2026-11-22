@@ -22,7 +22,7 @@ export function homeResidents(world: WorldConfig): Residents {
  * power: more hands make more, each extra one a bit less (land and equipment stay fixed), and an emptied planet keeps
  * more output per head. 1 would be linear.
  */
-export const LABOR_EXPONENT = 0.7;
+export const LABOR_EXPONENT = 0.85;
 
 /** Batches of one recipe a planet runs with `residents` colonists; exactly `batchesPerCycle` at its configured size. */
 export function batchesFor(planet: PlanetConfig, batchesPerCycle: number, residents: number): number {
