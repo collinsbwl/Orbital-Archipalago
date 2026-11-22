@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { layoutCity } from './city-layout';
-import { clampAboveTerrain, clampCameraY, clampPanTarget, EYE_HEIGHT, GROUND_LIMITS, landingPose, MIN_CAMERA_HEIGHT } from './ground-camera';
+import { clampAboveTerrain, clampCameraY, clampPanTarget, clampTargetY, EYE_HEIGHT, GROUND_LIMITS, landingPose, MIN_CAMERA_HEIGHT, polarAngle, TARGET_LIMITS } from './ground-camera';
 
 describe('clampCameraY', () => {
   it('lifts a camera that is too low', () => {
@@ -27,7 +27,36 @@ describe('clampAboveTerrain', () => {
   });
 });
 
+describe('water and the target height', () => {
+  const lake = { heightAt: () => 2, waterDepthAt: (x: number) => (x > 0 ? 3 : 0) };
+  it('keeps the camera above the water surface, not just the lake bed', () => {
+    expect(clampAboveTerrain(lake, 5, 3, 0)).toBe(5 + MIN_CAMERA_HEIGHT);
+    expect(clampAboveTerrain(lake, -5, 3, 0)).toBe(3);
+  });
+  it('keeps the orbit target between the limits above the surface', () => {
+    expect(clampTargetY(lake, -5, -10, 0)).toBe(2 + TARGET_LIMITS.min);
+    expect(clampTargetY(lake, -5, 1000, 0)).toBe(2 + TARGET_LIMITS.max);
+    expect(clampTargetY(lake, 5, 6, 0)).toBe(6);
+  });
+});
+
 describe('landingPose', () => {
+  it('lands inside the polar cap, so the controls do not lift the camera', () => {
+    for (const planet of ['verdan', 'helion', 'tethys']) {
+      const l = layoutCity({ planet });
+      for (const h of [0, 3, -4]) {
+        const pose = landingPose(l, { heightAt: (x: number, z: number) => (Math.hypot(x, z) < 5 ? 0 : h) });
+        expect(polarAngle(pose)).toBeLessThanOrEqual(GROUND_LIMITS.maxPolarAngle);
+        expect(pose.position[1]).toBeCloseTo(h + EYE_HEIGHT); // still at eye height
+      }
+    }
+  });
+  it('still looks along the road toward the plaza from eye level', () => {
+    const l = layoutCity({ planet: 'verdan' });
+    const pose = landingPose(l, { heightAt: () => 0 });
+    expect(pose.target[1]).toBeGreaterThan(0);
+    expect(pose.target[1]).toBeLessThan(EYE_HEIGHT);
+  });
   const layout = layoutCity({ planet: 'verdan' });
   const flat = { heightAt: () => 0 };
   it('lands at eye height at a road end, looking at the plaza', () => {

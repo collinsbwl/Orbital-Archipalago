@@ -67,6 +67,9 @@ export function useTrail(): Trail {
   return trail;
 }
 
+/** Stands in for a mesh's raycast so it can never be picked. */
+const noRaycast = () => null;
+
 interface FreighterModelProps {
   /** The caller moves and turns this group each frame. */
   groupRef: RefObject<THREE.Group>;
@@ -79,13 +82,15 @@ interface FreighterModelProps {
   onHover: (id: string | null) => void;
   /** Lines shown when hovered (see `shipTooltip`). */
   tooltip: string[];
+  /** False while the ship's scene is hidden: the hover target is taken out of picking so it cannot swallow pointer events. */
+  interactive?: boolean;
 }
 
 /**
  * The freighter everyone shares: a cone hull, a wing slab, a glowing engine, an invisible hover target and the tooltip.
  * The trail is in world space, so it is drawn outside the moving group.
  */
-export function FreighterModel({ groupRef, trail, id, scale = SHIP_SCALE, hovered, onHover, tooltip }: FreighterModelProps) {
+export function FreighterModel({ groupRef, trail, id, scale = SHIP_SCALE, hovered, onHover, tooltip, interactive = true }: FreighterModelProps) {
   useEffect(() => {
     if (!hovered) return;
     document.body.style.cursor = 'pointer';
@@ -111,11 +116,12 @@ export function FreighterModel({ groupRef, trail, id, scale = SHIP_SCALE, hovere
         </mesh>
         {/* An invisible, bigger target so a tiny ship is easy to point at. */}
         <mesh
-          onPointerOver={(e) => {
+          raycast={interactive ? undefined : noRaycast}
+          onPointerOver={interactive ? (e) => {
             e.stopPropagation();
             onHover(id);
-          }}
-          onPointerOut={() => onHover(null)}
+          } : undefined}
+          onPointerOut={interactive ? () => onHover(null) : undefined}
         >
           <sphereGeometry args={[0.13, 8, 6]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />

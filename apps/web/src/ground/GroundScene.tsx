@@ -7,7 +7,7 @@ import { Aliens } from './AlienCrowd';
 import { City } from './City';
 import { CITY_FLAT_RADIUS, layoutCity, populationTier } from './city-layout';
 import { Crops } from './CropFields';
-import { clampAboveTerrain, clampPanTarget, GROUND_LIMITS, landingPose } from './ground-camera';
+import { clampAboveTerrain, clampPanTarget, clampTargetY, GROUND_LIMITS, landingPose } from './ground-camera';
 import { initialAtmosphere } from './atmosphere-ref';
 import type { AtmosphereState } from './atmosphere-ref';
 import { Festival } from './FestivalShow';
@@ -41,6 +41,7 @@ export { GROUND_LIMITS };
 /** The bits of OrbitControls this scene touches. */
 export interface ControlsLike {
   enabled: boolean;
+  enableDamping?: boolean;
   target: Vector3;
   minDistance: number;
   maxDistance: number;
@@ -117,11 +118,13 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
   // The sky dome and far mountains need a far plane beyond the map's.
   useLayoutEffect(() => {
     const cam = camera as PerspectiveCamera;
-    const oldFar = cam.far;
+    const [oldFar, oldNear] = [cam.far, cam.near];
     cam.far = SKY_RADIUS * 1.8;
+    cam.near = Math.max(cam.near, 0.1); // the map uses a much nearer plane; on the ground that would waste depth precision
     cam.updateProjectionMatrix();
     return () => {
       cam.far = oldFar;
+      cam.near = oldNear;
       cam.updateProjectionMatrix();
     };
   }, [camera]);
@@ -139,18 +142,20 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
     controls?.update();
   }, [camera, controls, planet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Each frame: keep the pan target inside the city (moving the camera by the same amount so the view just slides), and
-  // keep the camera above the ground. Not during a transition, when the view director is placing the camera itself.
+  // Each frame: keep the pan target inside the city and between the surface and a sensible height (moving the camera by
+  // the same amount so the view just slides), and keep the camera above the ground or the water. Not during a
+  // transition, when the view director is placing the camera itself.
   useFrame(() => {
     if (controls && !controls.enabled) return;
     if (controls) {
       const t = controls.target;
       const c = clampPanTarget(t.x, t.z, layout.radius);
-      if (c.x !== t.x || c.z !== t.z) {
+      const ty = clampTargetY(terrain, c.x, t.y, c.z);
+      if (c.x !== t.x || c.z !== t.z || ty !== t.y) {
         camera.position.x += c.x - t.x;
+        camera.position.y += ty - t.y;
         camera.position.z += c.z - t.z;
-        t.x = c.x;
-        t.z = c.z;
+        t.set(c.x, ty, c.z);
       }
     }
     camera.position.y = clampAboveTerrain(terrain, camera.position.x, camera.position.y, camera.position.z);

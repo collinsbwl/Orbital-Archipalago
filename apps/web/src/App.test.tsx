@@ -9,7 +9,12 @@ const view: SnapshotsView = {
   playbackSpeed: 1, setPlaybackSpeed: vi.fn(),
 };
 vi.mock('./data/useSnapshots', () => ({ useSnapshots: () => view }));
-vi.mock('./components/Scene3D', () => ({ Scene3D: () => <div data-testid="scene" /> }));
+// The real scene needs WebGL. This stand-in just lets a test click a planet to focus it.
+vi.mock('./components/Scene3D', () => ({
+  Scene3D: ({ focused, onFocus }: { focused: string | null; onFocus: (id: string | null) => void }) => (
+    <button data-testid="scene" data-focused={focused ?? ''} onClick={() => onFocus('verdan')}>planet</button>
+  ),
+}));
 
 const { App } = await import('./App');
 
@@ -65,7 +70,7 @@ describe('App playback controls', () => {
     view.playbackPaused = false;
   });
 
-  it('lists the planets in the legend and keeps panels mounted but folded', () => {
+  it('shows how to use the view and keeps panels mounted but folded', () => {
     view.mode = 'live';
     render(<App />);
     expect(screen.getAllByText(/Drag to rotate/).length).toBe(1);
@@ -74,5 +79,42 @@ describe('App playback controls', () => {
     expect(screen.getByText('Charts')).toBeTruthy(); // still in the page, just hidden
     fireEvent.click(head);
     expect(head.getAttribute('aria-expanded')).toBe('true');
+  });
+});
+
+describe('App focus mode', () => {
+  it('opens the planet card when a planet is focused, and Esc or Back returns to the map', () => {
+    view.role = 'spectator';
+    view.mode = 'live';
+    render(<App />);
+    expect(screen.queryByText('Back to map (Esc)')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('scene')); // click the planet
+    expect(screen.getByLabelText('Verdan details')).toBeTruthy();
+    expect(screen.getByTestId('scene').getAttribute('data-focused')).toBe('verdan');
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByLabelText('Verdan details')).toBeNull();
+    expect(screen.getByTestId('scene').getAttribute('data-focused')).toBe('');
+
+    fireEvent.click(screen.getByTestId('scene'));
+    fireEvent.click(screen.getByText('Back to map (Esc)'));
+    expect(screen.queryByLabelText('Verdan details')).toBeNull();
+  });
+
+  it('ignores other keys, and drops a focus on a planet that is no longer there', () => {
+    view.role = 'spectator';
+    view.mode = 'live';
+    const { rerender } = render(<App />);
+    fireEvent.click(screen.getByTestId('scene'));
+    fireEvent.keyDown(window, { key: 'a' });
+    expect(screen.getByLabelText('Verdan details')).toBeTruthy();
+
+    const only = makeSnapshot(8);
+    only.planets = only.planets.filter((p) => p.planet === 'helion');
+    view.snapshot = only; // another universe, without Verdan
+    rerender(<App />);
+    expect(screen.queryByLabelText('Verdan details')).toBeNull();
+    view.snapshot = makeSnapshot(7);
   });
 });

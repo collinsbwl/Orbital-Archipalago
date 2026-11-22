@@ -2,7 +2,11 @@
 
 A full-screen 3D view of the archipelago with floating panels (planet metrics and charts, event feed, god-mode panel for operators).
 
-The scene (`src/scene/`, built with React Three Fiber): a glowing sun and starfield, low-poly planets that each have their own look (`planet-look.ts`), faint trade lanes between every pair of planets, and a freighter with an engine trail for each shipment in flight. Hover a ship for its owner, cargo, route and arrival. Drag to rotate, scroll to zoom. Planets are stationary (set `PLANETS_ORBIT` in `src/scene/frame.ts` to make them circle the sun), and ships glide smoothly along the lane between their two planets (`clock.ts` learns the cycle length from the gaps between snapshots). In fixture mode there are pause and 1x/2x/4x buttons.
+The scene (`src/scene/`, built with React Three Fiber): a glowing sun and starfield, low-poly planets that each have their own look (`planet-look.ts`), faint trade lanes between every pair of planets, and a freighter with an engine trail for each shipment in flight. Every planet carries its name; hover a planet for its currency, GDP, inflation and population, or a ship for its owner, cargo, route and arrival. Drag to rotate, scroll to zoom. Planets are stationary (set `PLANETS_ORBIT` in `src/scene/frame.ts` to make them circle the sun), and ships glide smoothly along the lane between their two planets (`clock.ts` learns the cycle length from the gaps between snapshots). In fixture mode there are pause and 1x/2x/4x buttons.
+
+Focus mode: click a zoomable planet (for now only Verdan; see `ZOOMABLE_PLANETS` in `src/scene/focus.ts`) and the camera flies in, the planet glows, its lanes turn gold and everything else steps back (the same spotlight shows when you just hover any planet on the map), and a card shows its economy numbers (it keeps updating while the simulation runs). Back to map, or press Esc, flies the camera back to where it was.
+
+The camera lands at a little city on the planet (`src/scene/city.ts` for the layout and walking rules, `CityView.tsx` for the drawing): a grassy mesa with a cross of roads, a plaza with a fountain, houses, a farm with a barn and silo, a landing pad, and aliens walking the roads. The numbers come from the planet: population sets how many houses and aliens there are, and consumer confidence sets how fast they walk. These aliens are placeholders; real per-agent aliens need per-agent data in the snapshot.
 
 ## Run
 

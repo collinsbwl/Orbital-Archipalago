@@ -7,14 +7,15 @@ body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #04050b; col
 
 /* The panels float over the scene. The layer itself ignores the mouse, so dragging in the gaps still moves the camera. */
 .hud {
-  position: absolute; inset: 0; pointer-events: none; display: grid; gap: 12px; padding: 12px;
+  /* Above the 3D labels and tooltips (their layer tops out at 30), so panels are never drawn over by a planet's name. */
+  z-index: 100; position: absolute; inset: 0; pointer-events: none; display: grid; gap: 12px; padding: 12px;
   grid-template-columns: minmax(0, 520px) 1fr minmax(0, 360px);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas: "top top top" "left . right" "bottom bottom bottom";
 }
 .hud > * { pointer-events: auto; }
 .hud-top { grid-area: top; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-.hud-left { grid-area: left; align-self: start; max-height: 100%; overflow: auto; }
+.hud-left { grid-area: left; align-self: start; max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
 .hud-right { grid-area: right; align-self: start; max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
 .hud-bottom { grid-area: bottom; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .hud-note { grid-column: 1 / -1; margin: 0; }
@@ -35,8 +36,21 @@ body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #04050b; col
 .hud-left .panel-body { max-height: 62vh; overflow: auto; }
 .hud-right .panel-body { max-height: 38vh; overflow: auto; }
 .playback { display: flex; gap: 6px; align-items: center; }
-.legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+.hint { font-size: 13px; }
+/* The label's bottom edge sits just above the planet, so opening it grows it upward instead of over the planet. */
+.planet-label { transform: translate(-50%, -100%); background: rgba(8, 10, 18, 0.72); border: 1px solid #2f3b66; border-radius: 6px; padding: 2px 8px; font-size: 12px; white-space: nowrap; color: #dde; text-align: center; }
+.planet-label.open { background: rgba(8, 10, 18, 0.92); border-color: #4a5c9a; padding: 5px 10px; }
+.planet-label-name { font-weight: 600; color: #fff; }
+.planet-label-name i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: baseline; }
+.planet-label-detail { color: #9aa6cc; }
+.planet-label-hint { color: #7fb0ff; margin-top: 2px; }
+.planet-label.dim { opacity: 0.45; }
+.planet-card header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.planet-card header i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.planet-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin: 0; }
+.planet-card dl div { display: flex; justify-content: space-between; gap: 8px; }
+.planet-card dt, .planet-card dd { margin: 0; }
+.planet-card dd { font-weight: 600; font-variant-numeric: tabular-nums; }
 .ship-tip { background: rgba(8, 10, 18, 0.92); border: 1px solid #3a4a80; border-radius: 6px; padding: 6px 9px; font-size: 12px; white-space: nowrap; color: #dde; }
 .ship-tip-title { font-weight: 600; color: #9cf; }
 .spacer { flex: 1; }
@@ -52,7 +66,6 @@ button, select, input { font: inherit; }
 .badge.shock { background: #a62; }
 .badge.policy { background: #36a; }
 .badge.headline { background: #555; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid #234; }
 .charts { display: flex; flex-wrap: wrap; gap: 16px; }
