@@ -29,17 +29,18 @@ const snapshot: Snapshot = {
   universeId: 'u0', cycle: 3, paused: false,
   planets: [{
     planet: 'helion', currency: 'HLX', prices: { iron: 100 }, policy, orbitPhaseCycles: 3,
-    metrics: { gdp: 50_000, cpi: 10_000, tradeBalance: -1_200, population: 30, consumerConfidence: 55, businessConfidence: 60, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000 },
+    metrics: { gdp: 50_000, cpi: 10_000, tradeBalance: -1_200, population: 30, consumerConfidence: 55, businessConfidence: 60, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000, netMigration: -3, emigrants: 5, immigrants: 2 },
   }],
   fx: [{ base: 'HLX', quote: 'VRD', ratePpm: 1_250_000 }],
   shipments: [{ id: 's1', owner: 'helion:trader:1', from: 'helion', to: 'verdan', cargo: [{ good: 'iron', qty: 5 }], departCycle: 2, arriveCycle: 5, status: 'in_flight' }],
+  migrants: [{ from: 'helion', to: 'verdan', people: 12, departCycle: 2, arriveCycle: 5 }],
   events: [{ id: 'e1', cycle: 3, kind: 'headline', planet: 'helion', text: 'Iron holds' }],
   series: [{ metric: 'gdp', planet: 'helion', points: [[1, 49_000], [2, 50_000]] }],
   gatewayCostUsd: 0.12,
 };
 
 describe('contracts', () => {
-  it('exposes a version', () => expect(CONTRACTS_VERSION).toBe('0.4.0'));
+  it('exposes a version', () => expect(CONTRACTS_VERSION).toBe('0.5.0'));
 
   it('DEFAULT_WORLD parses and is stable', () => {
     expect(WorldConfigSchema.parse(DEFAULT_WORLD)).toEqual(DEFAULT_WORLD);

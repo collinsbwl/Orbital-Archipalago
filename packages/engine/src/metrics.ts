@@ -47,6 +47,8 @@ export interface MetricsInput {
   trail?: readonly Pick<PlanetMetrics, 'realGdp' | 'labourInput' | 'capitalStock'>[];
   /** Cohorts, participation and labour of this cycle; absent = all colonists working-age at the base participation. */
   demography?: DemographyReading;
+  /** People who left and arrived this cycle (whole people); absent = none. */
+  migration?: { emigrants: number; immigrants: number };
 }
 
 /** The reading of a planet with no demography state: every colonist is a working-age person. */
@@ -84,6 +86,9 @@ export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: Me
     retired: demo.retired,
     dependencyRatioBp: demo.dependencyRatioBp,
     participationBp: demo.participationBp,
+    netMigration: (inp.migration?.immigrants ?? 0) - (inp.migration?.emigrants ?? 0),
+    emigrants: inp.migration?.emigrants ?? 0,
+    immigrants: inp.migration?.immigrants ?? 0,
   };
 }
 

@@ -22,6 +22,9 @@ export interface PlanetMetricsRow {
   retired: number;
   dependencyRatioBp: number;
   participationBp: number;
+  netMigration: number;
+  emigrants: number;
+  immigrants: number;
 }
 export interface PriceRow { universeId: string; cycle: number; planet: string; good: string; price: number }
 export interface FxRateRow { universeId: string; cycle: number; pair: string; ratePpm: number }
@@ -48,6 +51,7 @@ export function snapshotToRows(snapshot: Snapshot): CycleRows {
       realGdp: m.realGdp, labourInput: m.labourInput, capitalStock: m.capitalStock,
       realGdpGrowthBp: m.realGdpGrowthBp, labourContribBp: m.labourContribBp, capitalContribBp: m.capitalContribBp, tfpContribBp: m.tfpContribBp,
       children: m.children, workingAge: m.workingAge, retired: m.retired, dependencyRatioBp: m.dependencyRatioBp, participationBp: m.participationBp,
+      netMigration: m.netMigration, emigrants: m.emigrants, immigrants: m.immigrants,
     });
     for (const [good, price] of Object.entries(p.prices)) prices.push({ universeId, cycle, planet: p.planet, good, price });
   }

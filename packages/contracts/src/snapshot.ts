@@ -41,6 +41,10 @@ export const PlanetMetricsSchema = z.object({
   dependencyRatioBp: z.number().int().safe().nonnegative(),
   /** Share of working-age people in the labour force, bp. */
   participationBp: RateBpSchema,
+  /** People who changed planet this cycle: arrived minus departed (signed), and each side (people, whole). */
+  netMigration: SignedMinorUnitsSchema,
+  emigrants: StockSchema,
+  immigrants: StockSchema,
 });
 
 export const PlanetSnapshotSchema = z.object({
@@ -78,6 +82,17 @@ export const ChartSeriesSchema = z.object({
 });
 export type ChartSeries = z.infer<typeof ChartSeriesSchema>;
 
+/** A group of migrants in transit between planets (they consume nothing until they arrive). */
+export const MigrantGroupSchema = z.object({
+  from: PlanetIdSchema,
+  to: PlanetIdSchema,
+  /** People (whole). */
+  people: StockSchema,
+  departCycle: CycleSchema,
+  arriveCycle: CycleSchema,
+});
+export type MigrantGroup = z.infer<typeof MigrantGroupSchema>;
+
 export const SnapshotSchema = z.object({
   universeId: UniverseIdSchema,
   cycle: CycleSchema,
@@ -85,6 +100,8 @@ export const SnapshotSchema = z.object({
   planets: z.array(PlanetSnapshotSchema),
   fx: z.array(FxQuoteSchema),
   shipments: z.array(ShipmentSchema),
+  /** Migrant groups in transit, oldest departure first (at most 100). */
+  migrants: z.array(MigrantGroupSchema).max(100),
   events: z.array(SimEventSchema).max(50),
   series: z.array(ChartSeriesSchema),
   /** Cumulative gateway spend (USD telemetry). */

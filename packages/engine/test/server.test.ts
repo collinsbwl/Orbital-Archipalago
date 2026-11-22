@@ -9,7 +9,7 @@ import { startServer } from '../src/server/ws-server.js';
 import type { RunningServer } from '../src/server/ws-server.js';
 
 function snap(universeId: string, cycle: number): Snapshot {
-  return SnapshotSchema.parse({ universeId, cycle, paused: false, planets: [], fx: [], shipments: [], events: [], series: [], gatewayCostUsd: 0 });
+  return SnapshotSchema.parse({ universeId, cycle, paused: false, planets: [], fx: [], shipments: [], migrants: [], events: [], series: [], gatewayCostUsd: 0 });
 }
 
 class FakeHub implements SimHub {

@@ -14,6 +14,8 @@ import type { DetectedEvent } from './detectors/index.js';
 import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
 import { GROWTH_CONFIG, GROWTH_TRAIL, accrueWear, accumulateInstalledPpm, capacityMultiplierPpm, investmentPpm, labourMultiplierPpm, scaleBatches } from './growth.js';
+import { MIGRATION_CONFIG, addMigrants, attractiveness, migrationFlows, removeMigrants } from './migration.js';
+import type { MigrantGroup } from './migration.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
@@ -133,6 +135,10 @@ export class Universe {
   private readonly installedCapitalPpm = new Map<PlanetId, number>();
   /** Age cohorts, colonist households and the last unmet-needs share, per planet (ppm of a person; see demographics.ts). */
   private readonly demography = new Map<PlanetId, PlanetDemography>();
+  /** Migrants in transit, in departure order; they are in no cohort and consume nothing until they arrive. */
+  private migrants: MigrantGroup[] = [];
+  /** People (ppm) who left and arrived per planet in the current cycle. */
+  private readonly migStep = new Map<PlanetId, { out: number; in: number }>();
 
   constructor(opts: UniverseOptions) {
     this.world = opts.world;
@@ -201,6 +207,7 @@ export class Universe {
     u.events.push(...structuredClone(this.events));
     u.eventSeq = this.eventSeq;
     u.detectors.setState(structuredClone(this.detectors.getState()));
+    u.migrants = structuredClone(this.migrants);
     u._cycle = this._cycle;
     u.queue = structuredClone(this.queue);
     u.shocks = structuredClone(this.shocks);
@@ -350,6 +357,7 @@ export class Universe {
     await this.runEvents(cycle);
     const { arrivals, flows } = await this.runArrivals(cycle);
     const due0 = await this.settleDueLoans(cycle);
+    await this.runMigration(cycle);
     const used: Counts = {};
     const capital = await this.capitalStocks();
     const readings = this.demographyReadings();
@@ -436,6 +444,7 @@ export class Universe {
         produced: produced[p.id] ?? {}, used: used[p.id] ?? {}, price: (g) => this.priceOf(p.id, g), flow: flows[p.id]!,
         surveys: surveys.get(p.id) ?? [], ...(prev ? { prev: prev[p.id]! } : {}),
         capitalStock: await this.capitalStockOf(p.id) + this.installedUnits(p.id), demography: readings.get(p.id)!,
+        migration: { emigrants: Math.round((this.migStep.get(p.id)?.out ?? 0) / PPM), immigrants: Math.round((this.migStep.get(p.id)?.in ?? 0) / PPM) },
         trail: this.history.slice(-GROWTH_TRAIL).map((h) => h.metrics[p.id]!),
       });
     }
@@ -463,6 +472,51 @@ export class Universe {
       fxOrdersRejected: placedFx.rejected.length, ledgerRejections, departures, arrivals, fx, tradeFlows: flows, metrics,
       defaults: due0.defaults, detected,
     };
+  }
+
+  /**
+   * Migration phase: settles groups that arrive this cycle, then (every reviewIntervalCycles) lets working-age people leave
+   * for more attractive planets, judged on the last completed cycle's metrics. Embargoes block a pair in both directions.
+   */
+  private async runMigration(cycle: number): Promise<void> {
+    const cfg = MIGRATION_CONFIG;
+    this.migStep.clear();
+    const bump = (planet: PlanetId, key: 'out' | 'in', ppm: number) => {
+      const m = this.migStep.get(planet) ?? { out: 0, in: 0 };
+      m[key] += ppm;
+      this.migStep.set(planet, m);
+    };
+    const transit: MigrantGroup[] = [];
+    for (const g of this.migrants) {
+      if (g.arriveCycle > cycle) { transit.push(g); continue; }
+      addMigrants(this.demography.get(g.to)!, g.ppm);
+      bump(g.to, 'in', g.ppm);
+    }
+    this.migrants = transit;
+
+    const prev = this.history[this.history.length - 1]?.metrics;
+    if (!prev || cycle < cfg.warmupCycles || cycle % cfg.reviewIntervalCycles !== 0) return;
+    const planets = this.world.planets.filter((p) => this.demography.get(p.id)!.dynamic && this.demography.get(p.id)!.households.length > 0);
+    const attract = attractiveness(planets.map((p) => {
+      const m = prev[p.id]!;
+      return { planet: p.id, wage: m.labourInput > 0 ? m.realGdp / m.labourInput : 0, unmetPpm: this.demography.get(p.id)!.unmetPpm, consumerConfidence: m.consumerConfidence };
+    }));
+    const embargoes = new Map<PlanetId, readonly PlanetId[]>();
+    for (const p of planets) embargoes.set(p.id, (await this.ledger.getPolicy(p.id)).embargoes);
+    const flows = migrationFlows(
+      planets.map((p) => ({ planet: p.id, workingAge: this.demography.get(p.id)!.workingAge })), attract,
+      (a, b) => travelCycles(this.world, a, b, cycle),
+      (a, b) => (embargoes.get(a)?.includes(b) ?? false) || (embargoes.get(b)?.includes(a) ?? false),
+    );
+    const name = (id: PlanetId) => this.world.planets.find((p) => p.id === id)!.name;
+    for (const f of flows) {
+      const ppm = removeMigrants(this.demography.get(f.from)!, f.ppm);
+      if (ppm <= 0) continue;
+      this.migrants.push({ from: f.from, to: f.to, ppm, departCycle: cycle, arriveCycle: cycle + travelCycles(this.world, f.from, f.to, cycle) });
+      bump(f.from, 'out', ppm);
+      const people = Math.round(ppm / PPM);
+      if (people >= cfg.eventMinPeople) this.addEvent(cycle, 'system', `${people.toLocaleString('en-US')} people leave ${name(f.from)} for ${name(f.to)}`, f.from);
+    }
   }
 
   /** Holdings of the capital good on a planet, summed over the agents based there (accounts are owner + planet). */
@@ -574,7 +628,7 @@ export class Universe {
     const { world } = this;
     const cycle = Math.max(0, this._cycle - 1);
     const latest = this.history[this.history.length - 1]?.metrics;
-    const fresh = (): PlanetMetrics => ({ gdp: 0, cpi: CPI_BASE, tradeBalance: 0, population: 0, consumerConfidence: INITIAL_CONFIDENCE, businessConfidence: INITIAL_CONFIDENCE, realGdp: 0, labourInput: 0, capitalStock: 0, realGdpGrowthBp: 0, labourContribBp: 0, capitalContribBp: 0, tfpContribBp: 0, children: 0, workingAge: 0, retired: 0, dependencyRatioBp: 0, participationBp: 0 });
+    const fresh = (): PlanetMetrics => ({ gdp: 0, cpi: CPI_BASE, tradeBalance: 0, population: 0, consumerConfidence: INITIAL_CONFIDENCE, businessConfidence: INITIAL_CONFIDENCE, realGdp: 0, labourInput: 0, capitalStock: 0, realGdpGrowthBp: 0, labourContribBp: 0, capitalContribBp: 0, tfpContribBp: 0, children: 0, workingAge: 0, retired: 0, dependencyRatioBp: 0, participationBp: 0, netMigration: 0, emigrants: 0, immigrants: 0 });
     const planets = [];
     for (const p of world.planets) {
       planets.push({
@@ -592,6 +646,7 @@ export class Universe {
     });
     return {
       universeId: world.universeId, cycle, paused: opts.paused ?? false, planets, fx, shipments: [...this.flights.values()],
+      migrants: this.migrants.slice(0, MIGRATION_CONFIG.snapshotMaxGroups).map((g) => ({ from: g.from, to: g.to, people: Math.round(g.ppm / PPM), departCycle: g.departCycle, arriveCycle: g.arriveCycle })),
       events: [...this.events], series: opts.series, gatewayCostUsd: opts.gatewayCostUsd ?? 0,
     };
   }

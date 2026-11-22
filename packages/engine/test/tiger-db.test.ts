@@ -11,14 +11,14 @@ function snap(universeId: string, cycle: number): Snapshot {
     universeId, cycle, paused: false,
     planets: [
       { planet: 'helion', currency: 'HEL', prices: { iron: 100 + cycle }, policy,
-        metrics: { gdp: 1_000 + cycle, cpi: 10_000 + cycle, tradeBalance: cycle % 2 === 0 ? 10 : -4, population: 500, consumerConfidence: 60, businessConfidence: 55, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000 },
+        metrics: { gdp: 1_000 + cycle, cpi: 10_000 + cycle, tradeBalance: cycle % 2 === 0 ? 10 : -4, population: 500, consumerConfidence: 60, businessConfidence: 55, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000, netMigration: -3, emigrants: 5, immigrants: 2 },
         orbitPhaseCycles: 0 },
       { planet: 'vesta', currency: 'VES', prices: { iron: 90 }, policy,
-        metrics: { gdp: 2_000, cpi: 9_900, tradeBalance: 40, population: 800, consumerConfidence: 70, businessConfidence: 65, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000 },
+        metrics: { gdp: 2_000, cpi: 9_900, tradeBalance: 40, population: 800, consumerConfidence: 70, businessConfidence: 65, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000, netMigration: -3, emigrants: 5, immigrants: 2 },
         orbitPhaseCycles: 0 },
     ],
     fx: [{ base: 'HEL', quote: 'VES', ratePpm: 1_000_000 + cycle }],
-    shipments: [], events: [], series: [], gatewayCostUsd: cycle * 0.01,
+    shipments: [], migrants: [], events: [], series: [], gatewayCostUsd: cycle * 0.01,
   });
 }
 

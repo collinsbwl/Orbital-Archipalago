@@ -6,7 +6,7 @@ import type { ArriveResult, FxAuctionResult, PlanetId, PolicyState } from '@orbi
  * No clocks, no randomness, no I/O. State is plain JSON so forks can copy it.
  */
 
-export type DetectorKind = 'trade_war' | 'currency_crisis' | 'recession' | 'trade_diversion' | 'confidence_collapse';
+export type DetectorKind = 'trade_war' | 'currency_crisis' | 'recession' | 'trade_diversion' | 'confidence_collapse' | 'exodus';
 
 export interface DetectedEvent {
   detector: DetectorKind;
@@ -19,7 +19,7 @@ export interface DetectedEvent {
 /** One cycle's data. Build it from CycleReport plus `ledger.getPolicy` for each planet. */
 export interface DetectorInput {
   cycle: number;
-  metrics: Record<PlanetId, { gdp: number; consumerConfidence: number; businessConfidence: number }>;
+  metrics: Record<PlanetId, { gdp: number; consumerConfidence: number; businessConfidence: number; population?: number; netMigration?: number }>;
   policies: Record<PlanetId, PolicyState>;
   fx: FxAuctionResult[];
   arrivals: ArriveResult[];
@@ -64,6 +64,12 @@ export const DETECTOR_CONFIG = {
     /** Fires when the index falls strictly more than this many points from its max in the window. */
     dropPoints: 20,
     cooldownCycles: 10,
+  },
+  exodus: {
+    windowCycles: 50,
+    /** Fires when net outflow over the window exceeds this share of the planet's population, bp (500 = 5%). */
+    outflowBp: 500,
+    cooldownCycles: 25,
   },
 } as const;
 
@@ -112,6 +118,8 @@ export interface DetectorState {
   pending: PendingDiversion[];
   /** `planet|consumer` / `planet|business` -> [cycle, value][]. */
   conf: Record<string, [number, number][]>;
+  /** planet -> [cycle, netMigration][] over the exodus window (non-zero cycles only). */
+  mig: Record<PlanetId, [number, number][]>;
   /** `detector:key` -> cycle last fired. */
   cooldowns: Record<string, number>;
 }
@@ -119,7 +127,7 @@ export interface DetectorState {
 function emptyState(): DetectorState {
   return {
     lastCycle: null, prevTariffs: {}, prevEmbargoes: {}, lastRaise: {}, lastDelivery: {}, fxHist: {},
-    recession: {}, deliveries: [], pending: [], conf: {}, cooldowns: {},
+    recession: {}, deliveries: [], pending: [], conf: {}, mig: {}, cooldowns: {},
   };
 }
 
@@ -148,7 +156,7 @@ export class Detectors {
   }
 
   setState(state: DetectorState): void {
-    this.s = JSON.parse(JSON.stringify(state)) as DetectorState;
+    this.s = { ...emptyState(), ...(JSON.parse(JSON.stringify(state)) as DetectorState) };
   }
 
   /** Feed one cycle (cycles must increase; a repeated or older cycle is ignored). Returns newly detected events. */
@@ -168,6 +176,7 @@ export class Detectors {
     this.queueDiversions(cycle, raises, embargoAdds);
     out.push(...this.tradeDiversion(cycle));
     out.push(...this.confidenceCollapse(input));
+    out.push(...this.exodus(input));
 
     this.prune(cycle);
     return cycle < (this.opts.warmupCycles ?? DETECTOR_CONFIG.warmupCycles) ? [] : out;
@@ -423,6 +432,31 @@ export class Detectors {
         s.cooldowns[key] = input.cycle;
         out.push(ev('confidence_collapse', input.cycle, `Confidence collapse: ${label(planet)} ${idx} confidence fell ${Math.round(drop)} points in ${cfg.windowCycles} cycles`, planet));
       }
+    }
+    return out;
+  }
+
+  // ---- exodus ------------------------------------------------------------
+
+  private exodus(input: DetectorInput): DetectedEvent[] {
+    const s = this.s;
+    const cfg = DETECTOR_CONFIG.exodus;
+    const out: DetectedEvent[] = [];
+    for (const planet of sortedKeys(input.metrics)) {
+      const m = input.metrics[planet];
+      if (!m || m.netMigration === undefined) continue;
+      const hist = (s.mig[planet] ??= []);
+      if (m.netMigration !== 0) hist.push([input.cycle, m.netMigration]);
+      const from = input.cycle - cfg.windowCycles;
+      while (hist.length > 0 && (hist[0]?.[0] ?? 0) <= from) hist.shift();
+      const net = hist.reduce((sum, h) => sum + h[1], 0);
+      const pop = m.population ?? 0;
+      if (net >= 0 || pop <= 0 || -net * 10_000 <= cfg.outflowBp * pop) continue;
+      const key = `exodus:${planet}`;
+      if (!this.cooledDown(key, input.cycle, cfg.cooldownCycles)) continue;
+      s.cooldowns[key] = input.cycle;
+      const pct = ((-net * 100) / pop).toFixed(1);
+      out.push(ev('exodus', input.cycle, `Exodus: ${label(planet)} lost ${(-net).toLocaleString('en-US')} people (${pct}% of its population) to migration in ${cfg.windowCycles} cycles`, planet));
     }
     return out;
   }

@@ -42,6 +42,8 @@ export interface Cohorts {
 export interface PlanetDemography extends Cohorts {
   /** Colonist households, in agent index order; sums to children + workingAge + retired. */
   households: number[];
+  /** Food security of each household last cycle, bp (10_000 = nothing unmet); where newcomers settle. */
+  securityBp: number[];
   /** Initial mean household size (ppm); a household's need is the base need times size / this. */
   avgHouseholdPpm: number;
   /** Labour input at cycle 0 (the L0 of the production multiplier). */
@@ -75,6 +77,7 @@ export function initDemography(planet: PlanetConfig, cfg: DemographicsConfig = D
   const d: PlanetDemography = {
     ...cohorts,
     households: n > 0 ? evenSplit(total, n) : [],
+    securityBp: Array.from({ length: n }, () => 10_000),
     avgHouseholdPpm: n > 0 ? total / n : PPM,
     l0: 0, unmetPpm: 0, dynamic: pop !== undefined,
   };
@@ -165,6 +168,10 @@ export function advanceHouseholds(households: number[], births: number, deaths: 
 /** One cycle of demographics for a dynamic planet: flows from the cohorts, then households, then the new unmet share. */
 export function stepDemography(d: PlanetDemography, loads: readonly HouseholdLoad[], cfg: DemographicsConfig = DEMOGRAPHICS_CONFIG): CohortFlows | undefined {
   d.unmetPpm = unmetSharePpm(loads);
+  d.securityBp = d.households.map((_, i) => {
+    const l = loads[i];
+    return l && l.needed > 0 ? 10_000 - Math.floor((l.unmet * 10_000) / l.needed) : 10_000;
+  });
   if (!d.dynamic) return undefined;
   const f = advanceCohorts(d, d.unmetPpm, cfg);
   advanceHouseholds(d.households, f.births, f.deathsChildren + f.deathsWorking + f.deathsRetired, loads);

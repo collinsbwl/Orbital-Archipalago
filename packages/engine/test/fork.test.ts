@@ -43,8 +43,8 @@ describe('Universe.fork', () => {
     // Same again, but a tariff only on the fork.
     const twin = await universe.fork('u0-f2');
     twin.enqueue({ kind: 'tariff', planet: 'helion', good: 'iron', rateBp: 5_000 }, { sub: 't' });
-    const c = await run(universe, 20);
-    const d = await run(twin, 20);
+    const c = await run(universe, 40);
+    const d = await run(twin, 40);
     expect(d).not.toEqual(c);
     expect((await twin.snapshot({ series: [] })).planets.find((p) => p.planet === 'helion')!.policy.tariffsBp.iron).toBe(5_000);
     expect((await universe.snapshot({ series: [] })).planets.find((p) => p.planet === 'helion')!.policy.tariffsBp.iron).toBeUndefined();

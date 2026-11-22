@@ -38,7 +38,10 @@ const HYPERTABLES: HyperSpec[] = [
       working_age integer NOT NULL DEFAULT 0,
       retired integer NOT NULL DEFAULT 0,
       dependency_ratio_bp integer NOT NULL DEFAULT 0,
-      participation_bp integer NOT NULL DEFAULT 0`,
+      participation_bp integer NOT NULL DEFAULT 0,
+      net_migration integer NOT NULL DEFAULT 0,
+      emigrants integer NOT NULL DEFAULT 0,
+      immigrants integer NOT NULL DEFAULT 0`,
     primaryKey: 'universe_id, cycle, planet',
     segmentBy: 'universe_id, planet',
   },
@@ -162,6 +165,8 @@ const GROWTH_COLUMNS = [
   // Demography (contracts 0.4.0).
   'children integer NOT NULL', 'working_age integer NOT NULL', 'retired integer NOT NULL',
   'dependency_ratio_bp integer NOT NULL', 'participation_bp integer NOT NULL',
+  // Migration (contracts 0.5.0).
+  'net_migration integer NOT NULL', 'emigrants integer NOT NULL', 'immigrants integer NOT NULL',
 ];
 
 /**
