@@ -1,12 +1,27 @@
-import { useLayoutEffect, useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { PerspectiveCamera, Vector3 } from 'three';
+import type { Snapshot } from '@orbital/contracts';
+import type { FrameState } from '../scene/frame';
 import { Aliens } from './AlienCrowd';
 import { City } from './City';
 import { CITY_FLAT_RADIUS, layoutCity, populationTier } from './city-layout';
+import { Crops } from './CropFields';
 import { clampAboveTerrain, clampPanTarget, GROUND_LIMITS, landingPose } from './ground-camera';
 import { goodsOf, groundLookFor, sunDirection } from './ground-look';
-import { Industry } from './IndustrySites';
+import { Industry, useIndustryModels } from './IndustrySites';
+import { industryEmitters } from './industry';
+import { lifeLevels } from './life';
+import { Market } from './MarketStalls';
+import { layoutStalls } from './market';
+import { PowerLines } from './PowerLines';
+import { layoutPylons, pickRoad } from './power-line';
+import { Spaceport } from './Spaceport';
+import { layoutPort, portClearance } from './port';
+import { PortShips } from './PortShips';
+import { portTraffic } from './port-traffic';
+import { Smoke } from './SmokeEmitters';
+import { Vehicles } from './Vehicles';
 import { Sky, SKY_RADIUS } from './Sky';
 import { makeTerrain } from './terrain';
 import { Terrain } from './TerrainMesh';
@@ -31,13 +46,22 @@ export interface GroundSceneProps {
   population?: number;
   /** Goods the planet makes. Defaults to the planet's known goods. */
   goods?: string[];
+  /** The latest snapshot: its confidence readings set how busy the market, roads and chimneys are, its shipments fill the spaceport, its events can blight the crops. */
+  snapshot?: Snapshot;
+  /** The shared frame (smooth cycle). Without it the scene uses the snapshot's whole cycle and nothing glides. */
+  frame?: { current: FrameState };
+  /** 0 to 1 multiplier on how many people, vehicles, stalls and puffs there are. The mood system turns it down in a storm or crisis. Default 1. */
+  busyness?: number;
 }
+
+const NO_SHIPMENTS: Snapshot['shipments'] = [];
+const NO_EVENTS: Snapshot['events'] = [];
 
 /**
  * A planet's surface: gradient sky and sun, fogged terrain with hills and a mountain ring, trees, and a city with a
  * plaza, roads, buildings and aliens. On mount it lands the camera at the end of a road, looking at the plaza.
  */
-export function GroundScene({ planet, population, goods }: GroundSceneProps) {
+export function GroundScene({ planet, population, goods, snapshot, frame, busyness = 1 }: GroundSceneProps) {
   const look = groundLookFor(planet);
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as unknown as ControlsLike | null;
@@ -54,6 +78,25 @@ export function GroundScene({ planet, population, goods }: GroundSceneProps) {
   const streets = useMemo(() => layoutCity({ planet }), [planet]);
   const sunDir = useMemo(() => sunDirection(planet, look), [planet, look]);
   const alienPopulation = 10 ** (layout.tier / 4);
+
+  // The shared frame, or a still one made from the snapshot when the caller has none.
+  const still = useRef<FrameState>({ cycle: snapshot?.cycle ?? 0, planets: {} });
+  still.current.cycle = snapshot?.cycle ?? 0;
+  const frameRef = frame ?? still;
+
+  const levels = lifeLevels(snapshot?.planets.find((p) => p.planet === planet)?.metrics, busyness);
+  const models = useIndustryModels(terrain);
+  const emitters = useMemo(() => industryEmitters(models), [models]);
+  const port = useMemo(() => layoutPort(streets, terrain), [streets, terrain]);
+  // Trees keep off the port as well as off fields and mines.
+  const treeField = useMemo(() => ({ ...terrain, siteClearance: (x: number, z: number) => Math.min(terrain.siteClearance(x, z), portClearance(port, x, z)) }), [terrain, port]);
+  const stalls = useMemo(() => layoutStalls(planet, streets.roads), [planet, streets]);
+  const pylons = useMemo(() => {
+    const near = terrain.sites[0] ? ([terrain.sites[0].x, terrain.sites[0].z] as [number, number]) : null;
+    return layoutPylons(streets, pickRoad(streets, near, [0, port.road]), terrain);
+  }, [streets, terrain, port]);
+  const shipments = snapshot?.shipments ?? NO_SHIPMENTS;
+  const portShips = useMemo(() => portTraffic(shipments, planet, snapshot?.cycle ?? 0, port.pads.length).length, [shipments, planet, snapshot?.cycle, port]);
 
   // The sky dome and far mountains need a far plane beyond the map's.
   useLayoutEffect(() => {
@@ -106,10 +149,17 @@ export function GroundScene({ planet, population, goods }: GroundSceneProps) {
       <directionalLight position={[sunDir[0] * 200, sunDir[1] * 200, sunDir[2] * 200]} color={look.sunColor} intensity={1.5} />
       <Terrain terrain={terrain} look={look} />
       <WaterBodies terrain={terrain} />
-      <Industry terrain={terrain} />
-      <Trees planet={planet} terrain={terrain} layout={streets} />
+      <Industry models={models} />
+      <Smoke planet={planet} emitters={emitters} density={levels.smoke} />
+      <Crops planet={planet} fields={terrain.fields} events={snapshot?.events ?? NO_EVENTS} frame={frameRef} />
+      <Trees planet={planet} terrain={treeField} layout={streets} />
       <City layout={layout} look={look} />
-      <Aliens planet={planet} layout={layout} population={alienPopulation} />
+      <Market stalls={stalls} share={levels.stalls} />
+      <PowerLines pylons={pylons} />
+      <Spaceport port={port} />
+      <PortShips planet={planet} port={port} shipments={shipments} frame={frameRef} />
+      <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />
+      <Aliens planet={planet} layout={layout} population={alienPopulation} busyness={levels.busyness} />
     </>
   );
 }

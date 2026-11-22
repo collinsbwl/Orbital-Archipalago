@@ -13,7 +13,7 @@ import { groundedBox } from './shapes';
 
 const ROAD_TOP = 0.08;
 const SIDEWALK_TOP = 0.2;
-const PLAZA_TOP = 0.22;
+export const PLAZA_TOP = 0.22;
 /** Lane dashes along each road. */
 const DASH_EVERY = 6;
 

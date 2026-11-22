@@ -135,7 +135,7 @@ function ViewDirector({ transition, frame, onShown }: {
 
 /**
  * The whole 3D view: deep space, a glowing sun, planets with their own looks, faint trade lanes and moving freighters.
- * Click a planet to dive down to a placeholder ground scene; "Back to map" or Esc returns to the camera you left.
+ * Click a planet to dive down to a ground scene; "Back to map" or Esc returns to the camera you left.
  */
 export default function SceneCanvas({ snapshot, frozen }: SceneProps) {
   const clock = useMemo(() => new CycleClock(), []);
@@ -182,7 +182,7 @@ export default function SceneCanvas({ snapshot, frozen }: SceneProps) {
           <Planets snapshot={snapshot} frame={frame} onSelect={onMap ? selectPlanet : undefined} />
           <Ships snapshot={snapshot} frame={frame} hovered={onMap ? hoveredShip : null} onHover={hoverShip} />
         </group>
-        {shown.view.kind === 'ground' && <GroundScene planet={shown.view.planet} population={populationOf(snapshot, shown.view.planet)} />}
+        {shown.view.kind === 'ground' && <GroundScene planet={shown.view.planet} population={populationOf(snapshot, shown.view.planet)} snapshot={snapshot} frame={frame} />}
         <OrbitControls makeDefault enableDamping dampingFactor={0.07} {...MAP_LIMITS} />
       </Canvas>
       {shown.idle && shown.view.kind === 'ground' && (

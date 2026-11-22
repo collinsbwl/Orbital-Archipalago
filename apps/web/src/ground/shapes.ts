@@ -94,6 +94,31 @@ export function alienGeometry(): THREE.BufferGeometry {
   ]);
 }
 
+const box = (w: number, h: number, d: number) => new THREE.BoxGeometry(w, h, d);
+/** A wheel: a short cylinder lying on its side (axis along x). */
+const tyre = (r: number, width: number) => new THREE.CylinderGeometry(r, r, width, 6).rotateZ(Math.PI / 2);
+
+/** A small car, about 4 m long, nose along +z, on y = 0. Body and cabin are white so an instance colour tints them. */
+export function carGeometry(): THREE.BufferGeometry {
+  const wheel = (x: number, z: number) => ({ geo: tyre(0.34, 0.3), color: '#1d1f24', at: [x, 0.34, z] as [number, number, number] });
+  return mergeParts([
+    { geo: box(1.9, 0.7, 4.2), color: '#ffffff', at: [0, 0.65, 0] },
+    { geo: box(1.6, 0.6, 2.1), color: '#dfe6ee', at: [0, 1.25, -0.3] },
+    ...[wheel(-0.95, 1.3), wheel(0.95, 1.3), wheel(-0.95, -1.3), wheel(0.95, -1.3)],
+  ]);
+}
+
+/** A hauler truck, about 7 m long: a cab at the front (+z) and a big cargo box. Cab is white (tinted per instance); the box is fixed. */
+export function haulerGeometry(): THREE.BufferGeometry {
+  const wheel = (x: number, z: number) => ({ geo: tyre(0.45, 0.4), color: '#1d1f24', at: [x, 0.45, z] as [number, number, number] });
+  return mergeParts([
+    { geo: box(2.3, 1.7, 1.9), color: '#ffffff', at: [0, 1.15, 2.4] },
+    { geo: box(2.1, 0.7, 0.1), color: '#9fb4c8', at: [0, 1.6, 3.4] },
+    { geo: box(2.5, 2.3, 4.6), color: '#c9c2ae', at: [0, 1.6, -0.6] },
+    ...[wheel(-1.2, 2.4), wheel(1.2, 2.4), wheel(-1.2, -1.6), wheel(1.2, -1.6)],
+  ]);
+}
+
 /** A 1 x 1 x 1 box that sits on y = 0 (not centred), so scaling an instance by (w, h, d) stands it on the ground. */
 export function groundedBox(): THREE.BufferGeometry {
   const g = new THREE.BoxGeometry(1, 1, 1);
