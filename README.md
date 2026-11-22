@@ -74,7 +74,7 @@ docker compose --profile local up -d tiger
 export TIGER_DATABASE_URL='postgres://orbital:orbital@localhost:5432/orbital'
 ```
 
-> ⚠️ Each time the simulation starts, it wipes the previous run's data. Don't point a local run at the production database.
+> Each time the simulation starts, it wipes the previous run's data. Don't point a local run at the production database.
 
 **Run everything in Docker:** `docker compose up -d --build` starts the website, the simulation and a local Solana chain. This is the setup we deploy with Coolify. To open it on your own machine, add a port mapping to the `web` service.
 
@@ -133,14 +133,14 @@ Helion can't feed itself, and Verdan can't make tools, so the planets have to tr
 
 The simulation moves forward in steps called **cycles**. Each cycle goes like this:
 
-1. 🌩️ **Events:** god-mode actions take effect
-2. 🚀 **Ships arrive:** freighters dock and pay tariffs at customs
-3. 🏭 **Make and eat:** planets produce goods and colonists eat. Colonists who keep going hungry move to another planet
-4. 🧠 **Decide:** every character chooses what to do next
-5. ✅ **Check:** the engine makes sure each choice is allowed (enough money? enough goods?)
-6. 📈 **Trade:** auctions set prices on each planet, and the currencies are exchanged
-7. 🏦 **Banks:** each planet's central bank adjusts its interest rate
-8. 📡 **Publish:** the stats are saved and the new state is sent to your browser
+1. **Events:** god-mode actions take effect
+2. **Ships arrive:** freighters dock and pay tariffs at customs
+3. **Make and eat:** planets produce goods and colonists eat. Colonists who keep going hungry move to another planet
+4. **Decide:** every character chooses what to do next
+5. **Check:** the engine makes sure each choice is allowed (enough money? enough goods?)
+6. **Trade:** auctions set prices on each planet, and the currencies are exchanged
+7. **Banks:** each planet's central bank adjusts its interest rate
+8. **Publish:** the stats are saved and the new state is sent to your browser
 
 ### How the AI characters decide
 
@@ -183,15 +183,15 @@ Operators can change the economy while it runs. Every action is logged along wit
 ### 📰 Breaking news
 The simulation watches for big moments: **trade wars, currency crises, recessions, shifting trade routes and collapses in confidence**. When one happens, it shows up as a headline, such as *"Currency crisis! HLX tumbles 23% in 5 cycles"*.
 
-### 🌍 Visit a planet
+### Visit a planet
 Click a planet to fly down to its surface. Everything you see there comes from the live economy:
 - The city grows with the population, and the farms and factories match what the planet makes
 - Freighters land at and take off from a working spaceport
 - The weather follows the mood: storms in a crisis, gloomy skies in a slump, fireworks when times are good
 - Aliens wander the streets, gossiping about prices and tariffs in an alien alphabet
 
-### 💸 Spending limits
+### Spending limits
 AI spending has a cap of $15 per run by default. Once a run reaches it, the characters switch to simple rules instead of stopping. The engine tracks spending as it goes.
 
-### 🧪 Repeatable runs
+### Repeatable runs
 Run the same setup twice and you get exactly the same history. That's what makes forks a fair comparison. Every change is tested automatically, including a full 200-cycle run.
