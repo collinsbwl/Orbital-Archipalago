@@ -41,7 +41,7 @@ describe('scatterTrees', () => {
     const kinds = (p: string) => new Set(speciesFor(p).species.map((s) => s.kind));
     expect(kinds('verdan')).toEqual(new Set(['broadleaf', 'conifer']));
     expect(kinds('helion')).toEqual(new Set(['scrub', 'rock']));
-    expect(kinds('tethys')).toEqual(new Set(['spire']));
+    expect(kinds('tethys')).toEqual(new Set(['spire', 'frostscrub']));
   });
 
   it('respects a smaller cap', () => {

@@ -3,7 +3,7 @@ import type { CityLayout } from './city-layout';
 import { makeRng } from './rng';
 import type { HeightField } from './terrain';
 
-export type TreeKind = 'broadleaf' | 'conifer' | 'scrub' | 'rock' | 'spire';
+export type TreeKind = 'broadleaf' | 'conifer' | 'scrub' | 'rock' | 'spire' | 'frostscrub';
 
 export interface Species {
   kind: TreeKind;
@@ -41,7 +41,14 @@ const SPECIES: Record<string, { density: number; species: Species[] }> = {
       { kind: 'rock', weight: 0.35, minScale: 0.6, maxScale: 2.4 },
     ],
   },
-  tethys: { density: 0.22, species: [{ kind: 'spire', weight: 1, minScale: 0.7, maxScale: 1.8 }] },
+  // Ice spires, and hardy amber scrub clinging to the frozen ground.
+  tethys: {
+    density: 0.5,
+    species: [
+      { kind: 'spire', weight: 0.55, minScale: 0.7, maxScale: 1.8 },
+      { kind: 'frostscrub', weight: 0.45, minScale: 0.6, maxScale: 1.4 },
+    ],
+  },
 };
 
 /** What grows on a planet, with a rough density (chance a spot gets a plant, before the patchy forest noise). */

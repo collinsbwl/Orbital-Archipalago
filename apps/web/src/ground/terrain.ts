@@ -82,7 +82,12 @@ export function makeTerrain(options: TerrainOptions): Terrain {
     const d = Math.hypot(x, z);
     if (d <= options.flatRadius) return 0;
     const open = smoothstep(options.flatRadius, options.flatRadius + ramp, d);
-    const rolling = (fbm(x / hillScale, z / hillScale, seed, 3) - 0.5) * 2 * hills;
+    let rolling = (fbm(x / hillScale, z / hillScale, seed, 3) - 0.5) * 2 * hills;
+    if (relief.terrace) {
+      // Flat shelves joined by short steep risers, like broken ice sheets.
+      const t = rolling / relief.terrace;
+      rolling = (Math.floor(t) + smoothstep(0.75, 1, t - Math.floor(t))) * relief.terrace;
+    }
     // The mountain ring: rises from `mountainStart`, taller where the ridge noise is high, never a smooth wall.
     const rise = smoothstep(mountainStart, mountainStart + 130, d);
     const ridge = fbm(x / 70 + 40, z / 70 + 40, seed + 99, 3);

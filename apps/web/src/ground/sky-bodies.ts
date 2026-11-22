@@ -136,10 +136,10 @@ export interface SkyView {
   bodies: SkyBody[];
 }
 
-/** The whole sky: the sun, the neighbouring planets and the spin, from the map positions, the cycle and the planet's look. */
-export function skyView(args: { planetId: string; sunElevation: number; cycle: number; planets: Record<string, MapPoint> | undefined; dayLength?: number }): SkyView {
-  const { planetId, sunElevation, cycle, planets, dayLength } = args;
-  const t = timeOfDay(cycle, planetId, dayLength);
+/** The whole sky: the sun, the neighbouring planets and the spin, from the map positions, the cycle and the planet's look. `fixedTime` holds the clock at one time of day instead of following the cycle. */
+export function skyView(args: { planetId: string; sunElevation: number; cycle: number; planets: Record<string, MapPoint> | undefined; dayLength?: number; fixedTime?: number }): SkyView {
+  const { planetId, sunElevation, cycle, planets, dayLength, fixedTime } = args;
+  const t = fixedTime ?? timeOfDay(cycle, planetId, dayLength);
   const celestial = sunCelestial(planetId, planets);
   const basis = skyBasis(celestial, latitudeFor(sunElevation), t);
   const sun = toLocal(basis, celestial);

@@ -64,6 +64,13 @@ export function treeGeometry(kind: TreeKind): THREE.BufferGeometry {
         { geo: new THREE.DodecahedronGeometry(0.9, 0), color: '#ffffff', at: [0, 0.7, 0], scale: [1.2, 0.8, 1] },
         { geo: new THREE.DodecahedronGeometry(0.5, 0), color: '#ffffff', at: [0.9, 0.45, 0.3] },
       ]);
+    case 'frostscrub':
+      return mergeParts([
+        { geo: ico(0.7, 0), color: '#ffffff', at: [0, 0.35, 0], scale: [1.3, 0.55, 1.1] },
+        { geo: ico(0.5, 0), color: '#ffffff', at: [0.65, 0.3, 0.25], scale: [1, 0.6, 1] },
+        { geo: ico(0.45, 0), color: '#ffffff', at: [-0.5, 0.28, -0.35], scale: [1, 0.55, 1] },
+        { geo: ico(0.35, 0), color: '#e8f4fa', at: [0.1, 0.62, 0.05], scale: [1.1, 0.35, 1.1] },
+      ]);
     case 'spire':
       return mergeParts([
         { geo: cone(0.8, 5, 5), color: '#ffffff', at: [0, 2.5, 0] },
@@ -80,6 +87,7 @@ export const TREE_COLORS: Record<TreeKind, string> = {
   scrub: '#9a8a4a',
   rock: '#8a7468',
   spire: '#cfe8f4',
+  frostscrub: '#b8662f',
 };
 
 /** A small alien, about 1.7 m tall: pale body to tint, big head, dark eyes. Stands on y = 0, faces +z. */

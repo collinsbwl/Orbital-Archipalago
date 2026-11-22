@@ -12,6 +12,7 @@ import { initialAtmosphere } from './atmosphere-ref';
 import type { AtmosphereState } from './atmosphere-ref';
 import { Festival } from './FestivalShow';
 import { goodsOf, groundLookFor } from './ground-look';
+import { IceLandmarks } from './IceLandmarks';
 import { Industry, useIndustryModels } from './IndustrySites';
 import { streetLampPieces } from './lamps';
 import { Pieces } from './PieceMeshes';
@@ -167,7 +168,8 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
       <Sky atmo={atmo} planetIds={planetIds} />
       <Precipitation kind={look.precip} atmo={atmo} />
       <Terrain terrain={terrain} look={look} />
-      <WaterBodies terrain={terrain} />
+      <WaterBodies terrain={terrain} mirror={look.style === 'crystal'} />
+      {look.style === 'crystal' && <IceLandmarks planet={planet} layout={streets} terrain={terrain} port={port} atmo={atmo} />}
       <Industry models={models} />
       <Smoke planet={planet} emitters={emitters} density={levels.smoke} />
       <Crops planet={planet} fields={terrain.fields} events={snapshot?.events ?? NO_EVENTS} frame={frameRef} />
@@ -179,7 +181,7 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
       <PowerLines pylons={pylons} />
       <Spaceport port={port} atmo={atmo} />
       <PortShips planet={planet} port={port} shipments={shipments} frame={frameRef} />
-      <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />
+      {look.style !== 'crystal' && <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />}
       <Aliens planet={planet} layout={layout} population={alienPopulation} busyness={levels.busyness} />
     </>
   );

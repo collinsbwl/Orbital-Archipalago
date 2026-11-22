@@ -21,6 +21,9 @@ export interface MoodView {
 
 const NO_EVENTS: Snapshot['events'] = [];
 
+/** The ground is always in daylight: the clock is held at noon (0.5) rather than following the cycle round to night. */
+const ALWAYS_NOON = 0.5;
+
 /**
  * The scene's single sky and light controller. Every frame it eases the mood, finds the sun (from the map positions, then
  * turned by the planet's spin for the time of day), asks atmosphere.ts for the result, stores it in `atmo` for the sky
@@ -52,7 +55,7 @@ export function SkyRig({ planet, look, snapshot, frame, atmo, onMood }: {
 
   useFrame((_, delta) => {
     mood.current = stepMood(mood.current, scoresRef.current, Math.min(delta, 0.25));
-    const view = skyView({ planetId: planet, sunElevation: look.sunElevation, cycle: frame.current.cycle, planets: frame.current.planets });
+    const view = skyView({ planetId: planet, sunElevation: look.sunElevation, cycle: frame.current.cycle, planets: frame.current.planets, fixedTime: ALWAYS_NOON });
     const a = computeAtmosphere({ look, mood: mood.current, timeOfDay: view.timeOfDay, sunDir: view.sun });
     // Update the shared state in place (readers keep the same object), instead of making a new one every frame.
     const shared = atmo.current;

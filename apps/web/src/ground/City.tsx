@@ -11,6 +11,7 @@ import { InstancedGroup } from './InstancedGroup';
 import { setInstance } from './instancing';
 import type { Placement } from './instancing';
 import { groundedBox } from './shapes';
+import { iglooGeometry, useCrystalMaterial } from './crystal';
 
 const ROAD_TOP = 0.08;
 const SIDEWALK_TOP = 0.2;
@@ -144,8 +145,12 @@ export function City({ layout, look, atmo }: { layout: CityLayout; look: GroundL
       <InstancedGroup geometry={box} material={material} items={sidewalks} />
       <InstancedGroup geometry={box} material={material} items={dashes} />
       <RingStreets streets={layout.ringStreets} />
-      <GrowingBuildings key={layout.options.planet} layout={layout} look={look} box={box} material={material} wallMaterial={wallMaterial} />
-      <Plaza />
+      {look.style === 'crystal' ? (
+        <CrystalBuildings key={layout.options.planet} layout={layout} look={look} atmo={atmo} />
+      ) : (
+        <GrowingBuildings key={layout.options.planet} layout={layout} look={look} box={box} material={material} wallMaterial={wallMaterial} />
+      )}
+      {look.style !== 'crystal' && <Plaza />}
     </group>
   );
 }
@@ -206,6 +211,84 @@ function GrowingBuildings({ layout, look, box, material, wallMaterial }: { layou
     <>
       <primitive object={walls} />
       <primitive object={roofs} />
+    </>
+  );
+}
+
+const IGLOO_INDUSTRIAL = '#4f6f8c';
+
+/**
+ * Tethys's city: futuristic igloos. Each building is a glowing ribbed ice dome (bigger and loftier for shops and offices
+ * than for homes) with a small annex dome huddled beside it, entrances facing the middle. They swell up out of the ice
+ * with the same growth as block buildings.
+ */
+function CrystalBuildings({ layout, look, atmo }: { layout: CityLayout; look: GroundLook; atmo?: AtmosphereRef }) {
+  const igloo = useMemo(() => iglooGeometry(), []);
+  useEffect(() => () => igloo.dispose(), [igloo]);
+  const material = useCrystalMaterial(atmo);
+  const capacity = Math.max(1, layout.capacity);
+  const mains = useMemo(() => {
+    const m = new THREE.InstancedMesh(igloo, material, capacity);
+    m.frustumCulled = false;
+    return m;
+  }, [igloo, material, capacity]);
+  const annexes = useMemo(() => {
+    const m = new THREE.InstancedMesh(igloo, material, capacity);
+    m.frustumCulled = false;
+    return m;
+  }, [igloo, material, capacity]);
+  useEffect(() => () => void mains.dispose(), [mains]);
+  useEffect(() => () => void annexes.dispose(), [annexes]);
+
+  const state = useRef<GrowthState>(new Map());
+  const first = useRef(true);
+  const moving = useRef(false);
+
+  const draw = () => {
+    const list = layout.buildings;
+    list.forEach((b, i) => {
+      const s = state.current.get(b.id);
+      const grown = s ? shownHeight(s) : 0;
+      const hide = grown < 0.01;
+      const rise = Math.min(1, grown / Math.max(0.01, b.h)); // 0 to 1 while it swells up
+      const industrial = b.kind === 'industrial';
+      const across = Math.max(b.w, b.d) * (industrial ? 1.2 : 1.1);
+      // Taller buildings in the block city become loftier domes here.
+      const lofty = 0.55 + 0.45 * Math.min(1, Math.max(0, (b.h - 5) / 30));
+      const h = across * lofty * rise;
+      const color = industrial ? IGLOO_INDUSTRIAL : look.buildings[b.paletteIndex % look.buildings.length]!;
+      // Turned like the block building, so the entrance (-z) faces the middle.
+      setInstance(mains, i, { x: b.x, y: 0, z: b.z, rotY: b.rotY, scale: hide ? 0 : [across, h, across], color });
+      const side = (b.paletteIndex % 2 === 0 ? 1 : -1) * across * 0.55;
+      const ax = b.x + Math.cos(b.rotY) * side + Math.sin(b.rotY) * across * 0.2;
+      const az = b.z - Math.sin(b.rotY) * side + Math.cos(b.rotY) * across * 0.2;
+      const small = across * 0.45;
+      setInstance(annexes, i, { x: ax, y: 0, z: az, rotY: b.rotY + Math.sign(side) * 0.9, scale: hide ? 0 : [small, small * 0.6 * rise, small], color: look.buildings[(b.paletteIndex + 2) % look.buildings.length]! });
+    });
+    for (const m of [mains, annexes]) {
+      m.count = list.length;
+      m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    }
+  };
+
+  useLayoutEffect(() => {
+    moving.current = stepGrowth(state.current, layout.buildings, 0, first.current);
+    first.current = false;
+    draw();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout, look, mains, annexes]);
+
+  useFrame((_, delta) => {
+    if (!moving.current) return;
+    moving.current = stepGrowth(state.current, layout.buildings, Math.min(delta, 0.1));
+    draw();
+  });
+
+  return (
+    <>
+      <primitive object={mains} />
+      <primitive object={annexes} />
     </>
   );
 }

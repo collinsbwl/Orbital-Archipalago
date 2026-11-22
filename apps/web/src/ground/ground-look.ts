@@ -27,8 +27,13 @@ export interface GroundLook {
   precip: PrecipKind;
   /** Building colours for the city. */
   buildings: string[];
-  /** How wild the land is: rolling hills near the city and a mountain ring far out, in metres. */
-  relief: { hills: number; hillScale: number; mountains: number; mountainStart: number };
+  /** How wild the land is: rolling hills near the city and a mountain ring far out, in metres. `terrace` steps the hills into flat shelves that many metres high. */
+  relief: { hills: number; hillScale: number; mountains: number; mountainStart: number; terrace?: number };
+  /**
+   * How the city is built. Blocks (the default) are plain boxes with windows; crystal is Tethys's own style: futuristic
+   * igloos with no cars and no central plaza, colossal ice monoliths on the skyline and mirror-still lakes with floes.
+   */
+  style?: 'blocks' | 'crystal';
 }
 
 const KNOWN: Record<string, GroundLook> = {
@@ -48,13 +53,16 @@ const KNOWN: Record<string, GroundLook> = {
     buildings: ['#c9a27c', '#a8794f', '#8c8a86', '#d9b48c'],
     relief: { hills: 3.5, hillScale: 90, mountains: 70, mountainStart: 220 },
   },
-  // Tethys: pale ice.
+  // Tethys: a frozen world at a long golden dawn. Warm haze on the horizon under a deep blue sky, pale ice underfoot,
+  // and a town of glowing futuristic igloos.
   tethys: {
-    sky: '#dfeef6', skyTop: '#8cb8de', sunColor: '#eef8ff', sunElevation: 0.42,
-    ground: '#e8f4fa', palette: ['#e8f4fa', '#d4ebf5', '#f4fafd', '#c2e0ee'], rock: '#8fa6b8', peak: '#ffffff',
-    fogNear: 55, fogFar: 400, precip: 'snow',
-    buildings: ['#cfe3ee', '#9fc4da', '#eef6fa', '#7fa6c0'],
-    relief: { hills: 2.5, hillScale: 120, mountains: 95, mountainStart: 240 },
+    sky: '#f0d9bd', skyTop: '#23406e', sunColor: '#ffe0b3', sunElevation: 0.26,
+    ground: '#e8f4fa', palette: ['#e8f4fa', '#d4ebf5', '#f4fafd', '#c2e0ee'], rock: '#6f8aa3', peak: '#ffffff',
+    fogNear: 60, fogFar: 420, precip: 'snow',
+    buildings: ['#a9d8f2', '#7fb6dc', '#d6f0ff', '#5d93c4'],
+    // Stepped ice shelves round the city, and a jagged range that starts close in.
+    relief: { hills: 11, hillScale: 75, mountains: 150, mountainStart: 165, terrace: 3.5 },
+    style: 'crystal',
   },
 };
 
