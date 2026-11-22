@@ -37,6 +37,8 @@ body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #04050b; col
 .hud-right .panel-body { max-height: 38vh; overflow: auto; }
 .playback { display: flex; gap: 6px; align-items: center; }
 .hint { font-size: 13px; }
+.legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
 /* The label's bottom edge sits just above the planet, so opening it grows it upward instead of over the planet. */
 .planet-label { transform: translate(-50%, -100%); background: rgba(8, 10, 18, 0.72); border: 1px solid #2f3b66; border-radius: 6px; padding: 2px 8px; font-size: 12px; white-space: nowrap; color: #dde; text-align: center; }
 .planet-label.open { background: rgba(8, 10, 18, 0.92); border-color: #4a5c9a; padding: 5px 10px; }
@@ -76,3 +78,11 @@ th, td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid #234
 .events li.god { background: #3a2a10; border-left: 3px solid #fb3; }
 .god-panel .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
 .god-panel input[type='number'] { width: 80px; }
+
+/* Shown over the planet-ground view. Centred below the header, where the side panels leave a gap. */
+.ground-back {
+  position: absolute; top: 72px; left: 50%; transform: translateX(-50%); z-index: 5; pointer-events: auto;
+  color: #dde; font: inherit; cursor: pointer;
+}
+.ground-back:hover { background: rgba(38, 48, 92, 0.85); }
+@media (max-width: 900px) { .ground-back { top: auto; bottom: 96px; } }

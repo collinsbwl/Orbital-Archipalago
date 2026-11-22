@@ -7,6 +7,7 @@ import { Panel } from './components/Panel';
 import { PlanetCard } from './components/PlanetCard';
 import { PlaybackControls } from './components/PlaybackControls';
 import { Scene3D } from './components/Scene3D';
+import { PlanetLegend } from './components/PlanetLegend';
 import { ViewHint } from './components/ViewHint';
 import { useSnapshots } from './data/useSnapshots';
 
@@ -74,6 +75,7 @@ export function App() {
               )}
             </div>
             <div className="hud-bottom">
+              <PlanetLegend snapshot={snapshot} />
               <ViewHint />
               {mode === 'fixture' && (
                 <PlaybackControls playbackPaused={playbackPaused} setPlaybackPaused={setPlaybackPaused} playbackSpeed={playbackSpeed} setPlaybackSpeed={setPlaybackSpeed} />

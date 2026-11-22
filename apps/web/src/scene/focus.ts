@@ -1,16 +1,10 @@
-import { PLATEAU_TOP } from './city';
 import type { V3 } from './curve';
-
-/**
- * Planets you can click to fly in to. For now just one; add ids here to turn on more.
- * (Verdan: the green-and-blue world, home of the first little city.)
- */
-export const ZOOMABLE_PLANETS: readonly string[] = ['verdan'];
-
-export const isZoomable = (planetId: string): boolean => ZOOMABLE_PLANETS.includes(planetId);
 
 /** The map view the camera starts in, and returns to if there is nothing better saved. */
 export const HOME_POSE: { position: V3; target: V3 } = { position: { x: 0, y: 7.5, z: 10.5 }, target: { x: 0, y: 0, z: 0 } };
+
+/** How far above the planet's surface the focus point (the middle of the future landing site) sits, in scene units. */
+export const SITE_RISE = 0.035;
 
 /** Camera distance limits on the map, in scene units. */
 export const MAP_LIMITS = { min: 2.5, max: 32 };
@@ -40,7 +34,7 @@ export function surfaceSite(planet: V3, radius: number): SurfaceSite {
   const [c, s] = [Math.cos(SURFACE_LATITUDE), Math.sin(SURFACE_LATITUDE)];
   const normal = { x: toward.x * c, y: s, z: toward.z * c };
   const south = { x: toward.x * s, y: -c, z: toward.z * s };
-  const up = radius + PLATEAU_TOP;
+  const up = radius + SITE_RISE;
   return { normal, south, point: { x: planet.x + normal.x * up, y: planet.y + normal.y * up, z: planet.z + normal.z * up } };
 }
 
@@ -58,4 +52,12 @@ export function focusPose(planet: V3, radius: number): { position: V3; target: V
     z: site.point.z + (site.normal.z * up + site.south.z * along) * away,
   };
   return { position, target: site.point, minDistance: radius * FOCUS_LIMITS.minRadii, maxDistance: radius * FOCUS_LIMITS.maxRadii };
+}
+
+/** While focused, scrolling in until the camera is closer than this many planet radii to the planet's centre starts the dive to the ground. */
+export const DIVE_TRIGGER_RADII = 1.7;
+
+/** Whether the camera is close enough to a focused planet (and not mid-flight) to dive onto its ground. */
+export function shouldDive(distanceToPlanet: number, radius: number, flying: boolean): boolean {
+  return !flying && distanceToPlanet < radius * DIVE_TRIGGER_RADII;
 }

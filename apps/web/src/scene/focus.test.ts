@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLATEAU_TOP } from './city';
-import { FOCUS_LIMITS, focusPose, HOME_POSE, isZoomable, LANDING_RADII, SURFACE_LATITUDE, surfaceSite, ZOOMABLE_PLANETS } from './focus';
+import { DIVE_TRIGGER_RADII, FOCUS_LIMITS, focusPose, HOME_POSE, LANDING_RADII, shouldDive, SITE_RISE, SURFACE_LATITUDE, surfaceSite } from './focus';
 
 type V = { x: number; y: number; z: number };
 const dist = (a: V, b: V) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -8,13 +7,6 @@ const dot = (a: V, b: V) => a.x * b.x + a.y * b.y + a.z * b.z;
 const len = (a: V) => Math.hypot(a.x, a.y, a.z);
 
 describe('focus', () => {
-  it('lets only the chosen planets be zoomed for now', () => {
-    expect(ZOOMABLE_PLANETS).toEqual(['verdan']);
-    expect(isZoomable('verdan')).toBe(true);
-    expect(isZoomable('helion')).toBe(false);
-    expect(isZoomable('')).toBe(false);
-  });
-
   it('has a home view looking at the sun from above and in front', () => {
     expect(HOME_POSE.target).toEqual({ x: 0, y: 0, z: 0 });
     expect(HOME_POSE.position.y).toBeGreaterThan(0);
@@ -39,7 +31,7 @@ describe('the city site', () => {
 
   it('puts the city floor just above the planet surface', () => {
     const site = surfaceSite(planet, radius);
-    expect(dist(site.point, planet)).toBeCloseTo(radius + PLATEAU_TOP, 9);
+    expect(dist(site.point, planet)).toBeCloseTo(radius + SITE_RISE, 9);
   });
 
   it('does not break for a planet at the sun', () => {
@@ -57,7 +49,7 @@ describe('landing pose', () => {
     const site = surfaceSite(planet, radius);
     expect(pose.target).toEqual(site.point);
     expect(dist(pose.position, pose.target)).toBeCloseTo(radius * LANDING_RADII, 9);
-    expect(dist(pose.position, planet)).toBeGreaterThan(radius + PLATEAU_TOP); // outside the planet, not inside it
+    expect(dist(pose.position, planet)).toBeGreaterThan(radius + SITE_RISE); // outside the planet, not inside it
     // seen at an angle: tilted away from straight down, but still looking down onto the city
     const view = { x: pose.position.x - pose.target.x, y: pose.position.y - pose.target.y, z: pose.position.z - pose.target.z };
     const cosFromVertical = dot(view, site.normal) / len(view);
@@ -73,5 +65,22 @@ describe('landing pose', () => {
     const d = dist(a.position, a.target);
     expect(a.minDistance).toBeLessThan(d);
     expect(a.maxDistance).toBeGreaterThan(d);
+  });
+});
+
+describe('dive trigger', () => {
+  it('dives only when close, and never while the camera is flying', () => {
+    expect(shouldDive(0.5 * DIVE_TRIGGER_RADII * 0.9, 0.5, false)).toBe(true);
+    expect(shouldDive(0.5 * DIVE_TRIGGER_RADII * 1.1, 0.5, false)).toBe(false);
+    expect(shouldDive(0.1, 0.5, true)).toBe(false);
+  });
+
+  it('the landing view of the focus flight is outside the trigger, so you scroll in to land', () => {
+    const planet = { x: 4, y: 0, z: 3 };
+    const pose = focusPose(planet, 0.5);
+    expect(dist(pose.position, planet)).toBeGreaterThan(0.5 * DIVE_TRIGGER_RADII);
+    // ...and the closest you can zoom (the min distance from the city point) is inside it.
+    const closest = dist(surfaceSite(planet, 0.5).point, planet) - pose.minDistance;
+    expect(closest).toBeLessThan(0.5 * DIVE_TRIGGER_RADII);
   });
 });

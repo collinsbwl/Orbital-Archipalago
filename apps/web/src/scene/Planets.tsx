@@ -6,8 +6,6 @@ import type { PlanetSnapshot, Snapshot } from '@orbital/contracts';
 import { orbitOf } from '../orbits';
 import { SCALE } from './frame';
 import type { FrameState } from './frame';
-import { City } from './CityView';
-import { isZoomable, surfaceSite } from './focus';
 import { makeGlowTexture } from './glow';
 import { HALO_OPACITY, PLANET_TINT, planetEmphasis } from './highlight';
 import { planetDetails, planetTitle } from './labels';
@@ -51,16 +49,18 @@ interface PlanetProps {
   onFocus: (id: string | null) => void;
   /** The planet being spotlighted (the focused one, else the hovered one), if any. */
   highlight: string | null;
+  /** False while the map is hidden (on the ground): no hover, click or label, so nothing is picked through the scene. */
+  interactive: boolean;
 }
 
-function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlight }: PlanetProps) {
-  const zoomable = isZoomable(look.id);
+/** Stands in for a mesh's raycast so it can never be picked (used while the map is hidden). */
+const noRaycast = () => null;
+
+function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlight, interactive }: PlanetProps) {
   const isFocused = focused === look.id;
   const emphasis = planetEmphasis(look.id, highlight);
   const dimmed = emphasis === 'dimmed';
   const open = hovered && focused === null; // hover details only on the map; the card covers a focused planet
-  // Where the city goes. (Planets stand still, so this is worked out once, when the planet is focused.)
-  const site = useMemo(() => surfaceSite(frame.current.planets[look.id] ?? { x: 0, y: 0, z: 0 }, look.radius), [isFocused, look]); // eslint-disable-line react-hooks/exhaustive-deps
   const group = useRef<THREE.Group>(null);
   const body = useRef<THREE.Mesh>(null);
   const surface = useRef<THREE.MeshStandardMaterial>(null);
@@ -74,12 +74,12 @@ function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlig
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   useEffect(() => {
-    if (!(hovered && zoomable && focused === null)) return;
+    if (!(hovered && interactive && focused === null)) return;
     document.body.style.cursor = 'pointer';
     return () => {
       document.body.style.cursor = '';
     };
-  }, [hovered, zoomable, focused]);
+  }, [hovered, interactive, focused]);
 
   useFrame((_, dt) => {
     const p = frame.current.planets[look.id];
@@ -96,13 +96,14 @@ function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlig
         ref={body}
         geometry={geometry}
         scale={look.radius}
+        raycast={interactive ? undefined : noRaycast}
         onPointerOver={(e) => {
           e.stopPropagation();
           onHover(look.id);
         }}
         onPointerOut={() => onHover(null)}
         onClick={(e) => {
-          if (!zoomable || isFocused || e.delta > 5) return; // a drag that happened to end on the planet is not a click
+          if (isFocused || e.delta > 5) return; // a drag that happened to end on the planet is not a click
           e.stopPropagation();
           onFocus(look.id);
         }}
@@ -113,10 +114,8 @@ function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlig
       <sprite scale={[look.radius * 4.6, look.radius * 4.6, 1]}>
         <spriteMaterial ref={halo} map={glow} color="#9cc4ff" transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} />
       </sprite>
-      {/* While you are zoomed in, the planet's little city appears on its sun-facing side. */}
-      {isFocused && zoomable && <City look={look} data={data} site={site} />}
       {/* The name is always shown; hovering the planet adds its currency and a quick read of its economy. */}
-      {!isFocused && (
+      {!isFocused && interactive && (
       <Html position={[0, look.radius + 0.1, 0]} zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
         <div className={`planet-label${open ? ' open' : ''}${dimmed ? ' dim' : ''}`}>
           <div className="planet-label-name">
@@ -124,7 +123,7 @@ function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlig
             {planetTitle(look.id)}
           </div>
           {open && planetDetails(data).map((line) => <div key={line} className="planet-label-detail">{line}</div>)}
-          {open && zoomable && <div className="planet-label-hint">Click to zoom in</div>}
+          {open && <div className="planet-label-hint">Click to zoom in</div>}
         </div>
       </Html>
       )}
@@ -145,7 +144,7 @@ function Planet({ look, data, frame, hovered, onHover, focused, onFocus, highlig
 }
 
 /** Every planet, on its orbit, with its own look. */
-export function Planets({ snapshot, frame, focused, onFocus, hovered, onHover, highlight }: {
+export function Planets({ snapshot, frame, focused, onFocus, hovered, onHover, highlight, interactive = true }: {
   snapshot: Snapshot;
   frame: FrameRef;
   focused: string | null;
@@ -154,13 +153,14 @@ export function Planets({ snapshot, frame, focused, onFocus, hovered, onHover, h
   hovered: string | null;
   onHover: (id: string | null) => void;
   highlight: string | null;
+  interactive?: boolean;
 }) {
   return (
     <>
       {snapshot.planets.map((p, i) => (
         <group key={p.planet}>
           <OrbitRing radius={orbitOf(p.planet, i).radius * SCALE} />
-          <Planet look={lookFor(p.planet)} data={p} frame={frame} hovered={hovered === p.planet} onHover={onHover} focused={focused} onFocus={onFocus} highlight={highlight} />
+          <Planet look={lookFor(p.planet)} data={p} frame={frame} hovered={hovered === p.planet} onHover={onHover} focused={focused} onFocus={onFocus} highlight={highlight} interactive={interactive} />
         </group>
       ))}
     </>
