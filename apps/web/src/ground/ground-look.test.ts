@@ -29,7 +29,7 @@ describe('groundLookFor', () => {
   it('makes verdan blue and green, helion orange, tethys pale', () => {
     const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
     const [vr, , vb] = rgb(groundLookFor('verdan').skyTop);
-    expect(vb).toBeGreaterThan(vr);
+    expect(vb).toBeGreaterThan(vr!);
     expect(rgb(groundLookFor('verdan').ground)[1]).toBeGreaterThan(rgb(groundLookFor('verdan').ground)[0]!);
     const [hr, , hb] = rgb(groundLookFor('helion').ground);
     expect(hr).toBeGreaterThan(hb!);
