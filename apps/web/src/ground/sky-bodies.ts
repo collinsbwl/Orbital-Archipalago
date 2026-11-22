@@ -58,14 +58,16 @@ export interface SkyBasis {
  * `sunElevation` sets that); at midnight it is as far below.
  */
 export function skyBasis(sun: Vec3, latitude: number, t: number): SkyBasis {
-  const noon = Math.hypot(sun[0], sun[2]) > 1e-6 ? Math.atan2(sun[2], sun[0]) : 0;
+  // `th` turns counterclockwise seen from above the north pole (the way a planet spins), which in this frame
+  // (x right, z toward the viewer) takes the horizontal direction (cos th, -sin th). That keeps east x up = south.
+  const noon = Math.hypot(sun[0], sun[2]) > 1e-6 ? Math.atan2(-sun[2], sun[0]) : 0;
   const th = noon + Math.PI * 2 * (t - 0.5);
   const sl = Math.sin(latitude);
   const cl = Math.cos(latitude);
   return {
-    east: [-Math.sin(th), 0, Math.cos(th)],
-    up: [cl * Math.cos(th), sl, cl * Math.sin(th)],
-    south: [sl * Math.cos(th), -cl, sl * Math.sin(th)],
+    east: [-Math.sin(th), 0, -Math.cos(th)],
+    up: [cl * Math.cos(th), sl, -cl * Math.sin(th)],
+    south: [sl * Math.cos(th), -cl, -sl * Math.sin(th)],
   };
 }
 

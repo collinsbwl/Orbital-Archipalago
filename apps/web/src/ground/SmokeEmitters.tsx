@@ -8,9 +8,14 @@ import type { PuffLayer } from './smoke';
 
 /** Emitters beyond this many are left out (the planet has about a dozen). */
 const MAX_EMITTERS = 40;
-const from = new THREE.Color();
-const to = new THREE.Color();
 const mix = new THREE.Color();
+/** Parsed colours by CSS string: a puff's colours come from a handful of layer strings, so parse each once, not per puff per frame. */
+const parsed = new Map<string, THREE.Color>();
+const colorOf = (css: string): THREE.Color => {
+  let c = parsed.get(css);
+  if (!c) parsed.set(css, (c = new THREE.Color(css)));
+  return c;
+};
 
 /** Smoke drifting from chimneys and forge stacks, flame flicker from flare stacks. `density` (0 to 1) is the share of puffs shown. */
 export function Smoke({ planet, emitters, density }: { planet: string; emitters: Emitter[]; density: number }) {
@@ -50,9 +55,7 @@ export function Smoke({ planet, emitters, density }: { planet: string; emitters:
         for (let k = 0; k < layer.count; k++) {
           const p = puffAt(e, ei, layer, k, t, wind, density);
           if (!p || p.radius <= 0.01) continue;
-          from.set(layer.color[0]);
-          to.set(layer.color[1]);
-          mix.copy(from).lerp(to, p.age);
+          mix.copy(colorOf(layer.color[0])).lerp(colorOf(layer.color[1]), p.age);
           setInstance(mesh, isFire ? nf++ : ns++, { x: p.x, y: p.y, z: p.z, rotY: k, scale: p.radius, color: mix });
         }
       }

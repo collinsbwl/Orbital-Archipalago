@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Shipment } from '@orbital/contracts';
@@ -6,7 +6,7 @@ import { shipTooltip } from '../scene/frame';
 import type { FrameState } from '../scene/frame';
 import { ENGINE_OFFSET, FreighterModel, TRAIL_JUMP, TRAIL_STEP, pushTrail, useTrail } from '../scene/Freighter';
 import type { Port } from './port';
-import { portTraffic, shipPhase, shipPose } from './port-traffic';
+import { planPort, shipPhase, shipPose, shipsAt } from './port-traffic';
 import type { PortShip } from './port-traffic';
 
 type FrameRef = { current: FrameState };
@@ -81,15 +81,17 @@ function PortShipView({ ship, planet, port, frame, hovered, onHover }: ViewProps
  * the map uses. Hover one for its owner, cargo, route and arrival.
  */
 export function PortShips({ planet, port, shipments, frame }: { planet: string; port: Port; shipments: Shipment[]; frame: FrameRef }) {
-  const shipmentsRef = useRef(shipments);
-  shipmentsRef.current = shipments;
-  const [active, setActive] = useState<PortShip[]>(() => portTraffic(shipments, planet, frame.current.cycle, port.pads.length));
+  // Which shipments touch this port, and their pads, are worked out once per snapshot; each frame only picks who is there now.
+  const plan = useMemo(() => planPort(shipments, planet, port.pads.length), [shipments, planet, port.pads.length]);
+  const planRef = useRef(plan);
+  planRef.current = plan;
+  const [active, setActive] = useState<PortShip[]>(() => shipsAt(plan, planet, frame.current.cycle));
   const key = useRef('');
   const [hovered, setHovered] = useState<string | null>(null);
 
   // Only touch React state when the set of ships (or their pads) changes, not every frame.
   useFrame(() => {
-    const list = portTraffic(shipmentsRef.current, planet, frame.current.cycle, port.pads.length);
+    const list = shipsAt(planRef.current, planet, frame.current.cycle);
     const k = list.map((s) => `${s.shipment.id}@${s.pad}`).join('|');
     if (k !== key.current) {
       key.current = k;

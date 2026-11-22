@@ -87,6 +87,16 @@ describe('the sun in the ground frame', () => {
     expect(len(b.up)).toBeCloseTo(1);
   });
 
+  it('is right-handed: east x up = south, at any time and sun direction', () => {
+    for (const sun of [[1, 0, 0], [0, 0.3, -1], [-0.6, 0.1, 0.7]] as Vec3[]) {
+      for (const t of [0, 0.2, 0.5, 0.83]) {
+        const b = skyBasis(sun, latitudeFor(0.9), t);
+        const cross: Vec3 = [b.east[1] * b.up[2] - b.east[2] * b.up[1], b.east[2] * b.up[0] - b.east[0] * b.up[2], b.east[0] * b.up[1] - b.east[1] * b.up[0]];
+        for (let i = 0; i < 3; i++) expect(cross[i]!).toBeCloseTo(b.south[i]!, 9);
+      }
+    }
+  });
+
   it('turns the whole sky together: the angle between the sun and a planet never changes with time', () => {
     const angle = (c: number) => {
       const v = view('verdan', c);

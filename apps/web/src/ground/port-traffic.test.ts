@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Shipment } from '@orbital/contracts';
-import { APPROACH_ALTITUDE, padFor, PARKED_CYCLES, portTraffic, REST_HEIGHT, shipPhase, shipPose } from './port-traffic';
+import { APPROACH_ALTITUDE, padFor, PARKED_CYCLES, planPort, portTraffic, PRE_DEPART_CYCLES, REST_HEIGHT, shipPhase, shipPose } from './port-traffic';
 
 const ship = (id: string, from: string, to: string, departCycle: number, arriveCycle: number): Shipment => ({
   id, owner: 'a', from, to, cargo: [{ good: 'iron', qty: 1 }], departCycle, arriveCycle, status: 'in_flight',
@@ -19,10 +19,15 @@ describe('shipPhase', () => {
     expect(shipPhase(s, 'verdan', 20 + PARKED_CYCLES)).toBeNull();
   });
   it('takes off in the first cycle after departing, at the origin planet only', () => {
-    expect(shipPhase(s, 'helion', 9.9)).toBeNull();
+    expect(shipPhase(s, 'helion', 10 - PRE_DEPART_CYCLES - 0.01)).toBeNull();
     expect(shipPhase(s, 'helion', 10.25)).toEqual({ phase: 'takeoff', t: 0.25 });
     expect(shipPhase(s, 'helion', 11)).toBeNull();
     expect(shipPhase(s, 'tethys', 10.25)).toBeNull();
+  });
+  it('sits on its pad for a while before it takes off, so it never pops in', () => {
+    expect(shipPhase(s, 'helion', 9)).toEqual({ phase: 'parked', t: 0 });
+    expect(shipPhase(s, 'helion', 9.5)).toEqual({ phase: 'parked', t: 0.5 });
+    expect(shipPhase(s, 'helion', 10)?.phase).toBe('takeoff');
   });
   it('ignores a ship that goes nowhere', () => {
     expect(shipPhase(ship('x', 'verdan', 'verdan', 1, 2), 'verdan', 1.5)).toBeNull();
@@ -47,12 +52,46 @@ describe('portTraffic', () => {
     const out = portTraffic([...parked, landing], 'verdan', 19.5, 4);
     expect(out.find((o) => o.shipment.id === 'z')).toBeDefined();
   });
+  it('keeps every ship on the same pad for its whole stay, whatever the cycle', () => {
+    const ships = Array.from({ length: 6 }, (_, i) => ship(`s${i}`, 'helion', 'verdan', 0, 10 + i * 0.7));
+    const padsSeen = new Map<string, Set<number>>();
+    for (let c = 8; c < 20; c += 0.1) {
+      const out = portTraffic(ships, 'verdan', c, 4);
+      expect(new Set(out.map((o) => o.pad)).size).toBe(out.length); // never two on a pad
+      for (const o of out) padsSeen.set(o.shipment.id, (padsSeen.get(o.shipment.id) ?? new Set()).add(o.pad));
+    }
+    expect(padsSeen.size).toBeGreaterThan(3);
+    for (const pads of padsSeen.values()) expect(pads.size).toBe(1);
+  });
+  it('lets an earlier ship keep its pad when a later one comes and goes', () => {
+    const early = ship('early', 'helion', 'verdan', 0, 10);
+    const late = ship('late', 'tethys', 'verdan', 0, 11);
+    const alone = planPort([early], 'verdan', 4).ships[0]!.pad;
+    const both = planPort([late, early], 'verdan', 4).ships;
+    expect(both.find((p) => p.shipment.id === 'early')!.pad).toBe(alone);
+    // the order the shipments arrive in the list does not matter
+    expect(planPort([early, late], 'verdan', 4)).toEqual(planPort([late, early], 'verdan', 4));
+  });
+  it('lets a ship reuse a pad once the earlier ship has left', () => {
+    const a = ship('a', 'helion', 'verdan', 0, 10);
+    const pad = padFor('a', 1);
+    expect(pad).toBe(0);
+    const b = ship('b', 'helion', 'verdan', 0, 10 + PARKED_CYCLES + 2);
+    const plan = planPort([a, b], 'verdan', 1).ships;
+    expect(plan).toHaveLength(2); // one pad, but they never overlap
+  });
   it('is empty when nothing is near', () => {
     expect(portTraffic([ship('s', 'helion', 'verdan', 0, 10)], 'tethys', 9.5)).toEqual([]);
   });
 });
 
 describe('shipPose', () => {
+  it('tilts the nose down while descending and up while climbing', () => {
+    const down = shipPose({ phase: 'landing', t: 0.2 }, 0.5);
+    const climb = shipPose({ phase: 'takeoff', t: 0.9 }, 0.5);
+    expect(down.nose[1]).toBeLessThan(0);
+    expect(climb.nose[1]).toBeGreaterThan(0);
+  });
   it('is on the pad, nose up, when parked', () => {
     const p = shipPose({ phase: 'parked', t: 0.3 }, 1);
     expect([p.x, p.y, p.z]).toEqual([0, REST_HEIGHT, 0]);

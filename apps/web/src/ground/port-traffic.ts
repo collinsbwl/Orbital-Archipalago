@@ -10,6 +10,8 @@ import { clamp, smoothstep } from './rng';
 /** A ship lands over the last cycle before it arrives, and takes off over the first cycle after it departs. */
 export const LANDING_CYCLES = 1;
 export const TAKEOFF_CYCLES = 1;
+/** A departing ship sits on its pad this many cycles before it lifts off, so it never pops into view at takeoff. */
+export const PRE_DEPART_CYCLES = 1;
 /** After landing a ship sits on its pad this many cycles. */
 export const PARKED_CYCLES = 3;
 /** How many ships the port can show at once (one per pad). */
@@ -31,8 +33,10 @@ export function shipPhase(s: Pick<Shipment, 'from' | 'to' | 'departCycle' | 'arr
     if (cycle >= landStart && cycle < s.arriveCycle) return { phase: 'landing', t: (cycle - landStart) / LANDING_CYCLES };
     if (cycle >= s.arriveCycle && cycle < s.arriveCycle + PARKED_CYCLES) return { phase: 'parked', t: (cycle - s.arriveCycle) / PARKED_CYCLES };
   }
-  if (s.from === planet && cycle >= s.departCycle && cycle < s.departCycle + TAKEOFF_CYCLES) {
-    return { phase: 'takeoff', t: (cycle - s.departCycle) / TAKEOFF_CYCLES };
+  if (s.from === planet) {
+    const readyAt = s.departCycle - PRE_DEPART_CYCLES;
+    if (cycle >= readyAt && cycle < s.departCycle) return { phase: 'parked', t: (cycle - readyAt) / PRE_DEPART_CYCLES };
+    if (cycle >= s.departCycle && cycle < s.departCycle + TAKEOFF_CYCLES) return { phase: 'takeoff', t: (cycle - s.departCycle) / TAKEOFF_CYCLES };
   }
   return null;
 }
@@ -47,25 +51,51 @@ export interface PortShip {
   pad: number;
 }
 
+/** When a shipment first shows at this planet's port and when it is gone again (cycles), or null if it never touches it. */
+export function presence(s: Pick<Shipment, 'from' | 'to' | 'departCycle' | 'arriveCycle'>, planet: string): { since: number; until: number } | null {
+  if (s.from === s.to) return null;
+  if (s.to === planet) return { since: s.arriveCycle - LANDING_CYCLES, until: s.arriveCycle + PARKED_CYCLES };
+  if (s.from === planet) return { since: s.departCycle - PRE_DEPART_CYCLES, until: s.departCycle + TAKEOFF_CYCLES };
+  return null;
+}
+
+/** Every shipment that touches the port, with its pad, in order of arrival. Built once per snapshot, not per frame. */
+export interface PortPlan {
+  ships: { shipment: Shipment; pad: number; since: number; until: number }[];
+}
+
 /**
- * Every shipment at the port, each on its own pad (its hashed pad, or the next free one). Ships in the air get a pad
- * before ships already parked. Never more ships than pads.
+ * Gives every shipment that touches the port a pad, in order of arrival (then id). Each ship takes its hashed pad, or the
+ * next one not held by a ship that is still there when it shows up; if every pad is held it gets none. A ship's pad
+ * depends only on ships that came before it, so it never changes while it sits there, and a departure never shuffles the rest.
  */
-export function portTraffic(shipments: Shipment[], planet: string, cycle: number, padCount = DEFAULT_PADS): PortShip[] {
-  const here = shipments
-    .map((shipment) => ({ shipment, at: shipPhase(shipment, planet, cycle) }))
-    .filter((x): x is { shipment: Shipment; at: PhaseAt } => x.at !== null)
-    .sort((a, b) => Number(a.at.phase === 'parked') - Number(b.at.phase === 'parked') || (a.shipment.id < b.shipment.id ? -1 : a.shipment.id > b.shipment.id ? 1 : 0));
-  const taken = new Set<number>();
-  const out: PortShip[] = [];
-  for (const { shipment } of here) {
-    if (taken.size >= padCount) break;
-    let pad = padFor(shipment.id, padCount);
-    while (taken.has(pad)) pad = (pad + 1) % padCount;
-    taken.add(pad);
-    out.push({ shipment, pad });
+export function planPort(shipments: Shipment[], planet: string, padCount = DEFAULT_PADS): PortPlan {
+  const pads = Math.max(1, padCount);
+  const all = shipments
+    .map((shipment) => ({ shipment, at: presence(shipment, planet) }))
+    .filter((x): x is { shipment: Shipment; at: { since: number; until: number } } => x.at !== null)
+    .sort((a, b) => a.at.since - b.at.since || (a.shipment.id < b.shipment.id ? -1 : a.shipment.id > b.shipment.id ? 1 : 0));
+  const placed: PortPlan['ships'] = [];
+  for (const { shipment, at } of all) {
+    const held = new Set(placed.filter((p) => p.until > at.since).map((p) => p.pad));
+    if (held.size >= pads) continue;
+    let pad = padFor(shipment.id, pads);
+    while (held.has(pad)) pad = (pad + 1) % pads;
+    placed.push({ shipment, pad, since: at.since, until: at.until });
   }
+  return { ships: placed };
+}
+
+/** The ships at the port at this cycle, from a plan. Cheap enough to call every frame. */
+export function shipsAt(plan: PortPlan, planet: string, cycle: number): PortShip[] {
+  const out: PortShip[] = [];
+  for (const p of plan.ships) if (cycle >= p.since && cycle < p.until && shipPhase(p.shipment, planet, cycle)) out.push({ shipment: p.shipment, pad: p.pad });
   return out;
+}
+
+/** Every shipment at the port right now, each on its own pad (see `planPort`). Never more ships than pads. */
+export function portTraffic(shipments: Shipment[], planet: string, cycle: number, padCount = DEFAULT_PADS): PortShip[] {
+  return shipsAt(planPort(shipments, planet, padCount), planet, cycle);
 }
 
 /** Height of the ship's centre above its pad when parked, metres (it stands on its tail, nose up). */
@@ -108,7 +138,7 @@ export function shipPose(at: PhaseAt, heading: number): ShipPose {
   const y = REST_HEIGHT + APPROACH_ALTITUDE * s;
   // Heading of travel along the ground: towards the pad when landing, away when taking off.
   const sign = landing ? -1 : 1;
-  const flat: [number, number, number] = [out[0] * sign, -0.12 * sign, out[2] * sign];
+  const flat: [number, number, number] = [out[0] * sign, 0.12 * sign, out[2] * sign]; // nose down while descending, up while climbing
   const up = landing ? smoothstep(0.45, 0.92, t) : 1 - smoothstep(0.08, 0.55, t);
   const nose = norm([flat[0] * (1 - up), flat[1] * (1 - up) + up, flat[2] * (1 - up)]);
   return { x: out[0] * horizontal, y, z: out[2] * horizontal, nose, fade: 1 - smoothstep(0.82, 1, s), burning: true };

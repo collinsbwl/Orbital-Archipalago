@@ -54,33 +54,40 @@ export function SkyRig({ planet, look, snapshot, frame, atmo, onMood }: {
     mood.current = stepMood(mood.current, scoresRef.current, Math.min(delta, 0.25));
     const view = skyView({ planetId: planet, sunElevation: look.sunElevation, cycle: frame.current.cycle, planets: frame.current.planets });
     const a = computeAtmosphere({ look, mood: mood.current, timeOfDay: view.timeOfDay, sunDir: view.sun });
-    atmo.current = { atmosphere: a, mood: mood.current, basis: view.basis, bodies: view.bodies };
+    // Update the shared state in place (readers keep the same object), instead of making a new one every frame.
+    const shared = atmo.current;
+    shared.atmosphere = a;
+    shared.mood = mood.current;
+    shared.basis = view.basis;
+    shared.bodies = view.bodies;
 
-    bg.current?.setRGB(...a.skyHorizon, THREE.SRGBColorSpace);
+    bg.current?.setRGB(a.skyHorizon[0], a.skyHorizon[1], a.skyHorizon[2], THREE.SRGBColorSpace);
     if (fog.current) {
-      fog.current.color.setRGB(...a.fogColor, THREE.SRGBColorSpace);
+      fog.current.color.setRGB(a.fogColor[0], a.fogColor[1], a.fogColor[2], THREE.SRGBColorSpace);
       fog.current.near = a.fogNear;
       fog.current.far = a.fogFar;
     }
     if (hemi.current) {
-      hemi.current.color.setRGB(...a.hemi.sky, THREE.SRGBColorSpace);
-      hemi.current.groundColor.setRGB(...a.hemi.ground, THREE.SRGBColorSpace);
+      hemi.current.color.setRGB(a.hemi.sky[0], a.hemi.sky[1], a.hemi.sky[2], THREE.SRGBColorSpace);
+      hemi.current.groundColor.setRGB(a.hemi.ground[0], a.hemi.ground[1], a.hemi.ground[2], THREE.SRGBColorSpace);
       hemi.current.intensity = a.hemi.intensity;
     }
     if (sun.current) {
       sun.current.position.set(a.sunLight.dir[0] * 200, a.sunLight.dir[1] * 200, a.sunLight.dir[2] * 200);
-      sun.current.color.setRGB(...a.sunLight.color, THREE.SRGBColorSpace);
+      sun.current.color.setRGB(a.sunLight.color[0], a.sunLight.color[1], a.sunLight.color[2], THREE.SRGBColorSpace);
       sun.current.intensity = a.sunLight.intensity;
     }
     if (moon.current) {
       moon.current.position.set(a.moonLight.dir[0] * 200, a.moonLight.dir[1] * 200, a.moonLight.dir[2] * 200);
-      moon.current.color.setRGB(...a.moonLight.color, THREE.SRGBColorSpace);
+      moon.current.color.setRGB(a.moonLight.color[0], a.moonLight.color[1], a.moonLight.color[2], THREE.SRGBColorSpace);
       moon.current.intensity = a.moonLight.intensity;
     }
 
-    const next: MoodView = { kind: mood.current.kind, busyness: stepBusyness(busynessOf(mood.current)), festive: mood.current.cheer > 0.5 };
+    // Only build a new view object when something changed (it rarely does).
+    const [kind, busyness, festive] = [mood.current.kind, stepBusyness(busynessOf(mood.current)), mood.current.cheer > 0.5];
     const l = last.current;
-    if (!l || l.kind !== next.kind || l.busyness !== next.busyness || l.festive !== next.festive) {
+    if (!l || l.kind !== kind || l.busyness !== busyness || l.festive !== festive) {
+      const next: MoodView = { kind, busyness, festive };
       last.current = next;
       onMood(next);
     }
