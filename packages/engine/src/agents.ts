@@ -5,6 +5,8 @@ export interface DecisionProvider {
   decideAll(tasks: AgentTask[]): Promise<AgentDecision[]>;
   /** Independent copy with the same internal state (RNG, memory), for universe forks. Absent = not forkable. */
   fork?(): DecisionProvider;
+  /** Cumulative model spend in USD (run-wide: forks share the meter), reported as `Snapshot.gatewayCostUsd`. Absent = 0. */
+  costUsd?(): number;
 }
 
 export interface AgentInfo {

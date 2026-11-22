@@ -3,7 +3,9 @@ import { AgentDecisionSchema, AgentTaskSchema } from '@orbital/contracts';
 import type { AgentDecision, AgentTask } from '@orbital/contracts';
 import type { CycleReport } from '../src/index.js';
 import { makeUniverse, scripted } from './helpers.js';
-import { RandomValidPolicy } from '../src/index.js';
+import { InMemoryLedger } from '@orbital/ledger-memory';
+import { RandomValidPolicy, Universe } from '../src/index.js';
+import type { DecisionProvider } from '../src/index.js';
 
 const CYCLES = 200;
 
@@ -91,5 +93,30 @@ describe('RandomValidPolicy', () => {
     await universe.init();
     for (let i = 0; i < 30; i++) expect((await universe.step()).rejections).toBe(0);
     expect(kinds.has('ship') && kinds.has('place_fx_order')).toBe(true);
+  });
+});
+
+describe('gateway cost', () => {
+  it("reports the provider's running spend in snapshots and in the metrics sink", async () => {
+    const world = makeUniverse().world;
+    const inner = new RandomValidPolicy(world, 3);
+    let spent = 0;
+    const agents: DecisionProvider = {
+      decideAll: async (tasks) => {
+        spent += 0.25;
+        return inner.decideAll(tasks);
+      },
+      costUsd: () => spent,
+    };
+    const written: number[] = [];
+    const universe = new Universe({ world, ledger: new InMemoryLedger(world), agents, sink: { writeCycle: async (s) => void written.push(s.gatewayCostUsd) } });
+    await universe.init();
+    await universe.step();
+    await universe.step();
+    expect(written).toEqual([0.25, 0.5]);
+    expect((await universe.snapshot({ series: [] })).gatewayCostUsd).toBe(0.5);
+    // An explicit value still wins, and a provider without a meter reports 0.
+    expect((await universe.snapshot({ series: [], gatewayCostUsd: 9 })).gatewayCostUsd).toBe(9);
+    expect((await makeUniverse().universe.snapshot({ series: [] })).gatewayCostUsd).toBe(0);
   });
 });

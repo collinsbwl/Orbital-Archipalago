@@ -27,7 +27,7 @@ export interface SnapshotsView {
 export function useSnapshots(): SnapshotsView {
   // Read the URL when the app mounts, not when this module loads: after an Auth0 login the module loads on the bare
   // callback URL, and `?live=1` is only put back (by onRedirectCallback) before the app renders.
-  const [{ mode, wsUrl }] = useState(() => resolveMode(window.location.search, import.meta.env.VITE_ENGINE_WS_URL));
+  const [{ mode, wsUrl }] = useState(() => resolveMode(window.location.search, import.meta.env.VITE_ENGINE_WS_URL, window.location.href));
   // Outside <Auth0Provider> this returns the inert default context (not authenticated, not loading).
   const { isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
   const authPending = AUTH0_ENABLED && isLoading;

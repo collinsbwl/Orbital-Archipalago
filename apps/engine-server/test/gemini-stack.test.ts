@@ -168,6 +168,7 @@ describe('the real Gemini stack against a strict fake SDK', () => {
         for (const d of out) sources.set(d.source, (sources.get(d.source) ?? 0) + 1);
         return out;
       },
+      costUsd: () => agents.costUsd?.() ?? 0,
     };
     const universe = new Universe({ world, ledger: new InMemoryLedger(world), agents: wrapped });
     await universe.init();
@@ -197,5 +198,10 @@ describe('the real Gemini stack against a strict fake SDK', () => {
     expect(fake.calls.cache).toBeGreaterThan(0);
     expect(fake.calls.cache).toBeLessThanOrEqual(4); // trader + government (+ policy-cycle variant)
     expect(fake.calls.cachedRequests).toBe(fake.calls.generate);
+
+    // Spend: the CostMeter's total reaches the Snapshot (and so the dashboard and Tiger's gateway_cost).
+    const spend = (await universe.snapshot({ series: [] })).gatewayCostUsd;
+    expect(spend).toBeGreaterThan(0);
+    expect(spend).toBe(agents.costUsd?.());
   }, 30_000);
 });

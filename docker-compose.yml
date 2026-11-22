@@ -54,6 +54,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.web
+      args:
+        # Same origin: Caddy in the web image proxies /ws to the engine.
+        VITE_ENGINE_WS_URL: /ws
+        # Build-time Auth0 for the SPA. Must pair with AUTH0_ISSUER / AUTH0_AUDIENCE on the engine: if the engine
+        # checks tokens and these are empty, the browser connects anonymously and every socket is refused (401).
+        VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN:-}
+        VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID:-}
+        VITE_AUTH0_AUDIENCE: ${VITE_AUTH0_AUDIENCE:-${AUTH0_AUDIENCE:-}}
     environment:
       # Coolify replaces SERVICE_FQDN_WEB_80 with the public FQDN it assigns.
       SERVICE_FQDN_WEB_80:

@@ -156,7 +156,7 @@ This is the Solana prize surface, and it is the same work as the ledger port:
 
 Dev and the live demo run `solana-test-validator` on the Vultr box so C5 can diff against `InMemoryLedger` without devnet airdrop flakiness. A public devnet deploy is a follow-up if we want an explorer link in the submission.
 
-The live server (`apps/engine-server`) picks its ledger from `LEDGER=memory|solana`. With `solana` it connects to `SOLANA_RPC_URL`, airdrops to the admin key, runs `bootstrapLedger`, and then hands the `SolanaLedger` to the `Universe`. docker-compose builds `Dockerfile.solana`, which compiles the program and starts a fresh (`--reset`) validator with it preloaded. Restart the validator and the engine together, since the engine needs an un-bootstrapped chain. `fork` commands are rejected on Solana because `SolanaLedger` has no `clone()`.
+With `solana` it connects to `SOLANA_RPC_URL`, airdrops to the admin key, runs `bootstrapLedger`, and then hands the `SolanaLedger` to the `Universe`. docker-compose builds `Dockerfile.solana`, which compiles the program and starts a fresh (`--reset`) validator with it preloaded. Restart the validator and the engine together, since the engine needs an un-bootstrapped chain. `fork` commands are rejected on Solana because `SolanaLedger` has no `clone()`.
 
 | Milestone | Scope | Done when |
 | --- | --- | --- |

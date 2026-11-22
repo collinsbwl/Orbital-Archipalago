@@ -1,3 +1,4 @@
+import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ChartSeriesSchema, SnapshotSchema } from '@orbital/contracts';
 import type { Snapshot } from '@orbital/contracts';
@@ -70,4 +71,62 @@ describe.skipIf(!url)('TigerStore (TimescaleDB integration)', () => {
     await store.recordGodModeAudit({ universeId, cycle: 12, sub: 'auth0|abc', command: { kind: 'pause' }, ok: true });
     await store.recordGodModeAudit({ universeId, cycle: 13, sub: 'auth0|abc', command: { kind: 'resume' }, ok: false, error: 'boom' });
   });
+});
+
+describe.skipIf(!url)('TigerStore.resetUniverse (TimescaleDB integration)', () => {
+  const id = `r${Date.now().toString(36)}`;
+  const fork = `${id}-f1`;
+  const other = `${id}x`; // shares the prefix but is not a fork: must survive
+  let store: TigerStore;
+  let pool: pg.Pool;
+
+  beforeAll(async () => {
+    store = TigerStore.fromUrl(url);
+    pool = new pg.Pool({ connectionString: url });
+    await store.migrate();
+  }, 120_000);
+
+  afterAll(async () => {
+    await store?.close();
+    await pool?.end();
+  });
+
+  const helionGdp = async (u: string) => (await store.readSeries(u)).find((s) => s.metric === 'gdp' && s.planet === 'helion')?.points;
+  const count = async (sql: string, args: unknown[]) => Number((await pool.query(sql, args)).rows[0].n);
+
+  it("gives a restarted run a clean slate: the old run's rows, forks and chart buckets are gone, the audit log stays", async () => {
+    // Run A: 30 cycles, a fork, an unrelated universe, materialised charts.
+    for (const u of [id, fork, other]) await store.registerUniverse(u, u, 1, {});
+    for (let c = 0; c < 30; c++) for (const u of [id, fork, other]) await store.writeCycle(snap(u, c));
+    await store.writeDecisions(
+      [{ universeId: id, cycle: 3, agentId: 'helion:colonist:0', role: 'colonist', planet: 'helion', observation: {}, allowedActions: [], deadlineMs: 1 }] as never,
+      [{ agentId: 'helion:colonist:0', actions: [], reason: 'r', source: 'stub' }] as never,
+    );
+    await store.recordGodModeAudit({ universeId: id, cycle: 4, sub: 'auth0|op', command: { kind: 'pause' }, ok: true });
+    await store.refreshAggregates();
+    expect((await helionGdp(id))?.map((p) => p[0])).toEqual([0, 5, 10, 15, 20, 25]);
+
+    expect(await store.resetUniverse(id)).toBeGreaterThan(0);
+    expect(await helionGdp(id)).toBeUndefined();
+    expect(await helionGdp(fork)).toBeUndefined();
+    expect((await helionGdp(other))?.length).toBe(6);
+    expect(await count(`SELECT count(*) AS n FROM universes WHERE id = ANY($1)`, [[id, fork]])).toBe(0);
+    expect(await count(`SELECT count(*) AS n FROM agent_decisions WHERE universe_id = $1`, [id])).toBe(0);
+    expect(await count(`SELECT count(*) AS n FROM god_mode_audit WHERE universe_id = $1`, [id])).toBe(1);
+
+    // Run B: different numbers for the same cycles. They must be stored, not dropped as conflicts with run A's rows,
+    // and charted with run B's values. (Here other universes sit at cycle 29, so the shared real-time watermark stays
+    // there and run B shows once materialised; with nothing else ahead it is charted at once.)
+    await store.registerUniverse(id, id, 1, {});
+    for (let c = 0; c < 10; c++) {
+      const s = snap(id, c);
+      s.planets[0]!.metrics.gdp += 5_000;
+      await store.writeCycle(s);
+    }
+    expect(await count(`SELECT count(*) AS n FROM planet_metrics WHERE universe_id = $1 AND gdp > 5000`, [id])).toBe(10);
+    await store.refreshAggregates();
+    expect(await helionGdp(id)).toEqual([[0, 6_002], [5, 6_007]]);
+    expect((await helionGdp(other))?.length).toBe(6);
+    expect(await store.resetUniverse(`${id}-nothing-here`)).toBe(0);
+  }, 120_000);
 });

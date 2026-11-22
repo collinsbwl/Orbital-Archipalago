@@ -509,7 +509,7 @@ export class Universe {
     });
     return {
       universeId: world.universeId, cycle, paused: opts.paused ?? false, planets, fx, shipments: [...this.flights.values()],
-      events: [...this.events], series: opts.series, gatewayCostUsd: opts.gatewayCostUsd ?? 0,
+      events: [...this.events], series: opts.series, gatewayCostUsd: opts.gatewayCostUsd ?? this.provider.costUsd?.() ?? 0,
     };
   }
 }

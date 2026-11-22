@@ -60,6 +60,11 @@ export class GeminiAgents implements DecisionProvider {
   fork(): GeminiAgents {
     return new GeminiAgents(this.runtime.fork(), this.cost, this.boards);
   }
+
+  /** Run-wide spend from the shared CostMeter; the engine puts it in every Snapshot (and Tiger's gateway_cost). */
+  costUsd(): number {
+    return this.cost.snapshot().totalUsd;
+  }
 }
 
 /** Wraps any DecisionProvider and hands each cycle's tasks + decisions to `record` (e.g. Tiger). Write failures are logged, never fatal. */
@@ -78,6 +83,10 @@ export class RecordedDecisions implements DecisionProvider {
   get fork(): (() => DecisionProvider) | undefined {
     const f = this.inner.fork?.bind(this.inner);
     return f ? () => new RecordedDecisions(f(), this.record) : undefined;
+  }
+
+  get costUsd(): (() => number) | undefined {
+    return this.inner.costUsd?.bind(this.inner);
   }
 }
 

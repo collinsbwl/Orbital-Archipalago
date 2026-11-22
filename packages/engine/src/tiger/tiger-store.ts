@@ -1,7 +1,7 @@
 import pg from 'pg';
 import type { AgentDecision, AgentTask, ChartSeries, GodModeCommand, Snapshot, UniverseId } from '@orbital/contracts';
 import type { MetricsSink, SeriesSource } from '../ports.js';
-import { migrate } from './schema.js';
+import { CAGGS, HYPERTABLE_NAMES, migrate, rebuildAggregates } from './schema.js';
 import { snapshotToRows } from './rows.js';
 
 /** Max points per series (matches `ChartSeriesSchema`). */
@@ -89,9 +89,41 @@ export class TigerStore implements MetricsSink, SeriesSource {
     }
   }
 
+  /**
+   * Fresh start for `id`: deletes every row a previous run left under it and its forks (`<id>-f…`, which a new run
+   * numbers from 1 again) in the per-cycle hypertables, plus their `universes` / `world_configs` registrations, then
+   * rebuilds the continuous aggregates from the remaining raw rows, so no stale chart bucket survives and the
+   * real-time watermark drops back (see `rebuildAggregates`). Needed because a run never resumes (fresh ledger and
+   * RNG) while rows are insert-once, so a new run's cycles would lose to the old run's. If other universes in the
+   * database are further along, the watermark follows them and this run's charts trail by up to one refresh-policy
+   * interval until it catches up. The operator audit log (`god_mode_audit`) is kept. Returns the rows deleted.
+   */
+  async resetUniverse(id: UniverseId): Promise<number> {
+    const ours = (col: string) => `(${col} = $1 OR starts_with(${col}, $1 || '-f'))`;
+    let deleted = 0;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const table of HYPERTABLE_NAMES) deleted += (await client.query(`DELETE FROM ${table} WHERE ${ours('universe_id')}`, [id])).rowCount ?? 0;
+      await client.query(`DELETE FROM universes WHERE ${ours('id')}`, [id]); // world_configs cascades
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw e;
+    } finally {
+      client.release();
+    }
+    // Outside the transaction: neither creating nor refreshing a continuous aggregate can run in one.
+    if (deleted > 0) {
+      await rebuildAggregates(this.pool);
+      await this.refreshAggregates();
+    }
+    return deleted;
+  }
+
   /** Force-materialise the continuous aggregates (the refresh policy does this on a schedule). */
   async refreshAggregates(): Promise<void> {
-    for (const view of ['planet_metrics_5', 'prices_5', 'fx_rates_5']) {
+    for (const { view } of CAGGS) {
       await this.pool.query(`CALL refresh_continuous_aggregate('${view}', NULL, NULL)`);
     }
   }

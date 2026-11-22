@@ -82,6 +82,9 @@ const HYPERTABLES: HyperSpec[] = [
   },
 ];
 
+/** Every per-cycle hypertable; all are keyed by `universe_id` first. */
+export const HYPERTABLE_NAMES: readonly string[] = HYPERTABLES.map((h) => h.table);
+
 function hypertableStatements(h: HyperSpec): string[] {
   const nowFn = `orbital_now_${h.table}`;
   return [
@@ -188,12 +191,26 @@ export const MIGRATIONS: string[] = [
 ];
 
 export async function migrate(pool: Pool): Promise<void> {
+  await withMigrationLock(pool, MIGRATIONS);
+}
+
+/**
+ * Drops and recreates the continuous aggregates (empty, with their refresh policies); refresh them afterwards.
+ * The only way to lower a real-time aggregate's watermark, which is one value per aggregate across all universes:
+ * after a run is deleted it stays at the old run's last cycle, and a new run's cycles below it would not be charted
+ * until the refresh policy materialised them. Raw hypertable rows are untouched.
+ */
+export async function rebuildAggregates(pool: Pool): Promise<void> {
+  await withMigrationLock(pool, CAGGS.flatMap((c) => [`DROP MATERIALIZED VIEW IF EXISTS ${c.view}`, ...caggStatements(c)]));
+}
+
+async function withMigrationLock(pool: Pool, statements: string[]): Promise<void> {
   const client = await pool.connect();
   try {
     // Serialise concurrent migrators (e.g. several engine processes booting together).
     await client.query('SELECT pg_advisory_lock(727274)');
     try {
-      for (const sql of MIGRATIONS) await client.query(sql);
+      for (const sql of statements) await client.query(sql);
     } finally {
       await client.query('SELECT pg_advisory_unlock(727274)');
     }

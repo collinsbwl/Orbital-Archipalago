@@ -1,7 +1,6 @@
 // Usage: node dist/main.js [--port 8787] [--interval 1000] [--cycles N]   (or `pnpm dev -- ...`)
 // Env:
 //   ENGINE_PORT (if no --port; default 8787)
-//   LEDGER=memory|solana (default memory); SOLANA_RPC_URL, SOLANA_ADMIN_KEYPAIR for solana (see src/ledger.ts)
 //   TIGER_DATABASE_URL (else in-memory series)
 //   AUTH0_ISSUER + AUTH0_AUDIENCE (else auth disabled, every caller is DEV_ROLE or 'operator')
 //   GEMINI_API_KEY (or GOOGLE_API_KEY), GATEWAY_PROFILE, RUN_BUDGET_USD, ... for real Gemini agents (see src/agents.ts)
@@ -34,6 +33,9 @@ let tiger: TigerStore | undefined;
 if (process.env.TIGER_DATABASE_URL) {
   tiger = TigerStore.fromUrl();
   await tiger.migrate();
+  // Every boot is a new run (fresh ledger and RNG), so drop the last run's rows for this universe and its forks.
+  const cleared = await tiger.resetUniverse(world.universeId);
+  if (cleared > 0) console.log(`tiger: cleared ${cleared} rows left by the previous run of ${world.universeId}`);
   await tiger.registerUniverse(world.universeId, world.name, world.seed, world);
   store = tiger;
 } else {
@@ -69,7 +71,8 @@ console.log(`engine listening on :${server.port} (universe ${world.universeId})`
 runner.start();
 
 const shutdown = async () => {
-  runner.stop();
+  // Let a running cycle finish its Tiger writes before the pool is closed.
+  await runner.stop();
   await server.close();
   await tiger?.close();
   process.exit(0);

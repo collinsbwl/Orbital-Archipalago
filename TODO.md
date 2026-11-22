@@ -29,12 +29,13 @@ Milestones refer to [architecture.md](architecture.md) §2; "build plan" is `orb
 - [ ] Expire stale resting orders. They rest forever unless an agent cancels them.
 - [ ] Withheld cargo (embargo/quota) goes back to the origin planet while the trader docks at the destination, so it's stranded until the trader returns.
 - [ ] Engine loan cache excludes interest accrued between repays (`Loan.outstanding` is refreshed only from ledger returns).
-- [ ] `Snapshot.gatewayCostUsd` is always 0 and the `gateway_cost` table is never written. Wire it once Track B's gateway reports usage.
+- [x] `Snapshot.gatewayCostUsd` carries the run's `CostMeter` total (via `DecisionProvider.costUsd()`), and each cycle's value lands in `gateway_cost`.
+- [ ] Per-call `call_usage` rows: `CostMeter`'s `onUsage` hook exists, but Tiger has no `call_usage` table or writer yet (architecture.md §3.6).
 - [ ] Forks need `clone()` on the ledger. `InMemoryLedger` has it; `SolanaLedger` (Track C) would need a fork strategy, such as replaying from a seed or snapshotting accounts.
 - [ ] A fork's chart series start at the fork cycle. Its pre-fork history isn't copied into Tiger, so the dashboard can't overlay a fork and its parent from cycle 0 without a query that unions the parent's rows.
 - [ ] Shock edge cases: a supply shock scaled to 0 output still consumes inputs; `demand_surge` is spread evenly across colonists (floor of the total).
 - [ ] Drought barely moves the grain clearing price under stub agents (CPI rises, price flat), so `god-mode.test.ts` only logs price. Re-check, and assert it, with B1/B3 agents.
-- [ ] Recorded **Snapshot fixtures** for the frontend (A5 builds against them; only `AgentTask` fixtures exist today).
+- [x] Recorded **Snapshot fixtures** for the frontend: `apps/web/public/fixtures/snapshots.json`, re-recorded with `pnpm --filter @orbital/engine record-snapshots`.
 
 ## Verification gaps
 

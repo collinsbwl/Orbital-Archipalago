@@ -146,9 +146,11 @@ export class LiveRunner implements SimHub {
     void loop();
   }
 
-  stop(): void {
+  /** Stops scheduling ticks and resolves once an in-flight tick or fork has finished, so stores can be closed safely. */
+  async stop(): Promise<void> {
     this.running = false;
     if (this.timer) clearTimeout(this.timer);
+    await this.chain;
   }
 
   private async publish(id: UniverseId, e: Entry): Promise<void> {

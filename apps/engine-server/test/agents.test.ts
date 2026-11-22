@@ -7,7 +7,7 @@ import { DefaultAgentRuntime } from '@orbital/agents';
 import { CostMeter, StubDecisionGateway, StubGateway } from '@orbital/gateway';
 import { RandomValidPolicy, Universe } from '@orbital/engine';
 import { InMemoryLedger } from '@orbital/ledger-memory';
-import { GeminiAgents, makeAgents, resolveProfile } from '../src/agents.js';
+import { GeminiAgents, makeAgents, RecordedDecisions, resolveProfile } from '../src/agents.js';
 
 /** Stand-in for Decision 1: prefer moving cargo, then buying for a route, then a policy move. */
 function preferActive(req: DecisionRequest): Record<string, DecisionAnswer> {
@@ -59,6 +59,18 @@ describe('GeminiAgents in a live Universe', () => {
     const a = new GeminiAgents(runtime, new CostMeter());
     expect(a.fork()).toBeInstanceOf(GeminiAgents);
     expect(a.fork()).not.toBe(a);
+  });
+
+  it('reports the shared run spend (forks included) through RecordedDecisions', () => {
+    const cost = new CostMeter();
+    const runtime = new DefaultAgentRuntime({ world: DEFAULT_WORLD, profile: 'stub' });
+    const agents = new GeminiAgents(runtime, cost);
+    const recorded = new RecordedDecisions(agents, async () => {});
+    const usage = { model: 'm', inputTokens: 1, cachedTokens: 0, outputTokens: 1, costUsd: 0.75, latencyMs: 1 };
+    cost.record({ universeId: 'u0', cycle: 1, agentId: 'helion:trader:0', role: 'trader', usage });
+    expect(recorded.costUsd?.()).toBe(0.75);
+    expect(recorded.fork?.().costUsd?.()).toBe(0.75);
+    expect(new RecordedDecisions(new RandomValidPolicy(DEFAULT_WORLD, 1), async () => {}).costUsd).toBeUndefined();
   });
 });
 

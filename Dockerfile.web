@@ -10,6 +10,14 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY packages ./packages
 COPY apps ./apps
 RUN pnpm install --frozen-lockfile
+# Vite inlines VITE_* at build time, so they are build args (local .env files never enter the context; see .dockerignore).
+# /ws is this page's own origin, which Caddy below proxies to the engine. Auth0 stays off unless domain and client id are set.
+ARG VITE_ENGINE_WS_URL=/ws
+ARG VITE_AUTH0_DOMAIN=
+ARG VITE_AUTH0_CLIENT_ID=
+ARG VITE_AUTH0_AUDIENCE=
+ENV VITE_ENGINE_WS_URL=${VITE_ENGINE_WS_URL} VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN} \
+    VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID} VITE_AUTH0_AUDIENCE=${VITE_AUTH0_AUDIENCE}
 RUN pnpm --filter "@orbital/web..." build
 
 FROM caddy:2-alpine AS runtime

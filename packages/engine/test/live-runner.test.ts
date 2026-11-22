@@ -16,6 +16,26 @@ async function setup() {
 }
 
 describe('LiveRunner', () => {
+  it('stop() waits for the cycle in flight, so a store closed afterwards is not written to', async () => {
+    const world = DEFAULT_WORLD;
+    const series = new InMemorySeries();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    let closed = false;
+    const writesAfterClose: number[] = [];
+    const sink = { writeCycle: async (s: { cycle: number }) => { await gate; if (closed) writesAfterClose.push(s.cycle); } };
+    const universe = new Universe({ world, ledger: new InMemoryLedger(world), agents: new RandomValidPolicy(world, 1), sink });
+    await universe.init();
+    const runner = new LiveRunner({ universeId: world.universeId, universe, series, intervalMs: 0 });
+    runner.start();
+    await new Promise((r) => setTimeout(r, 20)); // the first step is now blocked inside writeCycle
+    const stopped = runner.stop().then(() => { closed = true; });
+    setTimeout(release, 20);
+    await stopped;
+    expect(universe.cycle).toBe(1);
+    expect(writesAfterClose).toEqual([]);
+  });
+
   it('publishes schema-valid snapshots with series, pauses and audits', async () => {
     const { world, universe, runner, audit } = await setup();
     const seen: number[] = [];

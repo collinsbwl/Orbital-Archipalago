@@ -33,11 +33,17 @@ The role comes from the engine's `hello` message, never from the client. With Au
 
 | Var | Meaning |
 | --- | --- |
-| `VITE_ENGINE_WS_URL` | Engine WebSocket URL (`wss://...` in production) |
+| `VITE_ENGINE_WS_URL` | Engine WebSocket URL: absolute (`ws://localhost:8787/ws`) or a path (`/ws`) on the page's own origin, which becomes `wss://` on https |
 | `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID` | Enable Auth0 login when both set |
 | `VITE_AUTH0_AUDIENCE` | API audience; must match `AUTH0_AUDIENCE` on the engine |
 
 The access token goes on the socket handshake as `?access_token=`. Add the app origin to the Auth0 application's callback, logout and web origins.
+
+Operators: the engine reads roles from the `https://orbital/roles` claim of the access token (`DEFAULT_ROLES_CLAIM` in `packages/engine/src/server/auth.ts`). Auth0 does not add it by itself; a Post-Login Action has to set it, for example `api.accessToken.setCustomClaim('https://orbital/roles', event.authorization?.roles ?? [])`. Without it every user is a spectator.
+
+## Docker / Coolify
+
+`Dockerfile.web` builds the SPA and serves it with Caddy, which also proxies `/ws` to the engine, so the image is built with `VITE_ENGINE_WS_URL=/ws`. Auth0 settings are build args, filled by docker-compose from `VITE_AUTH0_*` in the environment (repo-root `.env`, or Coolify build variables). Local `.env` files are never copied into images.
 
 ## Landing page and sign-in
 

@@ -5,6 +5,8 @@ dist
 runs/
 .env
 .env.*
+**/.env
+**/.env.*
 *.tsbuildinfo
 .git
 .gitignore
