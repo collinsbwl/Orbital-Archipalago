@@ -1,11 +1,13 @@
 import { AgentDecisionSchema } from '@orbital/contracts';
-import type { AgentTask, Cargo, FxOrder, LoanId, Order, OrderId, PlanetId, SurveyAnswer, WorldConfig } from '@orbital/contracts';
+import type { AgentTask, Cargo, FxOrder, LoanId, Order, OrderId, PlanetId, PolicyInstruction, SurveyAnswer, WorldConfig } from '@orbital/contracts';
 import type { MarketBook } from './market-book.js';
 
 export const MAX_ACTIONS_PER_AGENT = 10;
 export const MAX_OPEN_LOANS = 3;
 /** A borrow may be at most this many times the role's starting purse. */
 export const BORROW_CAP_MULTIPLE = 2;
+/** Highest import tariff an agent government may set. Higher stays god-mode only. */
+export const MAX_AGENT_TARIFF_BP = 5_000;
 
 /** Max borrow per `${planet}:${role}` (see `borrowCapsOf`). */
 export const borrowCapsOf = (world: WorldConfig): Map<string, number> =>
@@ -27,6 +29,8 @@ export interface ValidatedDecision {
   /** At most one per decision, from the reserve bank of the task planet. */
   borrow?: { planet: PlanetId; amount: number; termCycles: number };
   repays: { loanId: LoanId; amount: number }[];
+  /** Government trade-policy changes, all for the acting planet, in action order. */
+  policies: PolicyInstruction[];
   /** Planet the agent acted on (docked planet for traders). */
   planet: PlanetId;
   survey?: SurveyAnswer;
@@ -74,7 +78,7 @@ export function validateDecisions(
       continue;
     }
     const out: ValidatedDecision = {
-      agentId: d.agentId, planet: task.planet, orders: [], cancels: [], fxOrders: [], repays: [],
+      agentId: d.agentId, planet: task.planet, orders: [], cancels: [], fxOrders: [], repays: [], policies: [],
       ...(d.survey ? { survey: d.survey } : {}), ...(d.memo !== undefined ? { memo: d.memo } : {}),
     };
     const cancelled = new Set<string>();
@@ -112,6 +116,21 @@ export function validateDecisions(
         if (repaid.has(a.loanId)) return reject('duplicate_repay');
         repaid.add(a.loanId);
         out.repays.push({ loanId: a.loanId, amount: a.amount });
+      } else if (a.kind === 'set_tariff' || a.kind === 'set_quota' || a.kind === 'set_embargo') {
+        if (task.role !== 'government') return reject('not_government');
+        if (a.kind === 'set_embargo') {
+          if (!known.planets.has(a.target)) return reject('unknown_planet');
+          if (a.target === task.planet) return reject('embargo_self');
+          out.policies.push({ kind: 'set_embargo', planet: task.planet, target: a.target, active: a.active });
+        } else {
+          if (!known.goods.has(a.good)) return reject('unknown_good');
+          if (a.kind === 'set_tariff') {
+            if (a.rateBp > MAX_AGENT_TARIFF_BP) return reject('tariff_cap');
+            out.policies.push({ kind: 'set_tariff', planet: task.planet, good: a.good, rateBp: a.rateBp });
+          } else {
+            out.policies.push({ kind: 'set_quota', planet: task.planet, good: a.good, maxPerCycle: a.maxPerCycle });
+          }
+        }
       }
     });
     seen.set(d.agentId, out);

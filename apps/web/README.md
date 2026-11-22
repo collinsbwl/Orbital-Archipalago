@@ -18,7 +18,7 @@ pnpm --filter @orbital/web dev          # fixtures: plays public/fixtures/snapsh
 Against a live engine:
 
 ```sh
-pnpm --filter @orbital/engine serve -- --port 8787 --interval 2000
+pnpm --filter @orbital/engine-server dev -- --port 8787 --interval 500
 # then open http://localhost:5173/?live=1   (ws://localhost:8787 by default)
 ```
 
@@ -38,6 +38,12 @@ The role comes from the engine's `hello` message, never from the client. With Au
 | `VITE_AUTH0_AUDIENCE` | API audience; must match `AUTH0_AUDIENCE` on the engine |
 
 The access token goes on the socket handshake as `?access_token=`. Add the app origin to the Auth0 application's callback, logout and web origins.
+
+## Landing page and sign-in
+
+Until the user signs in, the app shows a landing page (`src/landing/`): the title forms out of melted letters (the Climate Crisis font's YEAR axis), then a low-poly island bursts toward the camera, drops under gravity and bounces to rest (`boom.ts` holds the motion, `island-scene.ts` draws it with three.js). Its one button is the only way in.
+
+With Auth0 configured the button calls `loginWithRedirect`. Auth0 always redirects back to the bare origin (the one callback URL to register), and `onRedirectCallback` in `src/auth.tsx` puts back the path and query the user started from (e.g. `?live=1`), with `code` and `state` removed. A failed login shows its error under the button. With Auth0 unset (anonymous dev) the button reads Enter and just lets you in. The gate is only the front door: the engine still checks the token.
 
 ## Vercel
 

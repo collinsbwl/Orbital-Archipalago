@@ -94,4 +94,89 @@ describe('GoogleGenaiClient', () => {
     expect(out.blockReason).toBe('safety');
     expect(out.answers).toBeUndefined();
   });
+
+  it('sends a tool turn as raw model content then one message with every function response', async () => {
+    const ai = fakeAi();
+    const raw = { role: 'model', parts: [{ functionCall: { name: 'a', args: {} }, thoughtSignature: 'sig' }, { functionCall: { name: 'b', args: {} } }] };
+    await new GoogleGenaiClient({ ai }).generate({
+      model: 'm',
+      contents: [
+        { role: 'user', text: 'state' },
+        { role: 'model', functionCalls: [{ name: 'a', args: {} }, { name: 'b', args: {} }], raw },
+        { role: 'tool', name: 'a', id: 'i1', response: { x: 1 } },
+        { role: 'tool', name: 'b', response: 7 },
+      ],
+      maxOutputTokens: 10,
+      signal,
+    });
+    const contents = (ai.models.generateContent as ReturnType<typeof vi.fn>).mock.calls[0]![0].contents;
+    expect(contents).toHaveLength(3);
+    expect(contents[1]).toBe(raw);
+    expect(contents[2]).toEqual({
+      role: 'user',
+      parts: [
+        { functionResponse: { name: 'a', id: 'i1', response: { x: 1 } } },
+        { functionResponse: { name: 'b', response: { result: 7 } } },
+      ],
+    });
+  });
+
+  it('rebuilds a model turn from function calls when there is no raw content', async () => {
+    const ai = fakeAi();
+    await new GoogleGenaiClient({ ai }).generate({
+      model: 'm',
+      contents: [{ role: 'model', functionCalls: [{ name: 'a', args: { q: 1 }, id: 'z' }] }, { role: 'tool', name: 'a', id: 'z', response: {} }],
+      maxOutputTokens: 10,
+      signal,
+    });
+    const contents = (ai.models.generateContent as ReturnType<typeof vi.fn>).mock.calls[0]![0].contents;
+    expect(contents[0]).toEqual({ role: 'model', parts: [{ functionCall: { name: 'a', args: { q: 1 }, id: 'z' } }] });
+  });
+
+  it('returns the raw model content and call ids', async () => {
+    const content = { role: 'model', parts: [{ functionCall: { name: 'f', args: {}, id: 'q' } }] };
+    const ai = fakeAi({
+      models: {
+        generateContent: async () => ({ functionCalls: [{ name: 'f', args: {}, id: 'q' }], candidates: [{ finishReason: 'STOP', content }], usageMetadata: {} }),
+        generateContentStream: async () => (async function* () {})(),
+      },
+    });
+    const res = await new GoogleGenaiClient({ ai }).generate({ model: 'm', contents: [{ role: 'user', text: 'x' }], maxOutputTokens: 1, signal });
+    expect(res.functionCalls).toEqual([{ name: 'f', args: {}, id: 'q' }]);
+    expect(res.modelContent).toBe(content);
+  });
+
+  it('sends schemas through the JSON-schema fields with unsupported keywords folded away', async () => {
+    const ai = fakeAi();
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['qty', 'reason'],
+      properties: {
+        qty: { type: 'integer', minimum: 0, exclusiveMinimum: true },
+        reason: { type: 'string', maxLength: 500, pattern: '^.*$' },
+        maybe: { type: 'string', nullable: true },
+        tags: { type: 'array', items: { type: 'string', minLength: 1 }, maxItems: 5 },
+      },
+    };
+    await new GoogleGenaiClient({ ai }).generate({
+      model: 'm', contents: [{ role: 'user', text: 'x' }], responseMimeType: 'application/json', responseSchema: schema,
+      tools: [{ name: 'submit_turn', description: 'd', parameters: schema }], maxOutputTokens: 1, signal,
+    });
+    const config = (ai.models.generateContent as ReturnType<typeof vi.fn>).mock.calls[0]![0].config;
+    const expected = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['qty', 'reason'],
+      properties: {
+        qty: { type: 'integer', minimum: 1 },
+        reason: { type: 'string', description: '(at most 500 characters)' },
+        maybe: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+        tags: { type: 'array', items: { type: 'string', description: '(at least 1 characters)' }, maxItems: 5 },
+      },
+    };
+    expect(config.responseSchema).toBeUndefined();
+    expect(config.responseJsonSchema).toEqual(expected);
+    expect(config.tools[0].functionDeclarations[0].parametersJsonSchema).toEqual(expected);
+  });
 });

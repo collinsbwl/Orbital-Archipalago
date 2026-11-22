@@ -1,6 +1,6 @@
 import { AnchorProvider, Program } from '@anchor-lang/core';
 import BN from 'bn.js';
-import { ComputeBudgetProgram, Connection, type Keypair, type PublicKey, Transaction, type TransactionInstruction } from '@solana/web3.js';
+import { ComputeBudgetProgram, Connection, type Keypair, PACKET_DATA_SIZE, type PublicKey, Transaction, type TransactionInstruction } from '@solana/web3.js';
 import {
   AgentIdSchema, LedgerError, type AuctionResult, type BorrowRequest, type Cargo, type CurrencyId, type DepartRequest, type GoodId,
   type FxAuctionResult, type FxOrder, type InvariantReport, type Ledger, type Loan, type MinorUnits, type OpenAccountRequest, type Order, type OrderId, type OrderRecord, type OwnerId,
@@ -9,7 +9,7 @@ import {
 } from '@orbital/contracts';
 import { clearAuction, sortBook } from './auction.js';
 import { clearFx } from './fx.js';
-import { type Chain, ConnectionChain } from './chain.js';
+import { type Chain, ConnectionChain, readMany } from './chain.js';
 import { IDL } from './idl/orbital.js';
 import type { Orbital } from './idl/orbital-types.js';
 import { Addresses, codeBytes, idKey } from './keys.js';
@@ -86,6 +86,14 @@ const BOOK_SLOTS_OFFSET = BOOK_LEN_OFFSET + 8;
 const ORDER_SIZE = 72;
 /** The auction scans the whole book, so give it the maximum compute budget. */
 const AUCTION_COMPUTE_UNITS = 1_400_000;
+const MAX_COMPUTE_UNITS = 1_400_000;
+/**
+ * A place_order measured ~20-26k CU on a validator; packing assumes 60k each (sells scan the planet ledger, so they grow
+ * as it fills). A packed transaction that still runs out falls back to one order per transaction at the old 600k limit.
+ */
+const ORDER_COMPUTE_UNITS = 60_000;
+/** Any valid base58 hash: only used to measure a transaction's size before it is sent. */
+const PLACEHOLDER_BLOCKHASH = '11111111111111111111111111111111';
 
 interface BookOrder {
   seq: number;
@@ -270,7 +278,12 @@ export class SolanaLedger implements Ledger {
         if (BigInt(supply) !== expected) violations.push({ code: 'currency_supply_mismatch', message: `${code}: supply ${supply} != minted - burned ${expected}` });
       }
       let purses = 0;
-      for (const owner of this.owners) purses += await this.getPurse(owner, code);
+      const owners = [...this.owners];
+      const purseData = await readMany(this.chain, owners.map((o) => this.addr.purse(o, code)));
+      for (const [i, data] of purseData.entries()) {
+        if (!data) throw new LedgerError('unknown_account', `no account ${owners[i]}`);
+        purses += toSafeNumber(data.readBigUInt64LE(TOKEN_AMOUNT_OFFSET));
+      }
       if (purses + vault !== supply) violations.push({ code: 'currency_supply_mismatch', message: `${code}: supply ${supply} != purses ${purses} + escrow ${vault}` });
       if (BigInt(vault) !== buyEscrow[code]) violations.push({ code: 'escrow_mismatch', message: `${code}: vault ${vault} != buy orders ${buyEscrow[code]}` });
     }
@@ -293,21 +306,75 @@ export class SolanaLedger implements Ledger {
 
   // ---- C2: local orders and auction ------------------------------------------------------------
 
-  /** Orders are validated and escrowed one at a time (one transaction each); rejects are reported, never thrown. */
+  /**
+   * Orders are validated off-chain in list order, then escrowed in as few transactions as fit: a transaction runs its
+   * instructions in order, so ids stay `next_order + i`, exactly as one transaction per order would assign them. If a
+   * packed transaction fails (say two buys that together overdraw a purse), its orders are retried one per transaction,
+   * so accepts, rejects and ids match the one-at-a-time result. Rejects are reported, never thrown.
+   */
   async placeOrders(orders: Order[], cycle: number): Promise<PlaceOrdersResult> {
     const result: PlaceOrdersResult = { accepted: [], rejected: [] };
+    const reject = (index: number, e: unknown) => {
+      if (!(e instanceof LedgerError)) throw e;
+      result.rejected.push({ index, error: e.toJSON() });
+    };
+    const ready: { index: number; order: Order; ix: TransactionInstruction }[] = [];
     for (const [index, order] of orders.entries()) {
       try {
-        result.accepted.push({ index, orderId: await this.placeOne(order, cycle) });
+        ready.push({ index, order, ix: await this.orderInstruction(order, cycle) });
       } catch (e) {
-        if (!(e instanceof LedgerError)) throw e;
-        result.rejected.push({ index, error: e.toJSON() });
+        reject(index, e);
       }
     }
+    for (const chunk of this.packInstructions(ready, ORDER_COMPUTE_UNITS)) {
+      const seq = await this.nextOrderSeq();
+      try {
+        await this.send(chunk.map((r) => r.ix), MAX_COMPUTE_UNITS);
+        for (const [i, r] of chunk.entries()) this.acceptOrder(result, r.index, r.order, seq + i);
+      } catch (e) {
+        if (!(e instanceof LedgerError)) throw e;
+        for (const r of chunk) {
+          const one = await this.nextOrderSeq();
+          try {
+            await this.send([r.ix], INVENTORY_COMPUTE_UNITS);
+            this.acceptOrder(result, r.index, r.order, one);
+          } catch (e2) {
+            reject(r.index, e2);
+          }
+        }
+      }
+    }
+    result.accepted.sort((a, b) => a.index - b.index);
+    result.rejected.sort((a, b) => a.index - b.index);
     return result;
   }
 
-  private async placeOne(o: Order, cycle: number): Promise<OrderId> {
+  private acceptOrder(result: PlaceOrdersResult, index: number, o: Order, seq: number): void {
+    this.ownerByHash.set(Buffer.from(idKey(o.agentId)).toString('hex'), o.agentId);
+    result.accepted.push({ index, orderId: `o${seq}` });
+  }
+
+  /** Splits instructions, in order, into groups that each fit one transaction (size and compute). */
+  private packInstructions<T extends { ix: TransactionInstruction }>(items: T[], unitsEach: number): T[][] {
+    const chunks: T[][] = [];
+    let cur: T[] = [];
+    const fits = (group: T[]) => {
+      if (unitsEach * group.length > MAX_COMPUTE_UNITS) return false;
+      const tx = new Transaction().add(ComputeBudgetProgram.setComputeUnitLimit({ units: MAX_COMPUTE_UNITS }), ...group.map((g) => g.ix));
+      tx.feePayer = this.admin.publicKey;
+      tx.recentBlockhash = PLACEHOLDER_BLOCKHASH;
+      return 1 + 64 + tx.serializeMessage().length <= PACKET_DATA_SIZE;
+    };
+    for (const item of items) {
+      if (cur.length > 0 && !fits([...cur, item])) { chunks.push(cur); cur = []; }
+      cur.push(item);
+    }
+    if (cur.length > 0) chunks.push(cur);
+    return chunks;
+  }
+
+  /** Off-chain checks (pinned order: shape, unknown ids, unknown account) and the escrow instruction for one order. */
+  private async orderInstruction(o: Order, cycle: number): Promise<TransactionInstruction> {
     this.checkOwner(o.agentId);
     this.checkPlanet(o.planet);
     this.checkGood(o.good);
@@ -320,9 +387,8 @@ export class SolanaLedger implements Ledger {
     await this.requireOpen(o.agentId);
     await this.ensureBook(o.planet, o.good);
 
-    const seq = await this.nextOrderSeq();
     const code = this.currencyOf(o.planet);
-    const ix = await this.program.methods
+    return this.program.methods
       .placeOrder(idKey(o.agentId), codeBytes(code), o.side === 'buy' ? 0 : 1, new BN(o.qty), new BN(o.limitPrice), new BN(cycle))
       .accountsPartial({
         admin: this.admin.publicKey,
@@ -333,9 +399,6 @@ export class SolanaLedger implements Ledger {
         purse: this.addr.purse(o.agentId, code),
       })
       .instruction();
-    await this.send([ix], INVENTORY_COMPUTE_UNITS);
-    this.ownerByHash.set(Buffer.from(idKey(o.agentId)).toString('hex'), o.agentId);
-    return `o${seq}`;
   }
 
   async cancelOrder(orderId: OrderId): Promise<void> {

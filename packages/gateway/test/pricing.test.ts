@@ -11,8 +11,8 @@ describe('pricing', () => {
   });
 
   it('prices output per rate', () => {
-    expect(price({ model: 'gemini-2.5-pro', inputTokens: 0, cachedTokens: 0, outputTokens: 1_000_000 })).toBeCloseTo(
-      PRICE_TABLE['gemini-2.5-pro']!.output,
+    expect(price({ model: 'gemini-2.5-flash', inputTokens: 0, cachedTokens: 0, outputTokens: 1_000_000 })).toBeCloseTo(
+      PRICE_TABLE['gemini-2.5-flash']!.output,
     );
   });
 

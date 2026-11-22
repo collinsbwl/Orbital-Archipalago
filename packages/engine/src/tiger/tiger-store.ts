@@ -1,5 +1,5 @@
 import pg from 'pg';
-import type { ChartSeries, GodModeCommand, Snapshot, UniverseId } from '@orbital/contracts';
+import type { AgentDecision, AgentTask, ChartSeries, GodModeCommand, Snapshot, UniverseId } from '@orbital/contracts';
 import type { MetricsSink, SeriesSource } from '../ports.js';
 import { migrate } from './schema.js';
 import { snapshotToRows } from './rows.js';
@@ -136,6 +136,32 @@ export class TigerStore implements MetricsSink, SeriesSource {
       out.push({ metric: 'fx_rate', pair, points: rs.map((r) => [Number(r.bucket), Math.round(Number(r.rate_ppm))]) });
     }
     return out;
+  }
+
+  /** Store one cycle's agent decisions alongside the tasks (observations) they answered. */
+  async writeDecisions(tasks: AgentTask[], decisions: AgentDecision[]): Promise<void> {
+    const byAgent = new Map(tasks.map((t) => [t.agentId, t]));
+    const rows: unknown[][] = [];
+    for (const d of decisions) {
+      const t = byAgent.get(d.agentId);
+      if (!t) continue;
+      const u = d.usage;
+      rows.push([
+        t.universeId, t.cycle, d.agentId, t.role, t.planet, d.source, d.reason, d.memo ?? null,
+        JSON.stringify(d.actions), d.survey ? JSON.stringify(d.survey) : null, JSON.stringify(t.observation),
+        u?.model ?? null, u?.inputTokens ?? null, u?.cachedTokens ?? null, u?.outputTokens ?? null, u?.costUsd ?? null, u?.latencyMs ?? null,
+      ]);
+    }
+    if (rows.length === 0) return;
+    const client = await this.pool.connect();
+    try {
+      await insertMany(client, 'agent_decisions', [
+        'universe_id', 'cycle', 'agent_id', 'role', 'planet', 'source', 'reason', 'memo', 'actions', 'survey', 'observation',
+        'model', 'input_tokens', 'cached_tokens', 'output_tokens', 'cost_usd', 'latency_ms',
+      ], rows);
+    } finally {
+      client.release();
+    }
   }
 
   async recordGodModeAudit(entry: GodModeAuditEntry): Promise<void> {

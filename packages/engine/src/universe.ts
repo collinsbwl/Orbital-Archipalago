@@ -1,6 +1,6 @@
 import { LedgerError } from '@orbital/contracts';
 import type {
-  ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyState, Shipment, SimEvent, Snapshot,
+  ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyInstruction, PolicyState, Shipment, SimEvent, Snapshot,
   SurveyAnswer, UniverseId, WorldConfig,
 } from '@orbital/contracts';
 import { listAgents } from './agents.js';
@@ -16,7 +16,7 @@ import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
 import { orbitPhase, travelCycles } from './orbits.js';
 import { runConsumption } from './phases/consumption.js';
-import { multKey, runProduction } from './phases/production.js';
+import { multKey, runProduction, settleAll } from './phases/production.js';
 import type { Counts, Multipliers } from './phases/production.js';
 import type { MetricsSink } from './ports.js';
 import { RESERVE_BANK_CONFIG, inflationBp, outputGapBp, taylorRateBp } from './reserve-bank.js';
@@ -209,6 +209,26 @@ export class Universe {
     if (this.events.length > MAX_EVENTS) this.events.shift();
   }
 
+  /** Short per-planet briefing for government reviews: CPI and GDP trend, trade balance, confidence, unmet needs. */
+  private briefings(unmet: Counts): Map<PlanetId, string> {
+    const out = new Map<PlanetId, string>();
+    const now = this.history[this.history.length - 1]?.metrics;
+    const then = this.history[Math.max(0, this.history.length - 6)]?.metrics;
+    for (const p of this.world.planets) {
+      const m = now?.[p.id];
+      if (!m) continue;
+      const o = then?.[p.id] ?? m;
+      const chg = (a: number, b: number) => (b > 0 ? `${(((a - b) * 100) / b).toFixed(1)}%` : 'n/a');
+      const gaps = Object.entries(unmet[p.id] ?? {}).filter(([, q]) => q > 0).map(([g, q]) => `${g} ${q}`);
+      out.set(p.id, [
+        `CPI ${m.cpi} (${chg(m.cpi, o.cpi)} over ~5 cycles); GDP ${m.gdp} ${p.currency} (${chg(m.gdp, o.gdp)}).`,
+        `Trade balance ${m.tradeBalance} ${p.currency}. Consumer confidence ${m.consumerConfidence}/100, business ${m.businessConfidence}/100.`,
+        gaps.length ? `Unmet colonist needs this cycle: ${gaps.join(', ')}.` : 'Colonist needs were met this cycle.',
+      ].join('\n'));
+    }
+    return out;
+  }
+
   private trackLoan(l: Loan): void {
     if (l.outstanding > 0) this.loans.set(l.id, l);
     else this.loans.delete(l.id);
@@ -316,18 +336,21 @@ export class Universe {
     }
   }
 
-  /** Cancels every resting order that has reached its lifetime, oldest first. Refunds go back through the ledger. */
+  /**
+   * Cancels every resting order that has reached its lifetime. Refunds go back through the ledger. Each cancel touches
+   * only its own order and refunds its own owner, so they run concurrently (one transaction each on a chain ledger).
+   */
   private async expireStaleOrders(cycle: number): Promise<void> {
     if (this.orderTtl <= 0) return;
-    for (const o of this.book.all()) {
-      if (cycle - o.cycle < this.orderTtl) continue;
+    const stale = this.book.all().filter((o) => cycle - o.cycle >= this.orderTtl);
+    await settleAll(stale.map(async (o) => {
       try {
         await this.ledger.cancelOrder(o.orderId);
       } catch (e) {
         if (!(e instanceof LedgerError)) throw e;
       }
-      this.book.remove(o.orderId);
-    }
+    }));
+    for (const o of stale) this.book.remove(o.orderId);
   }
 
   async step(): Promise<CycleReport> {
@@ -344,8 +367,12 @@ export class Universe {
     await this.expireStaleOrders(cycle);
 
     const due = schedule(this.roster, cycle, this.location);
+    const briefings = due.some((a) => a.role === 'government') ? this.briefings(unmet) : undefined;
     const tasks = await buildTasks(
-      { world, ledger, book, memos: this.memos, cycle, fx: fxViews(world, this.fxRates), flights: [...this.flights.values()], loans: [...this.loans.values()] },
+      {
+        world, ledger, book, memos: this.memos, cycle, fx: fxViews(world, this.fxRates), flights: [...this.flights.values()], loans: [...this.loans.values()],
+        ...(briefings ? { briefings } : {}),
+      },
       due,
     );
     const raw = await this.provider.decideAll(tasks);
@@ -353,12 +380,23 @@ export class Universe {
 
     // Settle in deterministic agent order. Ledger-level failures are counted, never fatal.
     let ledgerRejections = due0.ledgerRejections;
+    // Cancels first, all at once: each refunds only its own order's owner, and nothing later in settlement reads another
+    // agent's purse, so this matches settling them agent by agent (one transaction each on a chain ledger, in parallel).
+    await settleAll(decisions.flatMap((d) => d.cancels).map(async (id) => {
+      try {
+        await ledger.cancelOrder(id);
+        book.remove(id);
+      } catch (e) {
+        if (!(e instanceof LedgerError)) throw e;
+        ledgerRejections++;
+      }
+    }));
     for (const d of decisions) {
       if (d.memo !== undefined) this.memos.set(d.agentId, d.memo);
-      for (const id of d.cancels) {
+      for (const pol of d.policies) {
         try {
-          await ledger.cancelOrder(id);
-          book.remove(id);
+          await ledger.applyPolicy(pol);
+          this.addEvent(cycle, 'policy', describePolicy(world, pol), pol.planet);
         } catch (e) {
           if (!(e instanceof LedgerError)) throw e;
           ledgerRejections++;
@@ -473,5 +511,19 @@ export class Universe {
       universeId: world.universeId, cycle, paused: opts.paused ?? false, planets, fx, shipments: [...this.flights.values()],
       events: [...this.events], series: opts.series, gatewayCostUsd: opts.gatewayCostUsd ?? 0,
     };
+  }
+}
+
+function describePolicy(world: WorldConfig, p: PolicyInstruction): string {
+  const name = (id: PlanetId) => world.planets.find((x) => x.id === id)?.name ?? id;
+  switch (p.kind) {
+    case 'set_tariff':
+      return `${name(p.planet)} government sets a ${p.rateBp / 100}% tariff on ${p.good}`;
+    case 'set_quota':
+      return `${name(p.planet)} government caps ${p.good} imports at ${p.maxPerCycle} per cycle`;
+    case 'set_embargo':
+      return `${name(p.planet)} government ${p.active ? 'embargoes' : 'lifts the embargo on'} ${name(p.target)}`;
+    case 'set_policy_rate':
+      return `${name(p.planet)} policy rate set to ${p.rateBp} bp`;
   }
 }

@@ -42,6 +42,11 @@ export function contextBlockFor(task: AgentTask): string {
   const fxLines = o.fx.map((f) => `- ${f.base}/${f.quote}: ${f.lastRatePpm ?? 'n/a'}ppm`).join('\n');
   const headlines = o.headlines.length ? o.headlines.map((h) => `- ${h}`).join('\n') : '- (none)';
   const briefing = o.briefing ? `\n\nBriefing:\n${o.briefing}` : '';
+  const elsewhere = o.elsewhere?.length
+    ? `\n\nOther planets (last price in their own currency, import tariff, travel time from here):\n${o.elsewhere
+        .map((r) => `- ${r.planet} (${r.travelCycles} cycles): ${r.goods.map((g) => `${g.good}=${g.lastPrice ?? 'n/a'}${g.tariffBp ? ` (tariff ${g.tariffBp}bp)` : ''}`).join(', ')}`)
+        .join('\n')}`
+    : '';
   return [
     `Planet ${task.planet}, cycle ${task.cycle}.`,
     '',
@@ -50,6 +55,7 @@ export function contextBlockFor(task: AgentTask): string {
     '',
     'FX:',
     fxLines || '- (none)',
+    elsewhere,
     '',
     'Policy:',
     `- tariffs(bp): ${JSON.stringify(o.policy.tariffsBp)}`,

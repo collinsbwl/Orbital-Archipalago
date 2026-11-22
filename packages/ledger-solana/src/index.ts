@@ -5,3 +5,4 @@ export * from './keys.js';
 export * from './errors.js';
 export * from './auction.js';
 export * from './fx.js';
+export { IDL } from './idl/orbital.js';

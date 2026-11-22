@@ -5,12 +5,12 @@ import type { Profile, Route } from '@orbital/contracts';
 import type { Role } from '@orbital/contracts';
 
 /** Tier names used in the ROUTES table. The real SKU per tier is in MODEL_IDS. */
-export type TierName = 'gemini-flash' | 'gemini-pro' | 'stub';
+export type TierName = 'gemini-flash' | 'gemini-decision-1' | 'stub';
 
 /** Pinned Gemini model ids. Update here and nowhere else. */
 export const MODEL_IDS: Record<TierName, string> = {
   'gemini-flash': 'gemini-2.5-flash',
-  'gemini-pro': 'gemini-2.5-pro',
+  'gemini-decision-1': 'gemini-decision-1',
   stub: 'stub',
 };
 
@@ -31,11 +31,11 @@ export const ROUTES: Record<Role, Route> = {
 };
 
 type ModelOrStub = TierName;
-/** Profile × tier → model id (§3.3). */
+/** Profile × tier → model id (§3.3). Flash is the only generative model; there is no Pro tier. */
 export const TIERS: Record<Profile, Record<'small' | 'mid' | 'frontier', ModelOrStub>> = {
   stub: { small: 'stub', mid: 'stub', frontier: 'stub' },
   cheap: { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-flash' },
-  full: { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-pro' },
+  full: { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-flash' },
 };
 
 /**

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import type { GodModeCommand, Snapshot, UniverseId } from '@orbital/contracts';
 import { AUTH0_ENABLED } from '../auth';
@@ -24,9 +24,10 @@ export interface SnapshotsView {
   setPlaybackSpeed: (speed: number) => void;
 }
 
-const { mode, wsUrl } = resolveMode(window.location.search, import.meta.env.VITE_ENGINE_WS_URL);
-
 export function useSnapshots(): SnapshotsView {
+  // Read the URL when the app mounts, not when this module loads: after an Auth0 login the module loads on the bare
+  // callback URL, and `?live=1` is only put back (by onRedirectCallback) before the app renders.
+  const [{ mode, wsUrl }] = useState(() => resolveMode(window.location.search, import.meta.env.VITE_ENGINE_WS_URL));
   // Outside <Auth0Provider> this returns the inert default context (not authenticated, not loading).
   const { isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
   const authPending = AUTH0_ENABLED && isLoading;

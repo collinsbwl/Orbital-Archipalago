@@ -21,7 +21,8 @@
     "test": "vitest run -c vitest.unit.config.ts && vitest run && vitest run -c vitest.contract.config.ts",
     "test:validator": "vitest run",
     "test:contract": "vitest run -c vitest.contract.config.ts",
-    "swap-in": "tsx scripts/swap-in.ts"
+    "swap-in": "tsx scripts/swap-in.ts",
+    "bench": "tsx scripts/bench.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "1.2.2",

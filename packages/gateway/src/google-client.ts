@@ -103,11 +103,27 @@ export class GoogleGenaiClient implements GenaiClient {
 // ------------------------------------------------------------------ mapping
 
 function toContents(args: GenerateArgs): Content[] {
-  return args.contents.map((c) =>
-    c.role === 'user'
-      ? { role: 'user', parts: [{ text: c.text }] }
-      : { role: 'user', parts: [{ functionResponse: { name: c.name, response: asRecord(c.response) } }] },
-  );
+  const out: Content[] = [];
+  for (const c of args.contents) {
+    if (c.role === 'user') {
+      out.push({ role: 'user', parts: [{ text: c.text }] });
+    } else if (c.role === 'model') {
+      // Prefer the raw content: it carries thought signatures the API wants echoed back.
+      out.push(
+        (c.raw as Content | undefined) ?? {
+          role: 'model',
+          parts: c.functionCalls.map((f) => ({ functionCall: { name: f.name, args: asRecord(f.args), ...(f.id ? { id: f.id } : {}) } })),
+        },
+      );
+    } else {
+      const part = { functionResponse: { name: c.name, response: asRecord(c.response), ...(c.id ? { id: c.id } : {}) } };
+      // All responses to one model turn go back together in a single message.
+      const prev = out.at(-1);
+      if (prev && prev.role === 'user' && prev.parts?.every((p) => p.functionResponse)) prev.parts.push(part);
+      else out.push({ role: 'user', parts: [part] });
+    }
+  }
+  return out;
 }
 
 function toConfig(args: GenerateArgs): GenerateContentConfig {
@@ -117,8 +133,8 @@ function toConfig(args: GenerateArgs): GenerateContentConfig {
     systemInstruction: args.systemInstruction,
     tools: args.tools && args.tools.length ? toTools(args.tools) : undefined,
     responseMimeType: args.responseMimeType,
-    // PromptBuilder emits an OpenAPI 3 schema (zod-to-json-schema, target openApi3).
-    responseSchema: args.responseSchema as GenerateContentConfig['responseSchema'],
+    // JSON Schema route: accepts additionalProperties; unsupported keywords are folded away.
+    responseJsonSchema: args.responseSchema ? toGeminiJsonSchema(args.responseSchema) : undefined,
     maxOutputTokens: args.maxOutputTokens,
     thinkingConfig: args.thinkingBudget != null ? { thinkingBudget: args.thinkingBudget } : undefined,
   };
@@ -126,7 +142,7 @@ function toConfig(args: GenerateArgs): GenerateContentConfig {
 
 function toTools(tools: ToolDeclaration[]): Tool[] | undefined {
   if (!tools.length) return undefined;
-  return [{ functionDeclarations: tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.parameters })) }];
+  return [{ functionDeclarations: tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: toGeminiJsonSchema(t.parameters) })) }];
 }
 
 function fromResponse(res: GenerateContentResponse): GenerateResult {
@@ -136,7 +152,8 @@ function fromResponse(res: GenerateContentResponse): GenerateResult {
   const u = res.usageMetadata;
   return {
     text: res.text ?? null,
-    functionCalls: (res.functionCalls ?? []).map((c) => ({ name: c.name ?? '', args: c.args ?? {} })),
+    functionCalls: (res.functionCalls ?? []).map((c) => ({ name: c.name ?? '', args: c.args ?? {}, ...(c.id ? { id: c.id } : {}) })),
+    modelContent: res.candidates?.[0]?.content,
     finishReason,
     usage: {
       promptTokenCount: u?.promptTokenCount ?? 0,
@@ -149,4 +166,50 @@ function fromResponse(res: GenerateContentResponse): GenerateResult {
 
 function asRecord(x: unknown): Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x) ? (x as Record<string, unknown>) : { result: x };
+}
+
+/** Keywords Gemini's JSON-schema fields accept (responseJsonSchema / parametersJsonSchema). */
+const SUPPORTED_KEYS = new Set([
+  '$id', '$defs', '$ref', '$anchor', 'type', 'format', 'title', 'description', 'enum', 'items', 'prefixItems',
+  'minItems', 'maxItems', 'minimum', 'maximum', 'anyOf', 'oneOf', 'properties', 'additionalProperties', 'required',
+  'propertyOrdering',
+]);
+
+/**
+ * Reduce a zod-to-json-schema output (openApi3 or JSON Schema 7) to what Gemini accepts.
+ * Dropped constraints are still enforced by the zod parse after the call; length limits
+ * are kept as a hint in `description` so the model tends to respect them.
+ */
+export function toGeminiJsonSchema(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(toGeminiJsonSchema);
+  if (typeof schema !== 'object' || schema === null) return schema;
+  const s = schema as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(s)) {
+    if (!SUPPORTED_KEYS.has(k)) continue;
+    if (k === 'properties' || k === '$defs') {
+      out[k] = Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([pk, pv]) => [pk, toGeminiJsonSchema(pv)]));
+    } else if (k === 'additionalProperties' && typeof v === 'object') {
+      out[k] = toGeminiJsonSchema(v);
+    } else if (k === 'items' || k === 'anyOf' || k === 'oneOf' || k === 'prefixItems') {
+      out[k] = toGeminiJsonSchema(v);
+    } else {
+      out[k] = v;
+    }
+  }
+  // exclusiveMinimum: number (JSON Schema 7) or boolean + minimum (openApi3).
+  const exMin = s.exclusiveMinimum;
+  if (typeof exMin === 'number') out.minimum = s.type === 'integer' ? exMin + 1 : exMin;
+  else if (exMin === true && typeof s.minimum === 'number' && s.type === 'integer') out.minimum = s.minimum + 1;
+  const exMax = s.exclusiveMaximum;
+  if (typeof exMax === 'number') out.maximum = s.type === 'integer' ? exMax - 1 : exMax;
+  else if (exMax === true && typeof s.maximum === 'number' && s.type === 'integer') out.maximum = s.maximum - 1;
+  // openApi3 nullable → anyOf with null.
+  if (s.nullable === true) return { anyOf: [out, { type: 'null' }] };
+  const hints = [
+    typeof s.maxLength === 'number' ? `at most ${s.maxLength} characters` : '',
+    typeof s.minLength === 'number' && s.minLength > 0 ? `at least ${s.minLength} characters` : '',
+  ].filter(Boolean);
+  if (hints.length) out.description = [out.description, `(${hints.join(', ')})`].filter(Boolean).join(' ');
+  return out;
 }

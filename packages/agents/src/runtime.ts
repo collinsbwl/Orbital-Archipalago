@@ -8,9 +8,9 @@
 //   runtime, with agentId forced to the task's id (the engine never trusts
 //   whatever the model returns).
 // - On budget_exhausted the runtime switches the rest of the run to StubPolicy.
-// - With a DecisionGateway (Gemini Decision 1): colonists pick from rule-built
-//   candidate bundles, and traders/governments only call the LLM when a cheap
-//   yes/no check says their plan needs revising.
+// - With a DecisionGateway (Gemini Decision 1): colonists, traders and
+//   governments pick from rule-built candidate bundles. Traders and governments
+//   fall back to the LLM (Flash) only when the pick is low-confidence.
 // - The last decision per (universeId, agentId) is the only in-memory state,
 //   and it is reconstructible from the recorder.
 
@@ -24,7 +24,7 @@ import { StubPolicy } from './policies/stub.js';
 import { RulePolicy } from './policies/rule.js';
 import { StandingOrdersPolicy } from './policies/standing-orders.js';
 import { GatewayPolicyError, LlmPolicy } from './policies/llm.js';
-import { DecisionPolicy } from './policies/decision.js';
+import { DecisionPolicy, type DecisionPolicyOpts } from './policies/decision.js';
 import { EscalatingPolicy, type EscalatingPolicyOpts } from './policies/escalating.js';
 import { rngFor } from './rng.js';
 
@@ -42,19 +42,22 @@ export interface DefaultAgentRuntimeConfig {
   /** Called when the budget switches us to stub for the rest of the run. */
   onDegrade?: (reason: 'budget_exhausted') => void;
   /**
-   * Gemini Decision 1. When set (on `cheap` / `full`), colonists use DecisionPolicy
-   * and the `escalate` roles check with it before calling the LLM.
+   * Gemini Decision 1. When set (on `cheap` / `full`), the `choice` roles pick from
+   * candidate bundles with DecisionPolicy, and any `escalate` roles check with it
+   * before calling the LLM.
    */
   decisionGateway?: DecisionGateway;
-  /** Which roles use the decision model. DEFAULT: colonist choice; trader + government escalation. */
+  /** Which roles use the decision model. DEFAULT: colonist, trader, government choose; none escalate. */
   decisionRoles?: { choice?: Role[]; escalate?: Role[] };
+  /** Choice options: low-confidence threshold, fallback roles, telemetry. The fallback is the LLM policy. */
+  choice?: Omit<DecisionPolicyOpts, 'fallback'>;
   /** Escalation threshold and telemetry hook. */
   escalation?: EscalatingPolicyOpts;
 }
 
 const DEFAULT_DECISION_ROLES: Required<NonNullable<DefaultAgentRuntimeConfig['decisionRoles']>> = {
-  choice: ['colonist'],
-  escalate: ['trader', 'government'],
+  choice: ['colonist', 'trader', 'government'],
+  escalate: [],
 };
 
 export class DefaultAgentRuntime implements AgentRuntime {
@@ -75,7 +78,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
   private readonly onDegrade?: (reason: 'budget_exhausted') => void;
   private degraded = false;
 
-  constructor(cfg: DefaultAgentRuntimeConfig) {
+  constructor(private readonly cfg: DefaultAgentRuntimeConfig) {
     this.world = cfg.world;
     this.gateway = cfg.gateway;
     this.profile = cfg.profile ?? cfg.world.gatewayProfile;
@@ -88,7 +91,7 @@ export class DefaultAgentRuntime implements AgentRuntime {
     this.choiceRoles = new Set(roles.choice);
     this.escalateRoles = new Set(roles.escalate);
     if (this.profile !== 'stub' && cfg.decisionGateway) {
-      this.decision = new DecisionPolicy(cfg.decisionGateway);
+      this.decision = new DecisionPolicy(cfg.decisionGateway, { ...cfg.choice, ...(this.llm ? { fallback: this.llm } : {}) });
       if (this.llm) this.escalating = new EscalatingPolicy(cfg.decisionGateway, this.llm, this.standing, cfg.escalation);
     }
   }
@@ -131,11 +134,21 @@ export class DefaultAgentRuntime implements AgentRuntime {
     if (this.degraded) return this.stub;
     if (role === 'reserve_bank') return this.rule;
     if (this.profile === 'stub') return this.stub;
-    // DecisionPolicy only knows how to build colonist candidates.
-    if (this.decision && role === 'colonist' && this.choiceRoles.has(role)) return this.decision;
+    if (this.decision && this.choiceRoles.has(role) && this.decision.handles(role)) return this.decision;
     if (this.escalating && this.escalateRoles.has(role)) return this.escalating;
     if (this.llm) return this.llm;
     return this.stub;
+  }
+
+  /**
+   * Independent copy for a universe fork: same config and gateways (so the budget and
+   * limiters stay shared), its own copy of the standing-orders memory and degrade flag.
+   */
+  fork(): DefaultAgentRuntime {
+    const copy = new DefaultAgentRuntime(this.cfg);
+    for (const [k, v] of this.previous) copy.previous.set(k, structuredClone(v));
+    copy.degraded = this.degraded;
+    return copy;
   }
 
   /** For tests / forks: pre-seed the standing-orders memory with a prior decision. */

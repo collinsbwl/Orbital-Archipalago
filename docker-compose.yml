@@ -32,15 +32,22 @@ services:
       NODE_ENV: production
       ENGINE_PORT: 8080
       TIGER_DATABASE_URL: ${TIGER_DATABASE_URL}
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      # Gemini agents: decision-1 for choices, Flash fallback. Unset key = RandomValidPolicy, no calls.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-${GOOGLE_API_KEY:-}}
+      GATEWAY_PROFILE: ${GATEWAY_PROFILE:-}
+      RUN_BUDGET_USD: ${RUN_BUDGET_USD:-15}
       AUTH0_ISSUER: ${AUTH0_ISSUER}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      LEDGER: ${LEDGER:-solana}
       SOLANA_RPC_URL: ${SOLANA_RPC_URL:-http://solana-test-validator:8899}
+      SOLANA_ADMIN_KEYPAIR: ${SOLANA_ADMIN_KEYPAIR:-}
+      # Single local validator: nothing to roll back, so don't wait for votes. Use confirmed against devnet.
+      SOLANA_COMMITMENT: ${SOLANA_COMMITMENT:-processed}
     expose:
       - "8080"
     depends_on:
       solana-test-validator:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
 
   web:
@@ -58,20 +65,14 @@ services:
     restart: unless-stopped
 
   solana-test-validator:
-    image: solanalabs/solana:stable
-    command:
-      - solana-test-validator
-      - --ledger
-      - /ledger
-      - --rpc-port
-      - "8899"
-      - --quiet
-    volumes:
-      - solana-ledger:/ledger
+    # Builds the Orbital program and runs a fresh (--reset) local chain with it preloaded.
+    # Restart it together with the engine: docker compose restart solana-test-validator engine
+    build:
+      context: .
+      dockerfile: Dockerfile.solana
     expose:
       - "8899"
     restart: unless-stopped
 
 volumes:
   tiger-data:
-  solana-ledger:

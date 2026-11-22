@@ -10,7 +10,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && mkdir -p dist/prompt && cp -R src/prompt/rules dist/prompt/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
