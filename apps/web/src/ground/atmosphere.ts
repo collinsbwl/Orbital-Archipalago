@@ -121,8 +121,9 @@ export function computeAtmosphere({ look, mood, timeOfDay, sunDir }: AtmosphereI
   const hemiIntensity = (0.2 + 0.65 * daylight) * (1 - 0.3 * overcast) + 0.04 * mood.cheer;
 
   // Windows and lamps come on around sunset and stay on all night; a dark storm brings them on early.
-  const dusk = 1 - smoothstep(-0.12, 0.14, h);
-  const lamps = clamp(Math.max(dusk, mood.storm * 0.55), 0, 1);
+  // There is no night now, so the lights do not switch: a fixed level keeps the same windows lit and the same ones dark.
+  const windows = 0.5;
+  const lamps = 1;
 
   const amount = smoothstep(0.35, 0.9, mood.storm);
   const phase: Atmosphere['phase'] = night > 0.85 ? 'night' : daylight > 0.85 ? 'day' : timeOfDay < 0.5 ? 'dawn' : 'dusk';
@@ -148,7 +149,7 @@ export function computeAtmosphere({ look, mood, timeOfDay, sunDir }: AtmosphereI
     hemi: { sky: hemiSky, ground: hemiGround, intensity: hemiIntensity },
     stars: clamp(night * night * (1 - overcast), 0, 1),
     precipitation: { kind: look.precip, amount },
-    windows: lamps,
+    windows,
     lamps,
   };
 }

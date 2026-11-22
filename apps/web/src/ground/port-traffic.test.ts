@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Shipment } from '@orbital/contracts';
-import { APPROACH_ALTITUDE, padFor, PARKED_CYCLES, planPort, portTraffic, PRE_DEPART_CYCLES, REST_HEIGHT, shipPhase, shipPose } from './port-traffic';
+import { APPROACH_ALTITUDE, padFor, PARKED_CYCLES, TAKEOFF_CYCLES, planPort, portTraffic, PRE_DEPART_CYCLES, REST_HEIGHT, shipPhase, shipPose } from './port-traffic';
 
 const ship = (id: string, from: string, to: string, departCycle: number, arriveCycle: number): Shipment => ({
   id, owner: 'a', from, to, cargo: [{ good: 'iron', qty: 1 }], departCycle, arriveCycle, status: 'in_flight',
@@ -16,7 +16,8 @@ describe('shipPhase', () => {
   it('parks after arrival, then leaves', () => {
     expect(shipPhase(s, 'verdan', 20)?.phase).toBe('parked');
     expect(shipPhase(s, 'verdan', 20 + PARKED_CYCLES - 0.01)?.phase).toBe('parked');
-    expect(shipPhase(s, 'verdan', 20 + PARKED_CYCLES)).toBeNull();
+    expect(shipPhase(s, 'verdan', 20 + PARKED_CYCLES)?.phase).toBe('takeoff');
+    expect(shipPhase(s, 'verdan', 20 + PARKED_CYCLES + TAKEOFF_CYCLES)).toBeNull();
   });
   it('takes off in the first cycle after departing, at the origin planet only', () => {
     expect(shipPhase(s, 'helion', 10 - PRE_DEPART_CYCLES - 0.01)).toBeNull();

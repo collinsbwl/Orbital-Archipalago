@@ -56,15 +56,13 @@ describe('day and night', () => {
     }
   });
 
-  it('lights windows, lamps and stars only after dark', () => {
-    expect(noon.windows).toBe(0);
-    expect(noon.lamps).toBe(0);
+  it('keeps windows and lamps at a fixed level whatever the sun does', () => {
+    for (const a of [noon, night, dusk]) {
+      expect(a.windows).toBe(0.5);
+      expect(a.lamps).toBe(1);
+    }
     expect(noon.stars).toBe(0);
-    expect(night.windows).toBe(1);
-    expect(night.lamps).toBe(1);
     expect(night.stars).toBeGreaterThan(0.9);
-    expect(dusk.windows).toBeGreaterThan(0.3);
-    expect(dusk.windows).toBeLessThan(0.9);
   });
 
   it('uses the sun direction it is given', () => {
@@ -108,10 +106,8 @@ describe('weather and mood', () => {
     expect(amounts[amounts.length - 1]).toBe(1);
   });
 
-  it('is darker at night in a storm than at night clear, and lights come on early in a storm by day', () => {
+  it('is darker at night in a storm than at night clear', () => {
     expect(lum(at(-0.7, STORM).skyHorizon)).toBeLessThanOrEqual(lum(at(-0.7).skyHorizon) * 4);
-    expect(at(0.8, STORM).lamps).toBeGreaterThan(0.3);
-    expect(at(0.8).lamps).toBe(0);
   });
 
   it('hides the stars behind cloud', () => {

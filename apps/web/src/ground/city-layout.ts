@@ -109,7 +109,10 @@ export interface CityLayout {
   buildings: Building[];
   /** How many buildings the full-grown city has, so renderers can size their instance buffers once. */
   capacity: number;
+  /** Walkways: for each road, a loop out one sidewalk and back the other. */
   loops: Loop[];
+  /** Where the crowd gathers and walks: closed paths the aliens use. Here, rings across the plaza between the fountain and the market stalls. */
+  gatherLoops: Loop[];
   /** Distance from the point to the nearest radial road centreline (ring streets not counted). */
   distanceToRoad: (x: number, z: number) => number;
   /** Space between the point and the nearest road edge (sidewalk included, ring streets too); negative on a road. */
@@ -149,12 +152,16 @@ export function sampleLoop(loop: Loop, dist: number): { x: number; z: number; dx
   return { x: a[0] + (b[0] - a[0]) * k, z: a[1] + (b[1] - a[1]) * k, dx: (b[0] - a[0]) / len, dz: (b[1] - a[1]) / len };
 }
 
-/** Walkways: one loop round the plaza edge, one inside it, and for each road a loop out one sidewalk and back the other. */
+const ring = (r: number, n: number) => Array.from({ length: n }, (_, i) => [r * Math.cos((i / n) * Math.PI * 2), r * Math.sin((i / n) * Math.PI * 2)] as [number, number]);
+
+/** Three rings across the plaza (96 points each, so they read as smooth circles), between the fountain (about 3 m out) and the market stalls (about 7.5 m out). */
+function buildGatherLoops(): Loop[] {
+  return [PLAZA_RADIUS * 0.48, PLAZA_RADIUS * 0.59, PLAZA_RADIUS * 0.7].map((r) => makeLoop(ring(r, 96)));
+}
+
+/** Walkways: for each road, a loop out one sidewalk and back the other. */
 function buildLoops(roads: Road[]): Loop[] {
   const loops: Loop[] = [];
-  const ring = (r: number, n: number) => Array.from({ length: n }, (_, i) => [r * Math.cos((i / n) * Math.PI * 2), r * Math.sin((i / n) * Math.PI * 2)] as [number, number]);
-  loops.push(makeLoop(ring(PLAZA_RADIUS * 0.82, 28)));
-  loops.push(makeLoop(ring(PLAZA_RADIUS * 0.5, 20)));
   const off = ROAD_WIDTH / 2 + SIDEWALK_WIDTH / 2;
   for (const r of roads) {
     const near = PLAZA_RADIUS + 0.6;
@@ -240,7 +247,7 @@ export function layoutCity(options: CityOptions): CityLayout {
 
   return {
     options, tier, plazaRadius: PLAZA_RADIUS, radius: CITY_RADIUS, flatRadius: CITY_FLAT_RADIUS,
-    roads, ringStreets, buildings, capacity: all.length, loops: buildLoops(roads), distanceToRoad,
+    roads, ringStreets, buildings, capacity: all.length, loops: buildLoops(roads), gatherLoops: buildGatherLoops(), distanceToRoad,
     roadClearance: roadAndRingClearance, onStreet: onStreetNow,
   };
 }

@@ -54,7 +54,7 @@ const KNOWN: Record<string, GroundLook> = {
     ground: '#e8f4fa', palette: ['#e8f4fa', '#d4ebf5', '#f4fafd', '#c2e0ee'], rock: '#8fa6b8', peak: '#ffffff',
     fogNear: 55, fogFar: 400, precip: 'snow',
     buildings: ['#cfe3ee', '#9fc4da', '#eef6fa', '#7fa6c0'],
-    relief: { hills: 2.5, hillScale: 120, mountains: 95, mountainStart: 240 },
+    relief: { hills: 2.5, hillScale: 120, mountains: 120, mountainStart: 160 },
   },
 };
 

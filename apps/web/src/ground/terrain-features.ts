@@ -139,6 +139,8 @@ export interface PlanInput {
   baseHeight: (x: number, z: number) => number;
   /** Terrain is flat out to here; features keep outside it. */
   flatRadius: number;
+  /** Sites (mines, fields, lakes) are placed out from here instead of `flatRadius`: smaller for a compact camp. Default `flatRadius`. */
+  siteRadius?: number;
   /** Where the mountain ring starts, so rivers can stop before it. */
   mountainStart: number;
 }
@@ -261,6 +263,7 @@ export function waterDepth(set: FeatureSet, x: number, z: number, ground: number
  */
 export function planFeatures(input: PlanInput): FeatureSet {
   const { planet, baseHeight, flatRadius } = input;
+  const siteBase = input.siteRadius ?? flatRadius;
   const goods = new Set(input.goods);
   const icy = isIcyPlanet(planet);
   const set: FeatureSet = { icy, sites: [], fields: [], pits: [], pads: [], lakes: [], rivers: [], sheets: [], ridges: [], footprints: [] };
@@ -310,7 +313,7 @@ export function planFeatures(input: PlanInput): FeatureSet {
     for (let i = 0; i < 2; i++) {
       const radius = 24 + rng() * 6;
       const depth = 7 + rng() * 3;
-      const spot = findSpot(rng, flatRadius + 25, flatRadius + 115, radius * 1.3);
+      const spot = findSpot(rng, siteBase + 25, siteBase + 115, radius * 1.3);
       if (!spot) continue;
       const rim = baseHeight(spot.x, spot.z);
       const id = `pit:${i}`;
@@ -322,7 +325,7 @@ export function planFeatures(input: PlanInput): FeatureSet {
   // Fuel: a refinery on a levelled pad.
   if (goods.has('fuel')) {
     const rng = rngFor('fuel');
-    const spot = findSpot(rng, flatRadius + 20, flatRadius + 75, 36);
+    const spot = findSpot(rng, siteBase + 20, siteBase + 75, 36);
     if (spot) {
       addPad(spot.x, spot.z, 22, 14);
       addSite('refinery', 'fuel', spot.x, spot.z, 22, headingTo(spot.x, spot.z, 0, 0));
@@ -331,7 +334,7 @@ export function planFeatures(input: PlanInput): FeatureSet {
   // Tools: a forge on a levelled pad.
   if (goods.has('tools')) {
     const rng = rngFor('tools');
-    const spot = findSpot(rng, flatRadius + 15, flatRadius + 70, 28);
+    const spot = findSpot(rng, siteBase + 15, siteBase + 70, 28);
     if (spot) {
       addPad(spot.x, spot.z, 16, 10);
       addSite('forge', 'tools', spot.x, spot.z, 16, headingTo(spot.x, spot.z, 0, 0));
@@ -341,7 +344,7 @@ export function planFeatures(input: PlanInput): FeatureSet {
   if (goods.has('grain')) {
     const rng = rngFor('grain');
     for (let i = 0; i < 2; i++) {
-      const spot = findSpot(rng, flatRadius + 60, flatRadius + 120, 60);
+      const spot = findSpot(rng, siteBase + 60, siteBase + 120, 60);
       const nFields = 2 + (rng() < 0.5 ? 1 : 0);
       const spin = rng() * TAU;
       const sizes = Array.from({ length: 3 }, () => ({ hw: 12 + rng() * 5, hd: 16 + rng() * 6, crop: rng() }));
@@ -364,7 +367,7 @@ export function planFeatures(input: PlanInput): FeatureSet {
   if (goods.has('water')) {
     const rng = rngFor('water');
     const radius = 24 + rng() * 8;
-    const spot = findSpot(rng, flatRadius + 50, flatRadius + 110, radius * LAKE_WIDEST * 1.4);
+    const spot = findSpot(rng, siteBase + 50, siteBase + 110, radius * LAKE_WIDEST * 1.4);
     const swing = rng() - 0.5;
     const riverTurn = (rng() - 0.5) * 1.6;
     if (spot) {
@@ -388,7 +391,7 @@ export function planFeatures(input: PlanInput): FeatureSet {
     const rng = rngFor('ice');
     for (let i = 0; i < 3; i++) {
       const r = 20 + rng() * 14;
-      const spot = findSpot(rng, flatRadius + 15, flatRadius + 130, r + 12);
+      const spot = findSpot(rng, siteBase + 15, siteBase + 130, r + 12);
       if (!spot) continue;
       set.sheets.push({ x: spot.x, z: spot.z, r, ramp: 12, level: baseHeight(spot.x, spot.z) });
       claim(spot.x, spot.z, r + 8);
