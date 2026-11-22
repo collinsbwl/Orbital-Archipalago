@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import type { Shipment, Snapshot } from '@orbital/contracts';
 import { pointOnLane, tangentOnLane } from './curve';
 import { shipProgress, shipTooltip } from './frame';
+import { SHIP_SIZE, SHIP_TRAIL, routeEmphasis } from './highlight';
+import type { Emphasis } from './highlight';
 import type { FrameState } from './frame';
 
 type FrameRef = { current: FrameState };
@@ -14,6 +16,8 @@ interface FreighterProps {
   frame: FrameRef;
   hovered: boolean;
   onHover: (id: string | null) => void;
+  /** Whether the spotlight is on this ship's route, away from it, or not in use. */
+  emphasis: Emphasis;
 }
 
 const aim = new THREE.Vector3();
@@ -29,8 +33,10 @@ const SHIP_SCALE = 1.9;
 const ENGINE_OFFSET = 0.095;
 
 /** A small freighter riding its lane, with an engine trail. Hover it for owner, cargo, route and arrival. */
-function Freighter({ shipment, frame, hovered, onHover }: FreighterProps) {
+function Freighter({ shipment, frame, hovered, onHover, emphasis }: FreighterProps) {
   const group = useRef<THREE.Group>(null);
+  const look = useRef(emphasis);
+  look.current = emphasis;
   // The engine trail: a short line of recent engine positions, fading out to the tail.
   const trail = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
@@ -71,6 +77,10 @@ function Freighter({ shipment, frame, hovered, onHover }: FreighterProps) {
     const d = tangentOnLane(a, b, t);
     g.visible = true;
     g.position.set(p.x, p.y, p.z);
+    // Ships on the spotlighted route grow a little; the rest shrink and their trails fade.
+    g.scale.setScalar(g.scale.x + (SHIP_SIZE[look.current] * SHIP_SCALE - g.scale.x) * 0.15);
+    const trailMaterial = trail.line.material as THREE.LineBasicMaterial;
+    trailMaterial.opacity += (SHIP_TRAIL[look.current] - trailMaterial.opacity) * 0.15;
     g.lookAt(aim.set(p.x + d.x, p.y + d.y, p.z + d.z)); // the ship's nose (+z) points along the lane
     back.set(d.x, d.y, d.z).normalize().multiplyScalar(-ENGINE_OFFSET * SHIP_SCALE).add(g.position);
     if (!trail.seeded || back.distanceTo(trail.last) > TRAIL_JUMP) {
@@ -137,13 +147,13 @@ function Freighter({ shipment, frame, hovered, onHover }: FreighterProps) {
 }
 
 /** Every shipment that is in flight. */
-export function Ships({ snapshot, frame, hovered, onHover }: { snapshot: Snapshot; frame: FrameRef; hovered: string | null; onHover: (id: string | null) => void }) {
+export function Ships({ snapshot, frame, hovered, onHover, highlight }: { snapshot: Snapshot; frame: FrameRef; hovered: string | null; onHover: (id: string | null) => void; highlight: string | null }) {
   return (
     <>
       {snapshot.shipments
         .filter((s) => s.status === 'in_flight')
         .map((s) => (
-          <Freighter key={s.id} shipment={s} frame={frame} hovered={hovered === s.id} onHover={onHover} />
+          <Freighter key={s.id} shipment={s} frame={frame} hovered={hovered === s.id} onHover={onHover} emphasis={routeEmphasis(s, highlight)} />
         ))}
     </>
   );

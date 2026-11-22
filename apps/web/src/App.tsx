@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthControls } from './auth';
 import { EventFeed } from './components/EventFeed';
 import { GodModePanel } from './components/GodModePanel';
 import { MetricsPanel } from './components/MetricsPanel';
 import { Panel } from './components/Panel';
-import { PlanetLegend } from './components/PlanetLegend';
+import { PlanetCard } from './components/PlanetCard';
 import { PlaybackControls } from './components/PlaybackControls';
 import { Scene3D } from './components/Scene3D';
+import { ViewHint } from './components/ViewHint';
 import { useSnapshots } from './data/useSnapshots';
 
 /** Wide enough for the panels to sit beside the scene. In a narrow window they start folded so the scene stays visible. */
@@ -18,11 +19,26 @@ export function App() {
     snapshot, role, connected, mode, sendCommand, universeId, universes, selectUniverse, error, playbackPaused, setPlaybackPaused,
     playbackSpeed, setPlaybackSpeed,
   } = useSnapshots();
+  // The planet the camera is zoomed in on (null = the map). Esc goes back to the map.
+  const [focused, setFocused] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focused) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFocused(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [focused]);
+  // A planet that is no longer in the snapshot (another universe was selected) cannot stay focused.
+  const focusedPlanet = snapshot?.planets.find((p) => p.planet === focused);
+  useEffect(() => {
+    if (focused && snapshot && !focusedPlanet) setFocused(null);
+  }, [focused, snapshot, focusedPlanet]);
   // Hold the scene still while playback is paused or the engine itself is paused.
   const frozen = playbackPaused || (snapshot?.paused ?? false);
   return (
     <div className="app">
-      <div className="scene-layer">{snapshot && <Scene3D snapshot={snapshot} frozen={frozen} />}</div>
+      <div className="scene-layer">{snapshot && <Scene3D snapshot={snapshot} frozen={frozen} focused={focused} onFocus={setFocused} />}</div>
       <div className="hud">
         <header className="hud-top glass">
           <strong>Orbital Archipelago</strong>
@@ -40,6 +56,7 @@ export function App() {
         ) : (
           <>
             <div className="hud-left">
+              {focusedPlanet && <PlanetCard planet={focusedPlanet} onBack={() => setFocused(null)} />}
               <Panel title="Planets and charts" defaultOpen={false}>
                 <MetricsPanel snapshot={snapshot} />
               </Panel>
@@ -57,7 +74,7 @@ export function App() {
               )}
             </div>
             <div className="hud-bottom">
-              <PlanetLegend snapshot={snapshot} />
+              <ViewHint />
               {mode === 'fixture' && (
                 <PlaybackControls playbackPaused={playbackPaused} setPlaybackPaused={setPlaybackPaused} playbackSpeed={playbackSpeed} setPlaybackSpeed={setPlaybackSpeed} />
               )}

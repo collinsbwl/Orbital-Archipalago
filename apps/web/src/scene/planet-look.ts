@@ -20,11 +20,11 @@ const KNOWN: Record<string, Omit<PlanetLook, 'id' | 'seed'>> = {
   // Helion mines iron and refines fuel: a rough, rusty rock.
   helion: { radius: 0.5, palette: ['#c2672f', '#a64b25', '#d6934f', '#7d3b20'], roughness: 0.16, spin: 0.25 },
   // Verdan farms grain and pumps water: green land, blue seas, a thin haze.
-  verdan: { radius: 0.56, palette: ['#4b9a47', '#3a8240', '#2f6fae', '#86c45f'], roughness: 0.1, spin: 0.18, atmosphere: { color: '#8fd0ff', opacity: 0.14 } },
+  verdan: { radius: 0.56, palette: ['#4b9a47', '#3a8240', '#2f6fae', '#86c45f'], roughness: 0.05, spin: 0.18, atmosphere: { color: '#5aa8ff', opacity: 0.3 } },
   // Tethys pumps water and forges tools: pale ice with a ring.
   tethys: {
     radius: 0.46, palette: ['#d4ebf5', '#a3cfe6', '#eef8fc', '#78b2d6'], roughness: 0.08, spin: 0.12,
-    ring: { color: '#cfe6f2', inner: 1.4, outer: 1.85, tilt: 0.45 }, atmosphere: { color: '#d8f3ff', opacity: 0.12 },
+    ring: { color: '#cfe6f2', inner: 1.4, outer: 1.85, tilt: 0.45 }, atmosphere: { color: '#bfe6ff', opacity: 0.26 },
   },
 };
 
