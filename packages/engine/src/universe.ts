@@ -3,20 +3,23 @@ import type {
   AgentId, ArriveResult, AuctionResult, ChartSeries, FxAuctionResult, GodModeCommand, GoodId, Ledger, Loan, PlanetId, PolicyState, Shipment, SimEvent, Snapshot,
   SurveyAnswer, UniverseId, WorldConfig,
 } from '@orbital/contracts';
-import { listAgents } from './agents.js';
+import { agentId, listAgents } from './agents.js';
 import type { AgentInfo, DecisionProvider } from './agents.js';
 import { bootstrap } from './bootstrap.js';
+import { PPM, initDemography, participationBp, readDemography, stepDemography } from './demographics.js';
+import type { DemographyReading, HouseholdLoad, PlanetDemography } from './demographics.js';
 import { fxKey, fxPairs, fxViews } from './fx.js';
 import { Detectors } from './detectors/index.js';
 import type { DetectedEvent } from './detectors/index.js';
 import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
-import { GROWTH_CONFIG, GROWTH_TRAIL, accrueWear, accumulateInstalledPpm, capacityMultiplierPpm, investmentPpm, scaleBatches } from './growth.js';
+import { GROWTH_CONFIG, GROWTH_TRAIL, accrueWear, accumulateInstalledPpm, capacityMultiplierPpm, investmentPpm, labourMultiplierPpm, scaleBatches } from './growth.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
 import { orbitPhase, travelCycles } from './orbits.js';
 import { runConsumption } from './phases/consumption.js';
+import type { HouseholdSizes } from './phases/consumption.js';
 import { batchKey, multKey, runProduction } from './phases/production.js';
 import type { Counts, Multipliers } from './phases/production.js';
 import type { MetricsSink } from './ports.js';
@@ -128,6 +131,8 @@ export class Universe {
   private readonly wearPpm = new Map<PlanetId, number>();
   /** Saved-and-invested capital per planet in ppm tool-equivalents (exists outside any inventory); K = floor(this / 1e6) + tools held. */
   private readonly installedCapitalPpm = new Map<PlanetId, number>();
+  /** Age cohorts, colonist households and the last unmet-needs share, per planet (ppm of a person; see demographics.ts). */
+  private readonly demography = new Map<PlanetId, PlanetDemography>();
 
   constructor(opts: UniverseOptions) {
     this.world = opts.world;
@@ -145,6 +150,7 @@ export class Universe {
       borrowCaps: this.borrowCaps,
     };
     for (const a of this.roster) if (a.role === 'trader') this.location.set(a.id, a.planet);
+    for (const p of opts.world.planets) this.demography.set(p.id, initDemography(p));
   }
 
   get cycle(): number {
@@ -189,7 +195,7 @@ export class Universe {
     };
     u.book = this.book.clone();
     fill(u.memos, this.memos); fill(u.location, this.location); fill(u.flights, this.flights); fill(u.fxRates, this.fxRates);
-    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride); fill(u.batchCarry, this.batchCarry); fill(u.wearPpm, this.wearPpm); fill(u.installedCapitalPpm, this.installedCapitalPpm);
+    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride); fill(u.batchCarry, this.batchCarry); fill(u.wearPpm, this.wearPpm); fill(u.installedCapitalPpm, this.installedCapitalPpm); fill(u.demography, this.demography);
     for (const id of this.defaulted) u.defaulted.add(id);
     u.history.push(...structuredClone(this.history));
     u.events.push(...structuredClone(this.events));
@@ -346,15 +352,18 @@ export class Universe {
     const due0 = await this.settleDueLoans(cycle);
     const used: Counts = {};
     const capital = await this.capitalStocks();
-    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false), this.capacityBatches(capital));
+    const readings = this.demographyReadings();
+    const produced = await runProduction(world, ledger, cycle, used, this.multipliers(false), this.capacityBatches(capital, readings));
     await this.wearCapital(capital);
-    const unmet = await runConsumption(world, ledger, this.multipliers(true));
+    const loads = new Map<PlanetId, HouseholdLoad[]>();
+    const households = new Map<PlanetId, HouseholdSizes>([...this.demography].map(([id, d]) => [id, { sizesPpm: d.households, avgPpm: d.avgHouseholdPpm }]));
+    const unmet = await runConsumption(world, ledger, this.multipliers(true), { households, loads });
 
     await this.expireStaleOrders(cycle);
 
     const due = schedule(this.roster, cycle, this.location);
     const tasks = await buildTasks(
-      { world, ledger, book, memos: this.memos, cycle, fx: fxViews(world, this.fxRates), flights: [...this.flights.values()], loans: [...this.loans.values()] },
+      { world, ledger, book, memos: this.memos, cycle, fx: fxViews(world, this.fxRates), flights: [...this.flights.values()], loans: [...this.loans.values()], households: this.householdViews() },
       due,
     );
     const raw = await this.provider.decideAll(tasks);
@@ -426,12 +435,13 @@ export class Universe {
       metrics[p.id] = computeMetrics(world, p, {
         produced: produced[p.id] ?? {}, used: used[p.id] ?? {}, price: (g) => this.priceOf(p.id, g), flow: flows[p.id]!,
         surveys: surveys.get(p.id) ?? [], ...(prev ? { prev: prev[p.id]! } : {}),
-        capitalStock: await this.capitalStockOf(p.id) + this.installedUnits(p.id),
+        capitalStock: await this.capitalStockOf(p.id) + this.installedUnits(p.id), demography: readings.get(p.id)!,
         trail: this.history.slice(-GROWTH_TRAIL).map((h) => h.metrics[p.id]!),
       });
     }
     this.history.push({ cycle, metrics });
     this.invest(metrics);
+    for (const p of world.planets) stepDemography(this.demography.get(p.id)!, loads.get(p.id) ?? []);
     if (this.history.length > HISTORY_CYCLES) this.history.shift();
     await this.runReserveBanks(cycle);
 
@@ -481,6 +491,30 @@ export class Universe {
     }
   }
 
+  /** This cycle's cohorts, participation and labour per planet. Participation drops with last cycle's unmet share and low consumer confidence. */
+  private demographyReadings(): Map<PlanetId, DemographyReading> {
+    const prev = this.history[this.history.length - 1]?.metrics;
+    const out = new Map<PlanetId, DemographyReading>();
+    for (const p of this.world.planets) {
+      const d = this.demography.get(p.id)!;
+      out.set(p.id, readDemography(d, participationBp(d.unmetPpm, prev?.[p.id]?.consumerConfidence ?? INITIAL_CONFIDENCE, d.dynamic)));
+    }
+    return out;
+  }
+
+  /** The household each colonist agent represents: its size in people and how many of them are working-age. */
+  private householdViews(): Map<string, { size: number; workingAge: number }> {
+    const out = new Map<string, { size: number; workingAge: number }>();
+    for (const p of this.world.planets) {
+      const d = this.demography.get(p.id)!;
+      const total = d.children + d.workingAge + d.retired;
+      d.households.forEach((ppm, i) => {
+        out.set(agentId(p.id, 'colonist', i), { size: Math.round(ppm / PPM), workingAge: total > 0 ? Math.round((ppm * d.workingAge) / (total * PPM)) : 0 });
+      });
+    }
+    return out;
+  }
+
   /** Capital goods held per planet at the start of production (empty when capital does not affect production); these wear out. */
   private async capitalStocks(): Promise<Map<PlanetId, number>> {
     const out = new Map<PlanetId, number>();
@@ -489,11 +523,12 @@ export class Universe {
     return out;
   }
 
-  /** Effective batches per `planet|recipe` (K = held tools + installed capital): floor(batchesPerCycle * m + carry), the remainder kept in `batchCarry`. */
-  private capacityBatches(capital: ReadonlyMap<PlanetId, number>): Map<string, number> {
+  /** Effective batches per `planet|recipe` (K = held tools + installed capital, L = labour input): m = capitalMult * (L / L0)^(1 - alpha); floor(batchesPerCycle * m + carry), the remainder kept in `batchCarry`. */
+  private capacityBatches(capital: ReadonlyMap<PlanetId, number>, readings: ReadonlyMap<PlanetId, DemographyReading>): Map<string, number> {
     const out = new Map<string, number>();
     for (const p of this.world.planets) {
-      const m = capacityMultiplierPpm((capital.get(p.id) ?? 0) + this.installedUnits(p.id));
+      const labour = labourMultiplierPpm(readings.get(p.id)?.labourInput ?? 0, this.demography.get(p.id)!.l0);
+      const m = Math.round((capacityMultiplierPpm((capital.get(p.id) ?? 0) + this.installedUnits(p.id)) * labour) / PPM);
       for (const pr of p.recipes) {
         const k = batchKey(p.id, pr.recipe);
         const r = scaleBatches(pr.batchesPerCycle, m, this.batchCarry.get(k) ?? 0);
@@ -529,12 +564,17 @@ export class Universe {
     return this.book.lastPrice(planet, good) ?? this.world.goods.find((g) => g.id === good)!.basePrice;
   }
 
+  private freshDemography(planet: PlanetId): DemographyReading {
+    const d = this.demography.get(planet)!;
+    return readDemography(d, participationBp(d.unmetPpm, INITIAL_CONFIDENCE, d.dynamic));
+  }
+
   /** State as of the last completed cycle (cycle 0 before any step). `series` is passed through (read at broadcast time). */
   async snapshot(opts: { series: ChartSeries[]; paused?: boolean; gatewayCostUsd?: number }): Promise<Snapshot> {
     const { world } = this;
     const cycle = Math.max(0, this._cycle - 1);
     const latest = this.history[this.history.length - 1]?.metrics;
-    const fresh = (): PlanetMetrics => ({ gdp: 0, cpi: CPI_BASE, tradeBalance: 0, population: 0, consumerConfidence: INITIAL_CONFIDENCE, businessConfidence: INITIAL_CONFIDENCE, realGdp: 0, labourInput: 0, capitalStock: 0, realGdpGrowthBp: 0, labourContribBp: 0, capitalContribBp: 0, tfpContribBp: 0 });
+    const fresh = (): PlanetMetrics => ({ gdp: 0, cpi: CPI_BASE, tradeBalance: 0, population: 0, consumerConfidence: INITIAL_CONFIDENCE, businessConfidence: INITIAL_CONFIDENCE, realGdp: 0, labourInput: 0, capitalStock: 0, realGdpGrowthBp: 0, labourContribBp: 0, capitalContribBp: 0, tfpContribBp: 0, children: 0, workingAge: 0, retired: 0, dependencyRatioBp: 0, participationBp: 0 });
     const planets = [];
     for (const p of world.planets) {
       planets.push({
@@ -542,7 +582,7 @@ export class Universe {
         currency: p.currency,
         prices: Object.fromEntries(world.goods.map((g) => [g.id, this.priceOf(p.id, g.id)])),
         policy: await this.ledger.getPolicy(p.id),
-        metrics: latest?.[p.id] ?? { ...fresh(), population: p.agents.colonist, labourInput: p.agents.colonist },
+        metrics: latest?.[p.id] ?? { ...fresh(), ...this.freshDemography(p.id) },
         orbitPhaseCycles: orbitPhase(p, cycle),
       });
     }

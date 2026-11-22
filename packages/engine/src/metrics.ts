@@ -1,4 +1,6 @@
 import type { PlanetConfig, PlanetSnapshot, SurveyAnswer, WorldConfig } from '@orbital/contracts';
+import { DEMOGRAPHICS_CONFIG } from './demographics.js';
+import type { DemographyReading } from './demographics.js';
 import { decompose, realGdp } from './growth.js';
 import type { TradeFlow } from './universe.js';
 
@@ -43,13 +45,22 @@ export interface MetricsInput {
   capitalStock?: number;
   /** This planet's earlier metrics, oldest first, excluding this cycle (only the last window + smoothing span is needed). */
   trail?: readonly Pick<PlanetMetrics, 'realGdp' | 'labourInput' | 'capitalStock'>[];
+  /** Cohorts, participation and labour of this cycle; absent = all colonists working-age at the base participation. */
+  demography?: DemographyReading;
+}
+
+/** The reading of a planet with no demography state: every colonist is a working-age person. */
+export function defaultDemography(planet: PlanetConfig): DemographyReading {
+  const n = planet.agents.colonist;
+  const participationBp = DEMOGRAPHICS_CONFIG.baseParticipationBp;
+  return { population: n, children: 0, workingAge: n, retired: 0, dependencyRatioBp: 0, participationBp, labourInput: Math.round((n * participationBp * DEMOGRAPHICS_CONFIG.hoursBp) / 100_000_000) };
 }
 
 
 export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: MetricsInput): PlanetMetrics {
   const rgdp = realGdp(inp.produced, inp.used, world);
-  // Placeholder: headcount until colonist cohorts (age, skills) give a better labour measure.
-  const labourInput = planet.agents.colonist;
+  const demo = inp.demography ?? defaultDemography(planet);
+  const labourInput = demo.labourInput;
   const capitalStock = inp.capitalStock ?? 0;
   const trail = inp.trail ?? [];
   const growth = decompose({
@@ -61,13 +72,18 @@ export function computeMetrics(world: WorldConfig, planet: PlanetConfig, inp: Me
     gdp: valueAdded(inp.produced, inp.used, inp.price),
     cpi: basketCpi(world, inp.price),
     tradeBalance: tradeBalance(inp.flow),
-    population: planet.agents.colonist,
+    population: demo.population,
     consumerConfidence: confidence(inp.surveys, 'consumer', inp.prev?.consumerConfidence ?? INITIAL_CONFIDENCE),
     businessConfidence: confidence(inp.surveys, 'business', inp.prev?.businessConfidence ?? INITIAL_CONFIDENCE),
     realGdp: rgdp,
     labourInput,
     capitalStock,
     ...growth,
+    children: demo.children,
+    workingAge: demo.workingAge,
+    retired: demo.retired,
+    dependencyRatioBp: demo.dependencyRatioBp,
+    participationBp: demo.participationBp,
   };
 }
 

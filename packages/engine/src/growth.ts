@@ -53,6 +53,12 @@ export function capacityMultiplierPpm(capital: number, cfg: GrowthConfig = GROWT
   return Math.round(Math.pow((cfg.baseCapital + capital) / cfg.baseCapital, cfg.capitalShareBp / 10_000) * PPM);
 }
 
+/** Production multiplier (L / L0)^(1 - alpha) as integer ppm: exactly 1_000_000 when L = L0 (and for a planet with no L0). */
+export function labourMultiplierPpm(labour: number, labour0: number, cfg: GrowthConfig = GROWTH_CONFIG): number {
+  if (!(labour0 > 0)) return PPM;
+  return Math.round(Math.pow(Math.max(0, labour) / labour0, (10_000 - cfg.capitalShareBp) / 10_000) * PPM);
+}
+
 /**
  * Whole batches to run this cycle: floor(base * m + carry), the fractional remainder (ppm) carried to the next cycle.
  * Integer ppm math, so a multiplier of exactly 1 never creates or loses a batch.

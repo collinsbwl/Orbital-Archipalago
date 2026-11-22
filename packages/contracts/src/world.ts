@@ -25,6 +25,11 @@ export const PlanetConfigSchema = z.object({
   agents: z.object({ colonist: StockSchema, trader: StockSchema, government: StockSchema, reserve_bank: StockSchema }),
   /** Starting purses in this planet's currency. */
   purses: z.object({ colonist: MinorUnitsSchema, trader: MinorUnitsSchema, treasury: MinorUnitsSchema }),
+  /**
+   * Starting population by age cohort. The colonist agents are households sharing it. Absent = everyone working-age, one
+   * person per colonist, with static demographics.
+   */
+  population: z.object({ children: StockSchema, workingAge: StockSchema, retired: StockSchema }).optional(),
 });
 export type PlanetConfig = z.infer<typeof PlanetConfigSchema>;
 
@@ -91,6 +96,7 @@ export const DEFAULT_WORLD: WorldConfig = WorldConfigSchema.parse({
       recipes: [{ recipe: 'mine_iron', batchesPerCycle: 10 }, { recipe: 'refine_fuel', batchesPerCycle: 4 }],
       agents: { colonist: 30, trader: 3, government: 1, reserve_bank: 1 },
       purses: { colonist: 1_000, trader: 10_000, treasury: 100_000 },
+      population: { children: 900, workingAge: 1_650, retired: 450 },
     },
     {
       id: 'verdan', name: 'Verdan', currency: 'VRD',
@@ -98,6 +104,7 @@ export const DEFAULT_WORLD: WorldConfig = WorldConfigSchema.parse({
       recipes: [{ recipe: 'farm_grain', batchesPerCycle: 12 }, { recipe: 'pump_water', batchesPerCycle: 8 }],
       agents: { colonist: 30, trader: 3, government: 1, reserve_bank: 1 },
       purses: { colonist: 1_000, trader: 10_000, treasury: 100_000 },
+      population: { children: 900, workingAge: 1_650, retired: 450 },
     },
     {
       id: 'tethys', name: 'Tethys', currency: 'TTH',
@@ -110,6 +117,7 @@ export const DEFAULT_WORLD: WorldConfig = WorldConfigSchema.parse({
       ],
       agents: { colonist: 30, trader: 3, government: 1, reserve_bank: 1 },
       purses: { colonist: 1_000, trader: 10_000, treasury: 100_000 },
+      population: { children: 900, workingAge: 1_650, retired: 450 },
     },
   ],
 });

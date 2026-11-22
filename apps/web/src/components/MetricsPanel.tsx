@@ -23,12 +23,13 @@ export function MetricsPanel({ snapshot }: { snapshot: Snapshot }) {
       <h2>Planets</h2>
       <table>
         <thead>
-          <tr><th>Planet</th><th>GDP</th><th>Real GDP</th><th>Growth</th><th>CPI</th><th>Trade bal.</th><th>Rate</th><th>Cons. conf.</th><th>Biz conf.</th><th>Prices</th></tr>
+          <tr><th>Planet</th><th>Pop (C/W/R)</th><th>GDP</th><th>Real GDP</th><th>Growth</th><th>CPI</th><th>Trade bal.</th><th>Rate</th><th>Cons. conf.</th><th>Biz conf.</th><th>Prices</th></tr>
         </thead>
         <tbody>
           {snapshot.planets.map((p) => (
             <tr key={p.planet}>
               <td>{p.planet} <span className="muted">{p.currency}</span></td>
+              <td>{n(p.metrics.population)} <span className="muted">({p.metrics.children}/{p.metrics.workingAge}/{p.metrics.retired})</span></td>
               <td>{n(p.metrics.gdp)}</td>
               <td>{n(p.metrics.realGdp)}</td>
               <td>{growthPct(p.metrics.realGdpGrowthBp)}</td>

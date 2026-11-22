@@ -33,7 +33,12 @@ const HYPERTABLES: HyperSpec[] = [
       real_gdp_growth_bp integer NOT NULL DEFAULT 0,
       labour_contrib_bp integer NOT NULL DEFAULT 0,
       capital_contrib_bp integer NOT NULL DEFAULT 0,
-      tfp_contrib_bp integer NOT NULL DEFAULT 0`,
+      tfp_contrib_bp integer NOT NULL DEFAULT 0,
+      children integer NOT NULL DEFAULT 0,
+      working_age integer NOT NULL DEFAULT 0,
+      retired integer NOT NULL DEFAULT 0,
+      dependency_ratio_bp integer NOT NULL DEFAULT 0,
+      participation_bp integer NOT NULL DEFAULT 0`,
     primaryKey: 'universe_id, cycle, planet',
     segmentBy: 'universe_id, planet',
   },
@@ -154,6 +159,9 @@ const GROWTH_COLUMNS = [
   'real_gdp bigint NOT NULL', 'labour_input integer NOT NULL', 'capital_stock bigint NOT NULL',
   'real_gdp_growth_bp integer NOT NULL', 'labour_contrib_bp integer NOT NULL', 'capital_contrib_bp integer NOT NULL',
   'tfp_contrib_bp integer NOT NULL',
+  // Demography (contracts 0.4.0).
+  'children integer NOT NULL', 'working_age integer NOT NULL', 'retired integer NOT NULL',
+  'dependency_ratio_bp integer NOT NULL', 'participation_bp integer NOT NULL',
 ];
 
 /**
@@ -183,7 +191,7 @@ export const MIGRATIONS: string[] = [
     at timestamptz NOT NULL DEFAULT now()
   )`,
   ...HYPERTABLES.flatMap(hypertableStatements),
-  // Tables created before growth measurement lack these columns (CREATE TABLE IF NOT EXISTS leaves them as they were).
+  // Tables created before growth measurement or demography lack these columns (CREATE TABLE IF NOT EXISTS leaves them as they were).
   // Must precede the caggs, which read real_gdp.
   ...GROWTH_COLUMNS.map((c) => `ALTER TABLE planet_metrics ADD COLUMN IF NOT EXISTS ${c} DEFAULT 0`),
   ...CAGGS.flatMap(caggStatements),

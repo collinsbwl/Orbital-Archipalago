@@ -17,13 +17,14 @@ export const PlanetMetricsSchema = z.object({
   cpi: z.number().int().nonnegative(),
   /** Exports minus imports, planet currency (signed). */
   tradeBalance: SignedMinorUnitsSchema,
+  /** Total people: children + workingAge + retired. */
   population: StockSchema,
   /** 0-100. */
   consumerConfidence: z.number().int().min(0).max(100),
   businessConfidence: z.number().int().min(0).max(100),
   /** Value added at base prices (planet currency): GDP with price movements stripped out. */
   realGdp: MinorUnitsSchema,
-  /** Labour input; colonist headcount for now. */
+  /** Labour input: working-age people x participation x hours. */
   labourInput: StockSchema,
   /** Total holdings of the capital good (`tools`) on the planet. */
   capitalStock: StockSchema,
@@ -32,6 +33,14 @@ export const PlanetMetricsSchema = z.object({
   labourContribBp: GrowthBpSchema,
   capitalContribBp: GrowthBpSchema,
   tfpContribBp: GrowthBpSchema,
+  /** Population by age cohort (people). */
+  children: StockSchema,
+  workingAge: StockSchema,
+  retired: StockSchema,
+  /** (children + retired) per working-age person, bp (10_000 = 1.0); 0 with no working-age people. */
+  dependencyRatioBp: z.number().int().safe().nonnegative(),
+  /** Share of working-age people in the labour force, bp. */
+  participationBp: RateBpSchema,
 });
 
 export const PlanetSnapshotSchema = z.object({

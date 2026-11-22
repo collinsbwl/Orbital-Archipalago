@@ -91,7 +91,7 @@ describe('growth metrics in a run', () => {
     for (const r of reports) {
       for (const p of world.planets) {
         const m = r.metrics[p.id]!;
-        expect(m.labourInput).toBe(p.agents.colonist);
+        expect(Math.abs(m.labourInput - (m.workingAge * m.participationBp) / 10_000)).toBeLessThanOrEqual(1); // workingAge is itself rounded
         expect(m.labourContribBp + m.capitalContribBp + m.tfpContribBp).toBe(m.realGdpGrowthBp);
       }
     }

@@ -145,7 +145,8 @@ describe('200-cycle economy on DEFAULT_WORLD', () => {
       for (const p of world.planets) {
         const m = r.metrics[p.id]!;
         for (const v of Object.values(m)) expect(Number.isInteger(v)).toBe(true);
-        expect(m.population).toBe(p.agents.colonist);
+        expect(m.population).toBe(m.children + m.workingAge + m.retired);
+        expect(m.population).toBeGreaterThan(0);
         expect(m.consumerConfidence).toBeGreaterThanOrEqual(0);
         expect(m.businessConfidence).toBeLessThanOrEqual(100);
       }

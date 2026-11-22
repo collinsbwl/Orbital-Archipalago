@@ -6,7 +6,7 @@ export function makeSnapshot(cycle: number, universeId = 'u0'): Snapshot {
     currency,
     prices: { iron: 100, grain: 40 },
     policy: { tariffsBp: {}, quotas: {}, embargoes: [], policyRateBp: 200 },
-    metrics: { gdp: 1000, cpi: 10_000, tradeBalance: -5, population: 30, consumerConfidence: 50, businessConfidence: 50, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90 },
+    metrics: { gdp: 1000, cpi: 10_000, tradeBalance: -5, population: 30, consumerConfidence: 50, businessConfidence: 50, realGdp: 900, labourInput: 30, capitalStock: 5, realGdpGrowthBp: 120, labourContribBp: 0, capitalContribBp: 30, tfpContribBp: 90, children: 9, workingAge: 16, retired: 5, dependencyRatioBp: 8_750, participationBp: 8_000 },
     orbitPhaseCycles: phase,
   });
   return {

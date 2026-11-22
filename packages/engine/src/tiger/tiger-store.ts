@@ -73,9 +73,11 @@ export class TigerStore implements MetricsSink, SeriesSource {
       await client.query('BEGIN');
       await insertMany(client, 'planet_metrics',
         ['universe_id', 'cycle', 'planet', 'gdp', 'cpi', 'trade_balance', 'population', 'consumer_confidence', 'business_confidence',
-          'real_gdp', 'labour_input', 'capital_stock', 'real_gdp_growth_bp', 'labour_contrib_bp', 'capital_contrib_bp', 'tfp_contrib_bp'],
+          'real_gdp', 'labour_input', 'capital_stock', 'real_gdp_growth_bp', 'labour_contrib_bp', 'capital_contrib_bp', 'tfp_contrib_bp',
+          'children', 'working_age', 'retired', 'dependency_ratio_bp', 'participation_bp'],
         rows.planetMetrics.map((r) => [r.universeId, r.cycle, r.planet, r.gdp, r.cpi, r.tradeBalance, r.population, r.consumerConfidence, r.businessConfidence,
-          r.realGdp, r.labourInput, r.capitalStock, r.realGdpGrowthBp, r.labourContribBp, r.capitalContribBp, r.tfpContribBp]));
+          r.realGdp, r.labourInput, r.capitalStock, r.realGdpGrowthBp, r.labourContribBp, r.capitalContribBp, r.tfpContribBp,
+          r.children, r.workingAge, r.retired, r.dependencyRatioBp, r.participationBp]));
       await insertMany(client, 'prices', ['universe_id', 'cycle', 'planet', 'good', 'price'],
         rows.prices.map((r) => [r.universeId, r.cycle, r.planet, r.good, r.price]));
       await insertMany(client, 'fx_rates', ['universe_id', 'cycle', 'pair', 'rate_ppm'],

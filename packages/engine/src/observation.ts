@@ -16,11 +16,13 @@ export interface TaskContext {
   flights: readonly Shipment[];
   /** Engine-tracked open loans (outstanding > 0), in issue order. */
   loans: readonly Loan[];
+  /** Colonist agent id -> the household it represents (people; of whom `workingAge` are of working age). */
+  households?: ReadonlyMap<string, { size: number; workingAge: number }>;
 }
 
 /** Builds one cycle's tasks. `agents[].planet` is where the agent acts (docked planet for traders). Policy is read once per planet. */
 export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[]): Promise<AgentTask[]> {
-  const { world, ledger, book, memos, cycle, fx, flights, loans } = ctx;
+  const { world, ledger, book, memos, cycle, fx, flights, loans, households } = ctx;
   const policies = new Map<PlanetId, PolicyState>();
   const currency = new Map(world.planets.map((p) => [p.id, p.currency]));
   const tasks: AgentTask[] = [];
@@ -37,6 +39,7 @@ export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[])
     for (const g of world.goods) inventory[g.id] = await ledger.getInventory(a.id, a.planet, g.id);
 
     const memo = memos.get(a.id);
+    const household = a.role === 'colonist' ? households?.get(a.id) : undefined;
     tasks.push({
       universeId: world.universeId,
       cycle,
@@ -54,6 +57,7 @@ export async function buildTasks(ctx: TaskContext, agents: readonly AgentInfo[])
         policy,
         headlines: [],
         ...(memo !== undefined ? { memo } : {}),
+        ...(household ? { household } : {}),
       },
       allowedActions: allowedActionsFor(a.role),
       deadlineMs: world.cycleDeadlineMs,
