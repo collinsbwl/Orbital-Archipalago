@@ -37,7 +37,7 @@ jobs:
         run: pnpm --filter @orbital/engine sim
       - name: Live server smoke test (Tiger-backed)
         run: |
-          pnpm --filter @orbital/engine serve -- --port 8787 --interval 50 --cycles 20 &
+          pnpm --filter @orbital/engine-server dev -- --port 8787 --interval 50 --cycles 20 &
           for i in $(seq 1 30); do curl -sf localhost:8787/healthz && break; sleep 1; done
           sleep 3
           curl -sf localhost:8787/healthz

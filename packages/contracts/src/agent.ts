@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   AgentIdSchema, CurrencyIdSchema, CycleSchema, GoodIdSchema, LoanIdSchema, MinorUnitsSchema, OrderIdSchema,
-  PlanetIdSchema, QtySchema, RatePpmSchema, StockSchema, UniverseIdSchema,
+  PlanetIdSchema, QtySchema, RateBpSchema, RatePpmSchema, StockSchema, UniverseIdSchema,
 } from './ids.js';
 import {
   CargoSchema, LoanSchema, OrderRecordSchema, PolicyStateSchema, SetEmbargoSchema, SetPolicyRateSchema,
@@ -54,6 +54,15 @@ export const MarketViewSchema = z.object({
 });
 export type MarketView = z.infer<typeof MarketViewSchema>;
 
+/** What a trader knows about another planet's market: last clearing prices, import tariffs, and travel time from here. */
+export const RemoteMarketViewSchema = z.object({
+  planet: PlanetIdSchema,
+  /** Cycles a ship departing now needs to arrive. */
+  travelCycles: z.number().int().positive(),
+  goods: z.array(z.object({ good: GoodIdSchema, lastPrice: MinorUnitsSchema.nullable(), tariffBp: RateBpSchema })).max(16),
+});
+export type RemoteMarketView = z.infer<typeof RemoteMarketViewSchema>;
+
 export const FxViewSchema = z.object({ base: CurrencyIdSchema, quote: CurrencyIdSchema, lastRatePpm: RatePpmSchema.nullable() });
 
 /** Compact state an agent sees. DEFAULT: shape is a first cut; Track B may add fields (minor bump). */
@@ -65,6 +74,8 @@ export const ObservationSchema = z.object({
   loans: z.array(LoanSchema).max(10),
   shipments: z.array(ShipmentSchema).max(10),
   markets: z.array(MarketViewSchema).max(16),
+  /** Traders: the other planets' markets, prices in each planet's own currency. */
+  elsewhere: z.array(RemoteMarketViewSchema).max(8).optional(),
   fx: z.array(FxViewSchema).max(6),
   policy: PolicyStateSchema,
   headlines: z.array(z.string().max(160)).max(5),

@@ -4,10 +4,11 @@ A freighter captain between planets. You ship goods for profit, net of FX, trave
 
 ## How to act
 
-1. Compare the home ask against a peer planet's reference price in home currency. Ship only when the margin after costs exceeds 10% of the ask.
-2. Use `quote_route`, `fx_quote` and `book_depth` to pin numbers before committing.
-3. Always terminate the turn with `submit_turn` carrying your `actions` and a `survey` of type `business`.
+1. Compare the local ask against the other planets' last prices, converted to the local currency through FX and reduced by the destination's import tariff. Only act when the margin after costs is clearly positive; a faster route beats a slightly wider one.
+2. A ship leaves with the cargo you hold when it departs, and orders fill after departures. Buying and shipping therefore take two turns: buy now, ship next turn.
+3. When you arrive, sell the cargo or carry it on. Convert foreign cash home when you no longer need it, and repay loans when cash allows.
+4. Always terminate the turn with your `actions` and a `survey` of type `business`.
 
 ## Response
 
-Prefer one `ship` action at a time. Carry a memo like `watching iron:verdan` so next turn's you knows what you were tracking.
+Prefer one `ship` action at a time. Carry a memo like `plan: ship iron to verdan` so next turn's you knows what you were doing.

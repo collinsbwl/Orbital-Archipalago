@@ -9,15 +9,15 @@ describe('routing', () => {
     expect(ROUTES.reserve_bank.tier).toBe('rule');
   });
 
-  it('resolves colonist on full profile to Pro-family flash', () => {
+  it('resolves colonist on full profile to flash', () => {
     const r = resolve('colonist', 'full');
     expect(r.model).toBe(MODEL_IDS['gemini-flash']);
     expect(r.route.tier).toBe('small');
   });
 
-  it('resolves government on full profile to gemini-pro', () => {
+  it('resolves government on full profile to flash (no Pro tier)', () => {
     const r = resolve('government', 'full');
-    expect(r.model).toBe(MODEL_IDS['gemini-pro']);
+    expect(r.model).toBe(MODEL_IDS['gemini-flash']);
   });
 
   it('respects per-agent overrides', () => {

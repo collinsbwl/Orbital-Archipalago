@@ -15,8 +15,7 @@
     "test": "vitest run",
     "sim": "tsx scripts/sim.ts --cycles 200",
     "record-fixtures": "tsx scripts/record-fixtures.ts",
-    "record-snapshots": "tsx scripts/record-snapshots.ts",
-    "serve": "tsx scripts/serve.ts"
+    "record-snapshots": "tsx scripts/record-snapshots.ts"
   },
   "dependencies": {
     "@orbital/contracts": "workspace:*",

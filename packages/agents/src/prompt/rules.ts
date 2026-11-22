@@ -28,6 +28,7 @@ const WORLD = read('world.md').trim();
 const ROLE_RULES: Partial<Record<Role, string>> = {
   colonist: read('colonist.md').trim(),
   trader: read('trader.md').trim(),
+  government: read('government.md').trim(),
 };
 
 export function systemRulesFor(role: Role): string {

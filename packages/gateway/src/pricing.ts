@@ -15,7 +15,6 @@ export interface PricePerMillion {
  */
 export const PRICE_TABLE: Record<string, PricePerMillion> = {
   'gemini-2.5-flash': { input: 0.3, cachedInput: 0.075, output: 2.5 },
-  'gemini-2.5-pro': { input: 1.25, cachedInput: 0.3125, output: 10 },
   // Decisions API: input-only billing, no caching (so cached = input), output always 0.
   'gemini-decision-1': { input: 0.1, cachedInput: 0.1, output: 0 },
   stub: { input: 0, cachedInput: 0, output: 0 },

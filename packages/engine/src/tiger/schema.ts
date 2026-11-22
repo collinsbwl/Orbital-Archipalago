@@ -57,6 +57,29 @@ const HYPERTABLES: HyperSpec[] = [
     primaryKey: 'universe_id, cycle',
     segmentBy: 'universe_id',
   },
+  {
+    // One row per agent per cycle: what it saw, what it chose and why (raw, before engine validation).
+    table: 'agent_decisions',
+    columns: `universe_id text NOT NULL,
+      cycle integer NOT NULL,
+      agent_id text NOT NULL,
+      role text NOT NULL,
+      planet text NOT NULL,
+      source text NOT NULL,
+      reason text NOT NULL,
+      memo text,
+      actions jsonb NOT NULL,
+      survey jsonb,
+      observation jsonb NOT NULL,
+      model text,
+      input_tokens integer,
+      cached_tokens integer,
+      output_tokens integer,
+      cost_usd double precision,
+      latency_ms double precision`,
+    primaryKey: 'universe_id, cycle, agent_id',
+    segmentBy: 'universe_id, role',
+  },
 ];
 
 function hypertableStatements(h: HyperSpec): string[] {

@@ -86,3 +86,41 @@ th, td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid #234
 }
 .ground-back:hover { background: rgba(38, 48, 92, 0.85); }
 @media (max-width: 900px) { .ground-back { top: auto; bottom: 96px; } }
+
+/* Landing page (shown until sign-in). The title forms out of melted letters, then the island bursts out (island-scene.ts). */
+/* The body never scrolls (overflow: hidden above), so the landing scrolls itself when the window is too short for it. */
+.landing {
+  position: relative; height: 100%; overflow-x: hidden; overflow-y: auto; background: #0d0e14; color: #f2ede4;
+  font-family: Inter, system-ui, sans-serif;
+}
+.landing-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* border-box: the padding sits inside the full height instead of pushing the button off the bottom of the screen. */
+.landing-content {
+  box-sizing: border-box; position: relative; min-height: 100%; padding: max(24px, 9vh) 16px max(32px, 10vh);
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 32px;
+  text-align: center; pointer-events: none;
+}
+.landing-title {
+  margin: 0; font-family: 'Climate Crisis', system-ui, sans-serif; font-weight: 400; font-size: clamp(30px, 6.6vw, 100px);
+  line-height: 1; letter-spacing: 0.01em; display: flex; flex-direction: column; gap: 0.08em;
+}
+.landing-title > span { white-space: nowrap; }
+.landing-title-accent { color: #ff7a45; }
+.landing-letter { display: inline-block; animation: landing-form 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.landing-cta { pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: landing-in 0.6s 2.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.landing-button {
+  min-height: 56px; padding: 0 40px; border-radius: 999px; border: 0; background: #f2ede4; color: #0d0e14;
+  font: 600 17px Inter, system-ui, sans-serif; cursor: pointer; transition: transform 0.15s ease;
+}
+.landing-button:hover:not(:disabled) { transform: translateY(-2px); }
+.landing-button:focus-visible { outline: 2px solid #ff7a45; outline-offset: 3px; }
+.landing-button:disabled { opacity: 0.7; cursor: progress; }
+.landing-error { margin: 0; max-width: 420px; font-size: 14px; color: #ffb4a8; }
+@keyframes landing-form {
+  0% { opacity: 0; transform: translateY(0.45em) scaleY(1.5); font-variation-settings: 'YEAR' 2050; filter: blur(10px); }
+  55% { opacity: 1; filter: blur(0); }
+  80% { transform: translateY(-0.04em) scaleY(0.96); }
+  100% { opacity: 1; transform: none; font-variation-settings: 'YEAR' 1979; filter: blur(0); }
+}
+@keyframes landing-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .landing-letter, .landing-cta { animation: none; } }

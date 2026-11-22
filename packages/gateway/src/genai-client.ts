@@ -9,10 +9,14 @@ export interface GenerateArgs {
   cachedContent?: string;
   systemInstruction?: string;
   tools?: ToolDeclaration[];
-  /** Serialised user messages: role 'user' or 'tool'. */
+  /**
+   * Conversation so far. A tool turn is always `model` (the calls it made) followed
+   * by one `tool` entry per call; consecutive `tool` entries are sent as one message.
+   */
   contents: Array<
     | { role: 'user'; text: string }
-    | { role: 'tool'; name: string; response: unknown }
+    | { role: 'model'; functionCalls: FunctionCall[]; /** Opaque SDK content (keeps thought signatures). */ raw?: unknown }
+    | { role: 'tool'; name: string; id?: string; response: unknown }
   >;
   responseMimeType?: 'application/json' | 'text/plain';
   responseSchema?: Record<string, unknown>;
@@ -24,6 +28,8 @@ export interface GenerateArgs {
 export interface FunctionCall {
   name: string;
   args: unknown;
+  /** Call id, echoed on the matching function response when the API sets one. */
+  id?: string;
 }
 
 export interface GenerateResult {
@@ -31,6 +37,11 @@ export interface GenerateResult {
   text: string | null;
   /** Non-empty in `tools` mode when the model calls a function. */
   functionCalls: FunctionCall[];
+  /**
+   * The model's turn as the SDK returned it (`candidates[0].content`). Sent back
+   * verbatim in tool loops so thought signatures survive the round trip.
+   */
+  modelContent?: unknown;
   /** Gemini's `finishReason`. The gateway maps 'SAFETY' to `refused`. */
   finishReason: 'STOP' | 'MAX_TOKENS' | 'SAFETY' | 'OTHER';
   usage: {

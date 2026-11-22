@@ -46,6 +46,8 @@ export class RandomValidPolicy implements DecisionProvider {
   }
 
   private decide(task: AgentTask): AgentDecision {
+    // Governments hold policy. Returning early keeps the RNG stream identical to runs before governments were scheduled.
+    if (task.role === 'government') return { agentId: task.agentId, actions: [{ kind: 'pass' }], reason: 'random: hold policy', source: 'stub' };
     const rng = this.rng;
     const obs = task.observation;
     const actions: Action[] = [];

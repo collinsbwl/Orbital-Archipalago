@@ -4,14 +4,9 @@
 
 import type { Action, AgentTask, WorldConfig } from '@orbital/contracts';
 import { applyBand, baseOf, producedGoods } from '../econ.js';
+import type { Candidate } from './types.js';
 
-export interface Candidate {
-  /** Stable option id sent to the decision model ([A-Za-z0-9_-], no spaces). */
-  id: string;
-  /** One line the model reads; includes what it costs against the purse. */
-  description: string;
-  actions: Action[];
-}
+export type { Candidate } from './types.js';
 
 /** The bundle StubPolicy uses (and the pre-refactor stub behaviour). */
 export const DEFAULT_COLONIST_CANDIDATE = 'buy_and_sell_surplus';

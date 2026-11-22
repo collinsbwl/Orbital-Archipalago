@@ -49,6 +49,10 @@ export interface CacheManagerConfig {
   planetCycleTtlSec?: number;
   /** TTL seconds for role-level caches. DEFAULT: 3600 (reused across planets and cycles). */
   roleTtlSec?: number;
+  /** Clock, injectable for tests. */
+  now?: () => number;
+  /** Recreate a cache this long before its server-side TTL ends. DEFAULT: 30 s. */
+  expirySafetySec?: number;
   /** Optional observer for cache hits/misses. */
   onEvent?: (ev: { kind: 'created' | 'hit' | 'skipped' | 'warning'; key: string; detail?: string }) => void;
 }
@@ -72,6 +76,14 @@ export function lintPrefix(system: string): string[] {
 
 interface InFlight {
   record: Promise<CacheRecord | null>;
+  /** Local expiry (ms epoch); past this the entry is recreated instead of reused. */
+  expiresAt: number;
+}
+
+/** Rough token count of everything a cache holds: system text, tool declarations, context. */
+export function estimateCacheTokens(system: string, tools: ToolDeclaration[], context: string): number {
+  const toolChars = tools.reduce((n, t) => n + t.name.length + t.description.length + JSON.stringify(t.parameters).length, 0);
+  return Math.ceil((system.length + toolChars + context.length) / 4);
 }
 
 export class CacheManager {
@@ -80,6 +92,8 @@ export class CacheManager {
   private readonly planetCycleTtlSec: number;
   private readonly roleTtlSec: number;
   private readonly onEvent: CacheManagerConfig['onEvent'];
+  private readonly now: () => number;
+  private readonly safetyMs: number;
   private readonly planetCycle = new Map<string, InFlight>();
   private readonly roleLevel = new Map<string, InFlight>();
   /** Per-cycle cached-token tally, used by the "zero hits" warning. */
@@ -91,12 +105,27 @@ export class CacheManager {
     this.planetCycleTtlSec = cfg.planetCycleTtlSec ?? 300;
     this.roleTtlSec = cfg.roleTtlSec ?? 3600;
     this.onEvent = cfg.onEvent;
+    this.now = cfg.now ?? Date.now;
+    this.safetyMs = (cfg.expirySafetySec ?? 30) * 1000;
+  }
+
+  /** A live (not locally expired) entry, or undefined. Expired entries are dropped. */
+  private live(map: Map<string, InFlight>, key: string): InFlight | undefined {
+    const e = map.get(key);
+    if (!e) return undefined;
+    if (this.now() < e.expiresAt) return e;
+    map.delete(key);
+    return undefined;
+  }
+
+  private expiry(ttlSec: number): number {
+    return this.now() + Math.max(0, ttlSec * 1000 - this.safetyMs);
   }
 
   /** Planet-cycle cache. Single-flight: concurrent callers in a group share one create(). */
   async getOrCreatePlanetCycle(args: CacheLookupArgs): Promise<CacheRecord | null> {
     const key = this.planetCycleKey(args);
-    const existing = this.planetCycle.get(key);
+    const existing = this.live(this.planetCycle, key);
     if (existing) {
       this.onEvent?.({ kind: 'hit', key });
       return existing.record;
@@ -115,14 +144,18 @@ export class CacheManager {
       }
       return rec;
     });
-    this.planetCycle.set(key, { record: promise });
+    this.planetCycle.set(key, { record: promise, expiresAt: this.expiry(this.planetCycleTtlSec) });
     return promise;
   }
 
-  /** Role-level cache (model, role): system + tools only, longer TTL. */
+  /**
+   * Role-level cache: system + tools only, longer TTL, reused across planets and cycles.
+   * Keyed by the prefix content too, so a role whose tools differ by cycle (a government's
+   * submit_turn schema on policy cycles) gets one cache per variant, never a stale one.
+   */
   async getOrCreateRole(args: Omit<CacheLookupArgs, 'planet' | 'cycle' | 'context'>): Promise<CacheRecord | null> {
-    const key = `${args.model}:${args.role}`;
-    const existing = this.roleLevel.get(key);
+    const key = `${args.model}:${args.role}:${prefixHash(args.prefix)}`;
+    const existing = this.live(this.roleLevel, key);
     if (existing) {
       this.onEvent?.({ kind: 'hit', key });
       return existing.record;
@@ -135,7 +168,7 @@ export class CacheManager {
       ttlSeconds: this.roleTtlSec,
       eventKey: key,
     });
-    this.roleLevel.set(key, { record: promise });
+    this.roleLevel.set(key, { record: promise, expiresAt: this.expiry(this.roleTtlSec) });
     return promise;
   }
 
@@ -168,7 +201,8 @@ export class CacheManager {
   ): Promise<CacheRecord | null> {
     const warnings = lintPrefix(args.systemInstruction);
     for (const w of warnings) this.onEvent?.({ kind: 'warning', key: args.eventKey, detail: w });
-    const roughTokens = Math.ceil((args.systemInstruction.length + args.context.length) / 4);
+    // Tools count: a submit_turn decision schema alone is ~1k tokens.
+    const roughTokens = estimateCacheTokens(args.systemInstruction, args.tools, args.context);
     if (roughTokens < this.minTokens) {
       this.onEvent?.({ kind: 'skipped', key: args.eventKey, detail: `prefix is ~${roughTokens} tokens (< ${this.minTokens})` });
       return null;
@@ -188,4 +222,11 @@ export class CacheManager {
       return null;
     }
   }
+}
+
+function prefixHash(prefix: { system: string; tools: ToolDeclaration[] }): string {
+  const hash = createHash('sha256');
+  hash.update(prefix.system + '\n');
+  for (const t of sortedTools(prefix.tools)) hash.update(t.name + '|' + JSON.stringify(t.parameters) + '\n');
+  return hash.digest('hex').slice(0, 16);
 }

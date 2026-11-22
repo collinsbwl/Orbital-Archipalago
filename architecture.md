@@ -156,6 +156,8 @@ This is the Solana prize surface, and it is the same work as the ledger port:
 
 Dev and the live demo run `solana-test-validator` on the Vultr box so C5 can diff against `InMemoryLedger` without devnet airdrop flakiness. A public devnet deploy is a follow-up if we want an explorer link in the submission.
 
+The live server (`apps/engine-server`) picks its ledger from `LEDGER=memory|solana`. With `solana` it connects to `SOLANA_RPC_URL`, airdrops to the admin key, runs `bootstrapLedger`, and then hands the `SolanaLedger` to the `Universe`. docker-compose builds `Dockerfile.solana`, which compiles the program and starts a fresh (`--reset`) validator with it preloaded. Restart the validator and the engine together, since the engine needs an un-bootstrapped chain. `fork` commands are rejected on Solana because `SolanaLedger` has no `clone()`.
+
 | Milestone | Scope | Done when |
 | --- | --- | --- |
 | C1 | Anchor skeleton: 3 SPL mints with PDA mint authority, 3 zero-copy planetary ledgers, `SolanaLedger` adapter with purses and inventories only | Ledger contract tests pass for balances and transfers |
@@ -262,16 +264,16 @@ const ROUTES: Record<Role, Route> = {
 const TIERS: Record<Profile, Record<Tier, ModelId | 'stub'>> = {
   stub:  { small: 'stub',         mid: 'stub',         frontier: 'stub' },
   cheap: { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-flash' }, // tuning runs
-  full:  { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-pro' },   // demo runs
+  full:  { small: 'gemini-flash', mid: 'gemini-flash', frontier: 'gemini-flash' }, // demo runs (no Pro tier)
 };
 ```
 
-`gemini-flash` and `gemini-pro` are tier names. The routing table pins the current Gemini model ids (the Flash and Pro SKUs available that weekend) in one place.
+`gemini-flash` is the only generative tier name; there is no Pro tier. The routing table pins the current Gemini model ids (the Flash SKU and `gemini-decision-1`) in one place.
 
-- **Role → tier → model.** Agents only name their role. Each universe picks a profile (`stub`, `cheap`, `full`), which is how "stub universes for tuning, frontier governments only for final runs" from the risk table becomes one flag.
-- **Traders default to `small`.** The build plan has traders on a mid model. Thinking tokens are billed as output, so a Pro trader at about 2,400 calls per run is the line that blows the budget (see §3.6). Start traders on Flash, run an A/B against Pro on the same seed, and promote only if trade quality clearly improves.
-- **Decision model in front of the LLMs.** When the runtime has a `DecisionGateway` (`gemini-decision-1`, pinned as `DECISION_MODEL_ID` in `gateway/routing.ts`), colonists skip Flash entirely: the rule logic builds 2–6 candidate order bundles and Decision 1 picks one and scores the consumer-confidence survey on a rubric. Traders and governments first get one calibrated yes/no check ("has anything changed enough to revise the plan?"); below the threshold (default 0.35) they keep standing orders, otherwise the route below runs as normal. First turns and failed checks always escalate. The `colonist` route stays as the path when no decision gateway is configured.
-- **Three Gemini jobs, matching how the model is actually good at language.** Flash and Pro *decide* (traders and governments when escalated; colonists only without a decision gateway). Pro *reads* the Tiger aggregate series and writes the economist report. Flash *writes* the news headlines. The spectator advisor is a separate, user-triggered call: personalized advice from the live snapshot plus that user's god-mode history, gated by Auth0. It is not inside the cycle loop.
+- **Role → tier → model.** Agents only name their role. Each universe picks a profile (`stub`, `cheap`, `full`); with Pro removed, `cheap` and `full` both resolve to Flash and differ only by name.
+- **Flash is the only generative model.** Pro was dropped: thinking tokens are billed as output, and with Decision 1 making nearly every action choice there is no route left where Pro pays for itself.
+- **Decision 1 makes the gameplay choices.** When the runtime has a `DecisionGateway` (`gemini-decision-1`, pinned as `DECISION_MODEL_ID` in `gateway/routing.ts`), colonists, traders and governments all pick from rule-built candidate bundles (`agents/src/candidates/`): the rule code computes every quantity and price, Decision 1 picks one option and scores the confidence survey on a rubric. Traders get routes (buy here for a destination, ship held cargo, sell here, convert foreign cash, repay), using `observation.elsewhere` (other planets' prices, tariffs, travel time). Governments review trade policy every 5 cycles (raise/cut tariffs in 5-point steps, lift embargoes); the policy rate stays with the reserve bank's rule. When a trader or government pick is below `minChoiceConfidence` (default 0.4), Flash decides instead. A menu with only `hold` makes no call. The `EscalatingPolicy` yes/no check still exists for any role configured under `decisionRoles.escalate`, but none are by default.
+- **Gemini jobs.** Decision 1 *chooses* (all in-cycle actions). Flash *decides* only as the low-confidence fallback (or for every role when no decision gateway is configured), *reads* the Tiger aggregate series for the economist report (high effort), and *writes* the news headlines. The spectator advisor is a separate, user-triggered call: personalized advice from the live snapshot plus that user's god-mode history, gated by Auth0. It is not inside the cycle loop.
 - **Overrides** in god mode or config: `route.override(agentId | role | planet, tier)`, for example to give one government a different model in an experiment.
 - **One model per role for the whole run.** Explicit caches are scoped to a model, so switching a role's model mid-run throws away its cache. Downgrades happen only in the fallback path (standing orders), never by hopping models.
 
@@ -280,7 +282,7 @@ const TIERS: Record<Profile, Record<Tier, ModelId | 'stub'>> = {
 | Mode | Used by | Shape | Why |
 | --- | --- | --- | --- |
 | `structured` | Colonists, news | One `generateContent`, `responseMimeType: application/json` and a `responseSchema` built from the zod `AgentDecision` schema. No tools | Cheapest and fastest. Everything a colonist needs is already in the observation. News uses the same shape with a short headline schema |
-| `tools` | Traders, governments, advisor | Function declarations (`quote_route`, `fx_quote`, `book_depth`, `briefing_detail`, and for the advisor `metric_history`) plus one terminal function `submit_turn`. Loop until `submit_turn` or `maxTurns` | Traders price routes; governments drill into briefings; the advisor pulls a continuous aggregate before it answers. The terminal function keeps the output schema-valid |
+| `tools` | Traders, governments, advisor | Function declarations plus one terminal function `submit_turn`. Loop until `submit_turn` or `maxTurns`; each tool turn is sent back as the model's own function-call content (thought signatures intact) followed by one message holding every function response. Implemented today (engine server): `planet_prices` (traders, governments) and `quote_route` (traders), served from a per-universe board built from the cycle's tasks. Planned: `fx_quote`, `book_depth`, `briefing_detail`, and `metric_history` for the advisor | Traders price routes; governments drill into briefings; the advisor pulls a continuous aggregate before it answers. The terminal function keeps the output schema-valid |
 | `text` | Economist report | One streamed request, plain prose, with the Tiger aggregate series already in the prompt | Long output, end of run only |
 | `decision` | Colonists (choice + survey score), trader/government escalation checks | One `decisions.create` on `gemini-decision-1`: a shared input (rules + context + state) and 1–1,000 closed-set questions (`noul` yes/no, `choice`, `score`). Returns calibrated probabilities, no text. No caching, tools or thinking | ~150–250 ms, $0.10/M input, $0 output. It can only pick among options we build, so quantities and prices come from the rule-built candidates |
 
@@ -306,6 +308,9 @@ Requests are laid out so the expensive parts are shared and the per-agent part i
 - One cache object per `(role, planet, cycle)` holds tools, system rules, and that planet's cycle context. About 30 colonists on a planet then reference it. The role-level rules also sit in a longer-lived cache reused across planets and cycles, since that text never changes during a run.
 - Cache TTL is 5 minutes. Calls for a planet land in the same cycle, seconds apart, so the TTL stays warm on its own.
 - The prefix has to clear Gemini's minimum cache size. The gateway logs cached-token counts per role, and a cycle where a role never hits trips a warning.
+- The size check counts tool declarations as well as text: the `submit_turn` decision schema alone is ~1k tokens, which is what lifts trader/government prefixes (~1.6k) over the 1,024 minimum.
+- **Cache scope.** `cacheScope: 'planet_cycle'` (gateway default) is the layout above. The engine server uses `'role'`: one cache of system + tools per (model, role, prefix variant), reused across planets and cycles for its TTL, with context sent per call. With the decision model in front, Flash only sees the unsure trader/government turns, so per-planet-cycle caches would rarely be hit twice. Caches are recreated 30 s before their server-side TTL so a request never references an expired one.
+- Gemini rejects tools or a system instruction on a request that uses `cachedContent`, and rejects function calling with a JSON response type. So `tools`-mode caches hold read tools + `submit_turn`, `structured` / `text` caches hold no tools, and cached requests send neither.
 - Silent cache killers to keep out of the prefix: timestamps, cycle numbers in the system block, unsorted JSON, per-agent names, a tool list that changes between calls. The cycle number belongs in the planet-context block.
 - **Create the cache, then fan out.** Write the `(role, planet)` cache once, then release the rest of the group against `cachedContent`. Otherwise 30 parallel requests all miss and all pay to send the prefix.
 
@@ -322,12 +327,12 @@ Call volume is unchanged from the build plan. Recompute dollars from the cost me
 | Role | Calls / run | Model tier |
 | --- | --- | --- |
 | Colonists | ~11,000 | Decision 1 (Flash without a decision gateway) |
-| Traders | ~2,400 checks on Decision 1; only escalated turns (×1–3) on Flash | Flash, A/B against Pro |
-| Governments | ~120–150 checks on Decision 1; escalated turns on Pro | Pro |
-| News + economist | ~120 + 1 | Flash / Pro |
-| Advisor | user-triggered, outside the cycle | Flash, Pro if the question needs `metric_history` |
+| Traders | ~2,400 choices on Decision 1; low-confidence picks (×1–3 turns) on Flash | Decision 1, Flash fallback |
+| Governments | ~30 reviews on Decision 1 (every 5 cycles, only when a menu has more than `hold`); low-confidence picks on Flash | Decision 1, Flash fallback |
+| News + economist | ~120 + 1 | Flash |
+| Advisor | user-triggered, outside the cycle | Flash |
 
-The government line is what to watch against the $15 target. Levers in order: a smaller thinking budget on routine reviews and a larger one only after shocks, a tighter briefing, then the `cheap` profile (Flash for governments) in tuning runs.
+The Flash fallback rate is what to watch against the $15 target. Levers in order: lower `MIN_CHOICE_CONFIDENCE`, tighten candidate descriptions so Decision 1 is surer, then disable the fallback for traders.
 
 **Batch API: not for the loop.** Batches are cheaper but asynchronous, and each cycle depends on the last. It doesn't fit the live sim.
 
@@ -395,7 +400,7 @@ If we do add it, pin the exact version or image digest and keep the Gemini adapt
 
 | Decision | Default in this doc | Owner |
 | --- | --- | --- |
-| Traders on Gemini Flash or Pro | Flash, A/B in B3 | B |
+| Traders' Flash fallback threshold | 0.4 (`MIN_CHOICE_CONFIDENCE`) | B |
 | Who builds the frontend | Track A from A5, or Track D if a 4th person joins | Team |
 | Governments' thinking budget | Small on routine reviews, larger after shocks | B |
 | Universes in one process or many | One process, shared gateway, on one Vultr VM | A + B |

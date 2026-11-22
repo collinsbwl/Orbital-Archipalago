@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { GatewayRequest } from '@orbital/contracts';
 import { GeminiGateway } from '../src/gemini.js';
-import type { GenaiClient, GenerateResult } from '../src/genai-client.js';
+import type { GenaiClient, GenerateArgs, GenerateResult } from '../src/genai-client.js';
+import type { CacheCreateArgs } from '../src/cache.js';
 import { Limiter } from '../src/limiter.js';
 import { CacheManager } from '../src/cache.js';
 import { CostMeter } from '../src/cost.js';
@@ -27,7 +28,6 @@ function makeReq(overrides: Partial<GatewayRequest> = {}): GatewayRequest {
 function defaultLimiters() {
   return {
     [MODEL_IDS['gemini-flash']]: new Limiter({ concurrency: 10, rpm: 10_000, inputTpm: 10_000_000, outputTpm: 10_000_000 }),
-    [MODEL_IDS['gemini-pro']]: new Limiter({ concurrency: 10, rpm: 10_000, inputTpm: 10_000_000, outputTpm: 10_000_000 }),
   };
 }
 
@@ -200,5 +200,101 @@ describe('GeminiGateway', () => {
     });
     const res = await gw.invoke(makeReq(), new AbortController().signal);
     expect(res.ok).toBe(true);
+  });
+
+  describe('requests the real API accepts', () => {
+    const traderTools = [{ name: 'quote_route', description: 'quote', parameters: { type: 'object' } }];
+
+    function recordingClient(responses: GenerateResult[]) {
+      const calls: GenerateArgs[] = [];
+      const client: GenaiClient = {
+        generate: async (args) => {
+          // Snapshot: the gateway keeps appending to the same contents array.
+          calls.push({ ...args, contents: [...args.contents] });
+          return responses[Math.min(calls.length - 1, responses.length - 1)]!;
+        },
+        generateStream: async function* () {},
+      };
+      return { client, calls };
+    }
+
+    it('tool loop sends the model turn (raw, with ids) before the tool responses', async () => {
+      const raw = { role: 'model', parts: [{ functionCall: { name: 'quote_route', args: {}, id: 'c1' }, thoughtSignature: 'sig' }] };
+      const { client, calls } = recordingClient([
+        {
+          text: null,
+          functionCalls: [
+            { name: 'quote_route', args: { to: 'verdan' }, id: 'c1' },
+            { name: 'quote_route', args: { to: 'tethys' }, id: 'c2' },
+          ],
+          modelContent: raw,
+          finishReason: 'STOP',
+          usage: usage(),
+        },
+        { text: null, functionCalls: [{ name: 'submit_turn', args: { actions: [{ kind: 'pass' }], reason: 'ok' } }], finishReason: 'STOP', usage: usage() },
+      ]);
+      const gw = new GeminiGateway({ client, limiters: defaultLimiters(), cache: new CacheManager({ client: { create: async () => { throw new Error('no cache'); } } }), cost: new CostMeter() });
+      const res = await gw.invoke(makeReq({ role: 'trader', prefix: { system: 'a'.repeat(5_000), tools: traderTools }, runTool: async (_n, a) => ({ quoted: a }) }), new AbortController().signal);
+      expect(res.ok).toBe(true);
+      const second = calls[1]!.contents;
+      expect(second.map((c) => c.role)).toEqual(['user', 'user', 'model', 'tool', 'tool']);
+      expect(second[2]).toMatchObject({ role: 'model', raw });
+      expect(second[3]).toMatchObject({ role: 'tool', name: 'quote_route', id: 'c1', response: { quoted: { to: 'verdan' } } });
+      expect(second[4]).toMatchObject({ id: 'c2' });
+      // Uncached: tools (read + submit_turn) ride on every request.
+      expect(calls[0]!.tools!.map((t) => t.name)).toEqual(['quote_route', 'submit_turn']);
+    });
+
+    it('with a cache, tools mode puts submit_turn in the cache and sends no tools, system or context', async () => {
+      const created: CacheCreateArgs[] = [];
+      const { client, calls } = recordingClient([
+        { text: null, functionCalls: [{ name: 'submit_turn', args: { actions: [{ kind: 'pass' }], reason: 'ok' } }], finishReason: 'STOP', usage: usage() },
+      ]);
+      const gw = new GeminiGateway({
+        client, limiters: defaultLimiters(), cost: new CostMeter(),
+        cache: new CacheManager({ client: { create: async (a) => { created.push(a); return { name: 'cachedContents/x' }; } } }),
+      });
+      const res = await gw.invoke(makeReq({ role: 'trader', prefix: { system: 'a'.repeat(5_000), tools: traderTools } }), new AbortController().signal);
+      expect(res.ok).toBe(true);
+      expect(created[0]!.tools.map((t) => t.name)).toEqual(['quote_route', 'submit_turn']);
+      expect(calls[0]).toMatchObject({ cachedContent: 'cachedContents/x', tools: undefined, systemInstruction: undefined });
+      expect(calls[0]!.contents).toEqual([{ role: 'user', text: makeReq().state }]);
+    });
+
+    it('role cache scope: one cache of system + tools per role, context and state sent per call', async () => {
+      const created: CacheCreateArgs[] = [];
+      const { client, calls } = recordingClient([
+        { text: null, functionCalls: [{ name: 'submit_turn', args: { actions: [{ kind: 'pass' }], reason: 'ok' } }], finishReason: 'STOP', usage: usage() },
+      ]);
+      const gw = new GeminiGateway({
+        client, limiters: defaultLimiters(), cost: new CostMeter(), cacheScope: 'role',
+        cache: new CacheManager({ client: { create: async (a) => { created.push(a); return { name: 'cachedContents/role' }; } } }),
+      });
+      const req = makeReq({ role: 'trader', prefix: { system: 'a'.repeat(5_000), tools: traderTools } });
+      await gw.invoke(req, new AbortController().signal);
+      await gw.invoke({ ...req, planet: 'verdan', cycle: 2, agentId: 'verdan:trader:0' }, new AbortController().signal);
+      expect(created).toHaveLength(1); // reused across planets and cycles
+      expect(created[0]).toMatchObject({ context: '' });
+      expect(created[0]!.tools.map((t) => t.name)).toEqual(['quote_route', 'submit_turn']);
+      expect(calls[0]).toMatchObject({ cachedContent: 'cachedContents/role', tools: undefined, systemInstruction: undefined });
+      expect(calls[0]!.contents).toEqual([{ role: 'user', text: req.context }, { role: 'user', text: req.state }]);
+    });
+
+    it('structured mode never sends or caches tools (JSON mime type + function calling is rejected)', async () => {
+      const created: CacheCreateArgs[] = [];
+      const ok: GenerateResult = { text: '{"actions":[],"reason":"x"}', functionCalls: [], finishReason: 'STOP', usage: usage() };
+      const uncached = recordingClient([ok]);
+      await new GeminiGateway({ client: uncached.client, limiters: defaultLimiters(), cost: new CostMeter(), cache: new CacheManager({ client: { create: async () => { throw new Error('x'); } } }) })
+        .invoke(makeReq({ prefix: { system: 'a'.repeat(5_000), tools: traderTools } }), new AbortController().signal);
+      expect(uncached.calls[0]!.tools).toBeUndefined();
+
+      const cached = recordingClient([ok]);
+      await new GeminiGateway({
+        client: cached.client, limiters: defaultLimiters(), cost: new CostMeter(),
+        cache: new CacheManager({ client: { create: async (a) => { created.push(a); return { name: 'c' }; } } }),
+      }).invoke(makeReq({ prefix: { system: 'a'.repeat(5_000), tools: traderTools } }), new AbortController().signal);
+      expect(created[0]!.tools).toEqual([]);
+      expect(cached.calls[0]!.tools).toBeUndefined();
+    });
   });
 });

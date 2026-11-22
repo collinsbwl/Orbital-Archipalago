@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1.7
+# Local Solana chain for the engine (LEDGER=solana): compiles the Orbital program from source,
+# then runs solana-test-validator with it preloaded. --reset gives a fresh chain on every start,
+# which the engine needs (it bootstraps every account on boot).
+# Pinned to linux/amd64: Anza publishes no Linux arm64 release (runs under emulation on Apple Silicon).
+#
+# Two Agave versions on purpose:
+#  - BUILD_SOLANA_VERSION (4.x) compiles the program: its edition-2024 deps need the newer platform tools. --arch v0
+#    keeps the binary loadable by the npm litesvm the TS tests use (4.x otherwise defaults to SBPF v3).
+#  - VALIDATOR_SOLANA_VERSION (3.0) runs it: the 4.x validator asserts io_uring support, which Docker's default
+#    seccomp profile (and Rosetta) do not provide.
+ARG BUILD_SOLANA_VERSION=v4.4.1
+ARG VALIDATOR_SOLANA_VERSION=v3.0.14
+ARG PROGRAM_ID=3sRnQvQFEDeZ7Mt5hTk2hghucfB1RvdAB1RMq17BSZBa
+
+FROM --platform=linux/amd64 rust:1.89-bookworm AS build
+ARG BUILD_SOLANA_VERSION
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates bzip2 \
+  && rm -rf /var/lib/apt/lists/*
+RUN sh -c "$(curl -sSfL https://release.anza.xyz/${BUILD_SOLANA_VERSION}/install)"
+ENV PATH="/root/.local/share/solana/install/active_release/bin:${PATH}"
+WORKDIR /src
+COPY rust-toolchain.toml Cargo.toml Cargo.lock ./
+COPY programs ./programs
+RUN cargo build-sbf --manifest-path programs/orbital/Cargo.toml --sbf-out-dir /out --arch v0
+
+FROM --platform=linux/amd64 debian:bookworm-slim AS validator
+ARG VALIDATOR_SOLANA_VERSION
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates bzip2 \
+  && rm -rf /var/lib/apt/lists/*
+RUN sh -c "$(curl -sSfL https://release.anza.xyz/${VALIDATOR_SOLANA_VERSION}/install)"
+
+FROM --platform=linux/amd64 debian:bookworm-slim AS runtime
+ARG PROGRAM_ID
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates bzip2 libssl3 \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=validator /root/.local/share/solana/install/active_release/bin/solana-test-validator /usr/local/bin/
+COPY --from=validator /root/.local/share/solana/install/active_release/bin/solana /usr/local/bin/
+COPY --from=build /out/orbital.so /program/orbital.so
+ENV PROGRAM_ID=${PROGRAM_ID}
+EXPOSE 8899
+# The validator refuses 0.0.0.0 (gossip needs a concrete address), so bind the container's own IP; the RPC port is
+# then reachable from other containers and through published ports, but not via 127.0.0.1 inside this container.
+HEALTHCHECK --interval=3s --timeout=3s --retries=40 \
+  CMD solana cluster-version -u "http://$(hostname -i | cut -d' ' -f1):8899" >/dev/null 2>&1 || exit 1
+CMD ["sh", "-c", "exec solana-test-validator --reset --quiet --ledger /tmp/ledger --rpc-port 8899 --bind-address \"$(hostname -i | cut -d' ' -f1)\" --bpf-program \"$PROGRAM_ID\" /program/orbital.so"]

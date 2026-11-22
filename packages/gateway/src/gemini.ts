@@ -35,6 +35,13 @@ export interface GeminiGatewayConfig {
   cache: CacheManager;
   cost: CostMeter;
   overrides?: RouteOverride[];
+  /**
+   * Which explicit cache to use. `planet_cycle` (DEFAULT) shares system + tools + context
+   * per (model, role, planet, cycle): best when many agents on a planet call each cycle.
+   * `role` caches system + tools per (model, role) for its TTL and sends context per call:
+   * best when the LLM is a low-volume fallback and per-cycle caches would rarely be reused.
+   */
+  cacheScope?: 'planet_cycle' | 'role';
   /** Max retries on 429/5xx while the deadline covers them. DEFAULT: 3. */
   maxRetries?: number;
   /** Clock, injectable for tests. */
@@ -42,7 +49,10 @@ export interface GeminiGatewayConfig {
 }
 
 export class GeminiGateway implements ModelGateway {
-  private readonly cfg: Required<Omit<GeminiGatewayConfig, 'overrides'>> & { overrides: RouteOverride[] };
+  private readonly cfg: Required<Omit<GeminiGatewayConfig, 'overrides' | 'cacheScope'>> & {
+    overrides: RouteOverride[];
+    cacheScope: 'planet_cycle' | 'role';
+  };
 
   constructor(cfg: GeminiGatewayConfig) {
     this.cfg = {
@@ -51,6 +61,7 @@ export class GeminiGateway implements ModelGateway {
       cache: cfg.cache,
       cost: cfg.cost,
       overrides: cfg.overrides ?? [],
+      cacheScope: cfg.cacheScope ?? 'planet_cycle',
       maxRetries: cfg.maxRetries ?? 3,
       now: cfg.now ?? Date.now,
     };
@@ -95,15 +106,19 @@ export class GeminiGateway implements ModelGateway {
     }
 
     try {
-      // Single-flight cache for (model, role, planet, cycle).
-      const cache = await this.cfg.cache.getOrCreatePlanetCycle({
-        model: resolved.model,
-        role: req.role,
-        planet: req.planet,
-        cycle: req.cycle,
-        prefix: req.prefix,
-        context: req.context,
-      });
+      // Single-flight cache for (model, role, planet, cycle). Gemini rejects a request that
+      // sets tools alongside cachedContent, so the cache must hold exactly the tools the
+      // mode needs: read tools + submit_turn for `tools`, none for `structured` / `text`
+      // (function calling cannot be combined with a JSON response mime type).
+      const prefix = { system: req.prefix.system, tools: route.mode === 'tools' ? toolLoopTools(req) : [] };
+      const cache =
+        this.cfg.cacheScope === 'role'
+          ? await this.cfg.cache.getOrCreateRole({ model: resolved.model, role: req.role, prefix })
+          : await this.cfg.cache.getOrCreatePlanetCycle({
+              model: resolved.model, role: req.role, planet: req.planet, cycle: req.cycle, prefix, context: req.context,
+            });
+      // Only a planet-cycle cache holds the context block.
+      const cacheHasContext = !!cache && this.cfg.cacheScope === 'planet_cycle';
 
       const usage: Usage = {
         model: resolved.model,
@@ -119,6 +134,7 @@ export class GeminiGateway implements ModelGateway {
         route,
         model: resolved.model,
         cachedContent: cache?.name,
+        cacheHasContext,
         usage,
         signal,
       });
@@ -150,13 +166,16 @@ export class GeminiGateway implements ModelGateway {
     route: Extract<Route, { tier: 'small' | 'mid' | 'frontier' }>;
     model: string;
     cachedContent?: string;
+    cacheHasContext?: boolean;
     usage: Usage;
     signal: AbortSignal;
   }): Promise<
     | { ok: true; output: unknown; turns: number }
     | { ok: false; failure: GatewayFailure; message: string }
   > {
-    const { req, route, model, cachedContent, usage, signal } = args;
+    const { req, route, model, cachedContent, cacheHasContext = false, usage, signal } = args;
+    // A planet-cycle cache already holds the context block; send only what it lacks.
+    const opening = openingTurns(req, cacheHasContext);
     const base = {
       model,
       cachedContent,
@@ -170,11 +189,8 @@ export class GeminiGateway implements ModelGateway {
       if (route.mode === 'structured') {
         const gen = await this.generateRetrying({
           ...base,
-          tools: cachedContent ? undefined : req.prefix.tools,
-          contents: [
-            { role: 'user', text: req.context },
-            { role: 'user', text: req.state },
-          ],
+          tools: undefined,
+          contents: opening,
           responseMimeType: 'application/json',
           responseSchema: req.responseSchema,
         });
@@ -186,10 +202,7 @@ export class GeminiGateway implements ModelGateway {
           {
             ...base,
             tools: undefined,
-            contents: [
-              { role: 'user', text: req.context },
-              { role: 'user', text: req.state },
-            ],
+            contents: opening,
             responseMimeType: 'text/plain',
           },
           'stream',
@@ -199,7 +212,7 @@ export class GeminiGateway implements ModelGateway {
         return { ok: true, output: gen.text ?? '', turns: 1 };
       }
       // tools
-      return await this.runToolLoop({ req, route, model, cachedContent, usage, signal });
+      return await this.runToolLoop({ req, route, model, cachedContent, opening, usage, signal });
     } catch (err) {
       if (isTypedError(err)) return { ok: false, failure: err.kind, message: err.message };
       throw err;
@@ -211,21 +224,14 @@ export class GeminiGateway implements ModelGateway {
     route: Extract<Route, { tier: 'small' | 'mid' | 'frontier' }>;
     model: string;
     cachedContent?: string;
+    opening: GenerateArgs['contents'];
     usage: Usage;
     signal: AbortSignal;
   }): Promise<{ ok: true; output: unknown; turns: number } | { ok: false; failure: GatewayFailure; message: string }> {
-    const { req, route, model, cachedContent, usage, signal } = args;
-    const SUBMIT = 'submit_turn';
-    const tools: ToolDeclaration[] = cachedContent
-      ? [{ name: SUBMIT, description: 'Emit the final decision; terminates the turn.', parameters: req.responseSchema ?? {} }]
-      : [
-          ...req.prefix.tools,
-          { name: SUBMIT, description: 'Emit the final decision; terminates the turn.', parameters: req.responseSchema ?? {} },
-        ];
-    const messages: GenerateArgs['contents'] = [
-      { role: 'user', text: req.context },
-      { role: 'user', text: req.state },
-    ];
+    const { req, route, model, cachedContent, opening, usage, signal } = args;
+    // With a cache the tools live in it (and may not be repeated on the request).
+    const tools: ToolDeclaration[] | undefined = cachedContent ? undefined : toolLoopTools(req);
+    const messages: GenerateArgs['contents'] = [...opening];
     for (let turn = 1; turn <= route.maxTurns; turn++) {
       const gen = await this.generateRetrying({
         model,
@@ -246,12 +252,14 @@ export class GeminiGateway implements ModelGateway {
       if (gen.functionCalls.length === 0) {
         return { ok: false, failure: 'invalid_output', message: 'no submit_turn and no tool call' };
       }
-      // Run every read tool call and feed the result back on the next turn.
+      // Gemini needs the model's own function-call turn (with its thought signatures)
+      // in the history before the responses, then one response per call, in order.
+      messages.push({ role: 'model', functionCalls: gen.functionCalls, raw: gen.modelContent });
       for (const call of gen.functionCalls) {
         const toolResult = req.runTool
           ? await req.runTool(call.name, call.args)
           : { error: 'no tool runner provided' };
-        messages.push({ role: 'tool', name: call.name, response: toolResult });
+        messages.push({ role: 'tool', name: call.name, ...(call.id ? { id: call.id } : {}), response: toolResult });
       }
     }
     return { ok: false, failure: 'invalid_output', message: `no submit_turn within ${route.maxTurns} turns` };
@@ -273,6 +281,26 @@ export class GeminiGateway implements ModelGateway {
       return done;
     }, args.signal, this.cfg.maxRetries);
   }
+}
+
+const SUBMIT = 'submit_turn';
+
+/** Read tools plus the terminal `submit_turn`, whose parameters are the decision schema. */
+function toolLoopTools(req: GatewayRequest): ToolDeclaration[] {
+  return [
+    ...req.prefix.tools,
+    { name: SUBMIT, description: 'Emit the final decision; terminates the turn.', parameters: req.responseSchema ?? { type: 'object' } },
+  ];
+}
+
+/** First user turns: context (unless the cache already has it) then per-agent state. */
+function openingTurns(req: GatewayRequest, cacheHasContext: boolean): GenerateArgs['contents'] {
+  return cacheHasContext
+    ? [{ role: 'user', text: req.state }]
+    : [
+        { role: 'user', text: req.context },
+        { role: 'user', text: req.state },
+      ];
 }
 
 function accumulateUsage(usage: Usage, gen: GenerateResult): void {
