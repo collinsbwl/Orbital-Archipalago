@@ -48,9 +48,11 @@ export function openCount(total: number, share: number): number {
   return share <= 0 ? 0 : Math.min(total, Math.ceil(share * total - 1e-9));
 }
 
-/** A stall as pieces, standing on `y`. Open: bright awning and wares on the counter. Closed: dull awning, a shutter, no wares. */
+/** A stall as pieces, standing on `y`. Open: bright awning and wares on the counter. Closed: a shutter and no wares; the awning stays the same colour. */
 export function stallPieces(s: Stall, open: boolean, y: number): Piece[] {
-  const awning = open ? s.awning : '#6b6f78';
+  // The awning keeps its own colour whether open or shut (only the shutter and wares change), so a stall whose open state
+  // flips as the economy moves does not flash between its colour and grey.
+  const awning = s.awning;
   const base = { x: s.x, z: s.z, rotY: s.rotY };
   const out: Piece[] = [
     { shape: 'box', ...base, y, size: [2.4, 0.95, 1.1], color: '#8a6a48' },

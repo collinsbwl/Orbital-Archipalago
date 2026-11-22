@@ -56,13 +56,11 @@ const KNOWN: Record<string, GroundLook> = {
   // Tethys: a frozen world at a long golden dawn. Warm haze on the horizon under a deep blue sky, pale ice underfoot,
   // and a town of glowing futuristic igloos.
   tethys: {
-    sky: '#f0d9bd', skyTop: '#23406e', sunColor: '#ffe0b3', sunElevation: 0.26,
-    ground: '#e8f4fa', palette: ['#e8f4fa', '#d4ebf5', '#f4fafd', '#c2e0ee'], rock: '#6f8aa3', peak: '#ffffff',
-    fogNear: 60, fogFar: 420, precip: 'snow',
-    buildings: ['#a9d8f2', '#7fb6dc', '#d6f0ff', '#5d93c4'],
-    // Stepped ice shelves round the city, and a jagged range that starts close in.
-    relief: { hills: 11, hillScale: 75, mountains: 150, mountainStart: 165, terrace: 3.5 },
-    style: 'crystal',
+    sky: '#dfeef6', skyTop: '#8cb8de', sunColor: '#eef8ff', sunElevation: 0.42,
+    ground: '#e8f4fa', palette: ['#e8f4fa', '#d4ebf5', '#f4fafd', '#c2e0ee'], rock: '#8fa6b8', peak: '#ffffff',
+    fogNear: 55, fogFar: 400, precip: 'snow',
+    buildings: ['#cfe3ee', '#9fc4da', '#eef6fa', '#7fa6c0'],
+    relief: { hills: 2.5, hillScale: 120, mountains: 120, mountainStart: 160 },
   },
 };
 

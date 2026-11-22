@@ -20,6 +20,8 @@ export interface TerrainOptions {
   population?: number;
   /** Ground is dead flat (height 0) out to this distance from the plaza. */
   flatRadius: number;
+  /** Where mines, fields and lakes are placed out from (default `flatRadius`). */
+  siteRadius?: number;
   /** Width of the smooth ramp from flat ground up to the hills. */
   rampWidth?: number;
   /** Hills and mountains, metres. Usually from the planet's look. */
@@ -96,7 +98,7 @@ export function makeTerrain(options: TerrainOptions): Terrain {
   };
 
   const goods = options.goods ?? [];
-  const features = planFeatures({ planet: options.planet, goods, baseHeight: baseAt, flatRadius: options.flatRadius, mountainStart });
+  const features = planFeatures({ planet: options.planet, goods, baseHeight: baseAt, flatRadius: options.flatRadius, siteRadius: options.siteRadius, mountainStart });
   const hasFeatures = features.footprints.length > 0 || features.rivers.length > 0;
   const heightAt = (x: number, z: number): number => {
     const base = baseAt(x, z);

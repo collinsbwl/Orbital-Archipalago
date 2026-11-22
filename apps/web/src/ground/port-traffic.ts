@@ -32,6 +32,9 @@ export function shipPhase(s: Pick<Shipment, 'from' | 'to' | 'departCycle' | 'arr
     const landStart = s.arriveCycle - LANDING_CYCLES;
     if (cycle >= landStart && cycle < s.arriveCycle) return { phase: 'landing', t: (cycle - landStart) / LANDING_CYCLES };
     if (cycle >= s.arriveCycle && cycle < s.arriveCycle + PARKED_CYCLES) return { phase: 'parked', t: (cycle - s.arriveCycle) / PARKED_CYCLES };
+    // Then it lifts off and heads back the way it came, rather than vanishing from its pad.
+    const leaveAt = s.arriveCycle + PARKED_CYCLES;
+    if (cycle >= leaveAt && cycle < leaveAt + TAKEOFF_CYCLES) return { phase: 'takeoff', t: (cycle - leaveAt) / TAKEOFF_CYCLES };
   }
   if (s.from === planet) {
     const readyAt = s.departCycle - PRE_DEPART_CYCLES;
@@ -54,7 +57,7 @@ export interface PortShip {
 /** When a shipment first shows at this planet's port and when it is gone again (cycles), or null if it never touches it. */
 export function presence(s: Pick<Shipment, 'from' | 'to' | 'departCycle' | 'arriveCycle'>, planet: string): { since: number; until: number } | null {
   if (s.from === s.to) return null;
-  if (s.to === planet) return { since: s.arriveCycle - LANDING_CYCLES, until: s.arriveCycle + PARKED_CYCLES };
+  if (s.to === planet) return { since: s.arriveCycle - LANDING_CYCLES, until: s.arriveCycle + PARKED_CYCLES + TAKEOFF_CYCLES };
   if (s.from === planet) return { since: s.departCycle - PRE_DEPART_CYCLES, until: s.departCycle + TAKEOFF_CYCLES };
   return null;
 }
@@ -142,4 +145,15 @@ export function shipPose(at: PhaseAt, heading: number): ShipPose {
   const up = landing ? smoothstep(0.45, 0.92, t) : 1 - smoothstep(0.08, 0.55, t);
   const nose = norm([flat[0] * (1 - up), flat[1] * (1 - up) + up, flat[2] * (1 - up)]);
   return { x: out[0] * horizontal, y, z: out[2] * horizontal, nose, fade: 1 - smoothstep(0.82, 1, s), burning: true };
+}
+
+/**
+ * The engine drops a shipment from its snapshots the moment it arrives, which would make a landed ship vanish from its
+ * pad. This keeps shipments the viewer has already seen until they have parked and flown off again.
+ */
+export function retainShipments(memory: Map<string, Shipment>, current: Shipment[], cycle: number): Map<string, Shipment> {
+  const next = new Map<string, Shipment>();
+  for (const s of memory.values()) if (cycle < s.arriveCycle + PARKED_CYCLES + TAKEOFF_CYCLES) next.set(s.id, s);
+  for (const s of current) next.set(s.id, s);
+  return next;
 }

@@ -1,9 +1,11 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { PerspectiveCamera, Vector3 } from 'three';
-import type { Snapshot } from '@orbital/contracts';
+import type { Shipment, Snapshot } from '@orbital/contracts';
 import type { FrameState } from '../scene/frame';
 import { Aliens } from './AlienCrowd';
+import { Camp } from './Camp';
+import { CAMP_SITE_RADIUS, isCampPlanet } from './camp-layout';
 import { City } from './City';
 import { CITY_FLAT_RADIUS, layoutCity, populationTier } from './city-layout';
 import { Crops } from './CropFields';
@@ -28,7 +30,7 @@ import { layoutPylons, pickRoad } from './power-line';
 import { Spaceport } from './Spaceport';
 import { layoutPort, portClearance } from './port';
 import { PortShips } from './PortShips';
-import { portTraffic } from './port-traffic';
+import { portTraffic, retainShipments } from './port-traffic';
 import { Smoke } from './SmokeEmitters';
 import { Vehicles } from './Vehicles';
 import { Sky, SKY_RADIUS } from './Sky';
@@ -73,6 +75,7 @@ const NO_EVENTS: Snapshot['events'] = [];
  */
 export function GroundScene({ planet, population, goods, snapshot, frame, busyness = 1 }: GroundSceneProps) {
   const look = groundLookFor(planet);
+  const camp = isCampPlanet(planet);
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as unknown as ControlsLike | null;
 
@@ -82,12 +85,11 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
   const layout = useMemo(() => layoutCity({ planet, population, goods: goodsKey.split(',') }), [planet, goodsKey, tier]); // eslint-disable-line react-hooks/exhaustive-deps
   // Land and trees do not change as the city grows, so they depend on the planet and goods only (not the tier).
   const terrain = useMemo(
-    () => makeTerrain({ planet, goods: goodsKey.split(','), flatRadius: CITY_FLAT_RADIUS, relief: look.relief }),
-    [planet, goodsKey, look],
+    () => makeTerrain({ planet, goods: goodsKey.split(','), flatRadius: CITY_FLAT_RADIUS, siteRadius: camp ? CAMP_SITE_RADIUS : undefined, relief: look.relief }),
+    [planet, goodsKey, look, camp],
   );
   const streets = useMemo(() => layoutCity({ planet }), [planet]);
   const lamps = useMemo(() => streetLampPieces(layout), [layout]);
-  const alienPopulation = 10 ** (layout.tier / 4);
 
   // The shared frame, or a still one made from the snapshot when the caller has none.
   const still = useRef<FrameState>({ cycle: snapshot?.cycle ?? 0, planets: {} });
@@ -113,7 +115,12 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
     const near = terrain.sites[0] ? ([terrain.sites[0].x, terrain.sites[0].z] as [number, number]) : null;
     return layoutPylons(streets, pickRoad(streets, near, [0, port.road]), terrain);
   }, [streets, terrain, port]);
-  const shipments = snapshot?.shipments ?? NO_SHIPMENTS;
+  // Landed ships stay in view (parked, then lifting off again) after the engine stops reporting them.
+  const shipMemory = useRef<Map<string, Shipment>>(new Map());
+  const shipments = useMemo(() => {
+    shipMemory.current = retainShipments(shipMemory.current, snapshot?.shipments ?? NO_SHIPMENTS, snapshot?.cycle ?? 0);
+    return [...shipMemory.current.values()];
+  }, [snapshot]);
   const portShips = useMemo(() => portTraffic(shipments, planet, snapshot?.cycle ?? 0, port.pads.length).length, [shipments, planet, snapshot?.cycle, port]);
 
   // The sky dome and far mountains need a far plane beyond the map's.
@@ -174,15 +181,21 @@ export function GroundScene({ planet, population, goods, snapshot, frame, busyne
       <Smoke planet={planet} emitters={emitters} density={levels.smoke} />
       <Crops planet={planet} fields={terrain.fields} events={snapshot?.events ?? NO_EVENTS} frame={frameRef} />
       <Trees planet={planet} terrain={treeField} layout={streets} />
-      <City layout={layout} look={look} atmo={atmo} />
-      <Pieces pieces={lamps} atmo={atmo} />
-      {moodView.festive && <Festival planet={planet} layout={layout} atmo={atmo} />}
-      <Market stalls={stalls} share={levels.stalls} />
-      <PowerLines pylons={pylons} />
+      {camp ? (
+        <Camp layout={layout} planet={planet} stalls={stalls} share={levels.stalls} atmo={atmo} />
+      ) : (
+        <>
+          <City layout={layout} look={look} atmo={atmo} />
+          <Pieces pieces={lamps} atmo={atmo} />
+          {moodView.festive && <Festival planet={planet} layout={layout} atmo={atmo} />}
+          <Market stalls={stalls} share={levels.stalls} />
+          <PowerLines pylons={pylons} />
+        </>
+      )}
       <Spaceport port={port} atmo={atmo} />
       <PortShips planet={planet} port={port} shipments={shipments} frame={frameRef} />
-      {look.style !== 'crystal' && <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />}
-      <Aliens planet={planet} layout={layout} population={alienPopulation} busyness={levels.busyness} />
+      {!camp && <Vehicles planet={planet} streets={streets} port={port} traffic={levels.traffic} portShips={portShips} />}
+      <Aliens planet={planet} layout={layout} />
     </>
   );
 }

@@ -4,7 +4,7 @@ import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 /** Points in an engine trail, and how far the ship must move before a new point is added (so the trail has the same length at any speed). */
-export const TRAIL_POINTS = 22;
+export const TRAIL_POINTS = 30;
 export const TRAIL_STEP = 0.03;
 /** A ship that moves farther than this in one frame (a stalled tab catching up, or a correction) restarts its trail instead of drawing a long streak. */
 export const TRAIL_JUMP = 0.35;
@@ -31,7 +31,7 @@ export function createTrail(): Trail {
   const colors = new Float32Array(TRAIL_POINTS * 3);
   for (let i = 0; i < TRAIL_POINTS; i++) {
     const f = (i / (TRAIL_POINTS - 1)) ** 2; // dark at the tail, bright at the engine
-    colors.set([1 * f, 0.7 * f, 0.28 * f], i * 3);
+    colors.set([(0.35 + 0.65 * f) * f, (0.55 + 0.15 * f) * f, (1 - 0.72 * f) * f], i * 3); // blue-white at the tail, orange at the engine
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   const material = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -102,17 +102,51 @@ export function FreighterModel({ groupRef, trail, id, scale = SHIP_SCALE, hovere
   return (
     <>
       <group ref={groupRef} scale={scale}>
+        {/* Hull: a six-sided cone, with a dark glass canopy near the nose. */}
         <mesh rotation-x={Math.PI / 2}>
           <coneGeometry args={[0.035, 0.17, 6]} />
-          <meshStandardMaterial color="#e8eef8" flatShading roughness={0.6} />
+          <meshStandardMaterial color="#e8eef8" flatShading roughness={0.45} metalness={0.25} />
         </mesh>
-        <mesh position={[0, 0, -0.03]}>
-          <boxGeometry args={[0.15, 0.008, 0.06]} />
-          <meshStandardMaterial color="#8aa2c9" flatShading roughness={0.7} />
+        <mesh position={[0, 0.016, 0.03]} scale={[1, 0.6, 1.9]}>
+          <sphereGeometry args={[0.018, 8, 6]} />
+          <meshStandardMaterial color="#1c2b45" emissive="#3aa8ff" emissiveIntensity={0.7} flatShading roughness={0.2} />
         </mesh>
+        {/* Swept-back wings, each with a glowing tip light (red to port, green to starboard). */}
+        <mesh position={[0.055, 0, -0.03]} rotation-y={0.5}>
+          <boxGeometry args={[0.08, 0.008, 0.05]} />
+          <meshStandardMaterial color="#8aa2c9" flatShading roughness={0.5} metalness={0.2} />
+        </mesh>
+        <mesh position={[-0.055, 0, -0.03]} rotation-y={-0.5}>
+          <boxGeometry args={[0.08, 0.008, 0.05]} />
+          <meshStandardMaterial color="#8aa2c9" flatShading roughness={0.5} metalness={0.2} />
+        </mesh>
+        <mesh position={[0.09, 0, -0.05]}>
+          <sphereGeometry args={[0.008, 6, 4]} />
+          <meshBasicMaterial color="#5dff7a" />
+        </mesh>
+        <mesh position={[-0.09, 0, -0.05]}>
+          <sphereGeometry args={[0.008, 6, 4]} />
+          <meshBasicMaterial color="#ff4d4d" />
+        </mesh>
+        {/* A tail fin and two side thrusters. */}
+        <mesh position={[0, 0.03, -0.065]}>
+          <boxGeometry args={[0.006, 0.05, 0.05]} />
+          <meshStandardMaterial color="#5f7fb0" flatShading roughness={0.5} />
+        </mesh>
+        {[-0.022, 0.022].map((x) => (
+          <mesh key={x} position={[x, 0, -0.085]}>
+            <sphereGeometry args={[0.011, 6, 5]} />
+            <meshBasicMaterial color="#7fd4ff" />
+          </mesh>
+        ))}
+        {/* The main engine: a hot core with a soft additive halo. */}
         <mesh position={[0, 0, -ENGINE_OFFSET]}>
           <sphereGeometry args={[0.02, 8, 6]} />
           <meshBasicMaterial color="#ffb347" />
+        </mesh>
+        <mesh position={[0, 0, -ENGINE_OFFSET - 0.005]}>
+          <sphereGeometry args={[0.042, 10, 8]} />
+          <meshBasicMaterial color="#ff8a2a" transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
         {/* An invisible, bigger target so a tiny ship is easy to point at. */}
         <mesh

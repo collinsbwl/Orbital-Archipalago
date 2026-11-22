@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { applyPlacements, setInstance } from './instancing';
-import { alienGeometry, carGeometry, groundedBox, haulerGeometry, treeGeometry } from './shapes';
+import { PARTS } from './alien-rig';
+import { alienGeometry, alienPartGeometries, carGeometry, groundedBox, haulerGeometry, treeGeometry } from './shapes';
 import type { TreeKind } from './trees';
 
 describe('model geometry', () => {
@@ -22,7 +23,20 @@ describe('model geometry', () => {
     expect(g.boundingBox!.min.y).toBeGreaterThanOrEqual(-0.01);
     expect(g.boundingBox!.max.y).toBeGreaterThan(1.5);
     expect(g.boundingBox!.max.y).toBeLessThan(2.4);
-    expect(g.getAttribute('position').count).toBeLessThan(600);
+    expect(g.getAttribute('position').count).toBeLessThan(2000);
+  });
+  it('alien parts sit around their pivots and rebuild the whole alien', () => {
+    const parts = alienPartGeometries();
+    let verts = 0;
+    for (const def of PARTS) {
+      const g = parts[def.name];
+      g.computeBoundingBox();
+      // Legs and arms hang below their pivot; the head and face rise above theirs.
+      if (def.name === 'legL' || def.name === 'legR' || def.name === 'armL' || def.name === 'armR') expect(g.boundingBox!.max.y).toBeLessThan(0.1);
+      if (def.name === 'head') expect(g.boundingBox!.min.y).toBeGreaterThanOrEqual(-0.01);
+      verts += g.getAttribute('position').count;
+    }
+    expect(verts).toBe(alienGeometry().getAttribute('position').count);
   });
   it('car and hauler are coloured, on the ground, nose along +z, with a sensible length', () => {
     for (const [g, long] of [[carGeometry(), 4.2], [haulerGeometry(), 6.3]] as const) {

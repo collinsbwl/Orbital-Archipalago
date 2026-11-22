@@ -54,19 +54,29 @@ describe('layoutCity', () => {
     expect(layout.onStreet(b.x, b.z)).toBe(false);
   });
 
-  it('walks: a plaza loop, an inner loop, and one loop per road, all closed', () => {
-    expect(layout.loops).toHaveLength(2 + layout.roads.length);
-    for (const l of layout.loops) {
+  it('walks: one loop per road, plus three plaza gathering rings, all closed', () => {
+    expect(layout.loops).toHaveLength(layout.roads.length);
+    expect(layout.gatherLoops).toHaveLength(3);
+    for (const l of [...layout.loops, ...layout.gatherLoops]) {
       expect(l.length).toBeGreaterThan(10);
       expect(l.cumulative[l.cumulative.length - 1]).toBeCloseTo(l.length);
     }
   });
 
   it('keeps road loops on the sidewalk, not in the road or in buildings', () => {
-    for (const loop of layout.loops.slice(2)) {
+    for (const loop of layout.loops) {
       for (const [x, z] of loop.points) {
         expect(layout.roadClearance(x, z)).toBeLessThan(0.01);
         expect(layout.distanceToRoad(x, z)).toBeGreaterThan(ROAD_WIDTH / 2 - 0.01);
+      }
+    }
+  });
+
+  it('keeps the gathering rings on the plaza, clear of the fountain and the market stalls', () => {
+    for (const loop of layout.gatherLoops) {
+      for (const [x, z] of loop.points) {
+        expect(Math.hypot(x, z)).toBeGreaterThan(3.5);
+        expect(Math.hypot(x, z)).toBeLessThan(7);
       }
     }
   });

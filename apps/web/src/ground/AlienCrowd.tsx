@@ -1,50 +1,91 @@
 import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { alienCount, alienPose, makeAliens } from './aliens';
+import { alienRig, PARTS } from './alien-rig';
+import type { PartName } from './alien-rig';
+import { ALIEN_SUITS, alienCount, alienPose, alienSkin, makeAliens } from './aliens';
 import type { CityLayout } from './city-layout';
-import { setInstance } from './instancing';
-import { alienGeometry } from './shapes';
+import { alienPartGeometries } from './shapes';
 
-/** Skin colours aliens pick from by their `tint`. */
-const SKINS = ['#7fd09a', '#8fb8e8', '#d6a0e0', '#e8c87a', '#9fe0d6', '#e89a9a'];
+// Scratch objects reused every frame so walking the crowd allocates nothing.
+const rootM = new THREE.Matrix4();
+const localM = new THREE.Matrix4();
+const worldM = PARTS.map(() => new THREE.Matrix4());
+/** Index in PARTS of each part's parent (-1 for the root), found once. */
+const PARENT = PARTS.map((d) => PARTS.findIndex((o) => o.name === d.parent));
+const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+const quat = new THREE.Quaternion();
+const pos = new THREE.Vector3();
+const scl = new THREE.Vector3();
+const ZERO: [number, number, number] = [0, 0, 0];
+const UP = new THREE.Vector3(0, 1, 0);
 
 /**
- * Little aliens walking the sidewalks and plaza, drawn as one instanced mesh. Count grows with the log of the population;
- * `busyness` (0 to 1, default 1) shows only that share of them, so quiet moods empty the streets.
+ * A fixed crowd of little aliens walking the layout's gathering loops, each stopping now and then to talk. Every moving part
+ * (legs, arms, torso, head, eyes, mouth) is its own instanced mesh turned about a pivot. Skin colour follows the planet.
  */
-export function Aliens({ planet, layout, population, busyness = 1 }: { planet: string; layout: CityLayout; population?: number; busyness?: number }) {
-  const specs = useMemo(() => makeAliens(layout.loops, alienCount(population), planet), [layout, planet, population]);
-  const geometry = useMemo(() => alienGeometry(), []);
+export function Aliens({ planet, layout }: { planet: string; layout: CityLayout }) {
+  const specs = useMemo(() => makeAliens(layout.gatherLoops, alienCount(), planet), [layout, planet]);
+  const geometries = useMemo(() => alienPartGeometries(), []);
   const material = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.8 }), []);
-  const mesh = useMemo(() => {
-    const m = new THREE.InstancedMesh(geometry, material, Math.max(1, specs.length));
-    m.frustumCulled = false;
-    return m;
-  }, [geometry, material, specs.length]);
+  const meshes = useMemo(() => {
+    const out = {} as Record<PartName, THREE.InstancedMesh>;
+    for (const def of PARTS) {
+      const m = new THREE.InstancedMesh(geometries[def.name], material, Math.max(1, specs.length));
+      m.frustumCulled = false;
+      out[def.name] = m;
+    }
+    return out;
+  }, [geometries, material, specs.length]);
 
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => () => Object.values(geometries).forEach((g) => g.dispose()), [geometries]);
   useEffect(() => () => material.dispose(), [material]);
-  useEffect(() => () => void mesh.dispose(), [mesh]);
+  useEffect(() => () => Object.values(meshes).forEach((m) => m.dispose()), [meshes]);
 
-  // Each alien's skin colour never changes, so set it once.
+  // Skin and suit colours never change, so set them once. The head takes the skin, the torso the suit; the rest keep their own colours.
   useLayoutEffect(() => {
     const c = new THREE.Color();
-    specs.forEach((s, i) => mesh.setColorAt(i, c.set(SKINS[Math.floor(s.tint * SKINS.length) % SKINS.length]!)));
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [mesh, specs]);
+    specs.forEach((s, i) => {
+      meshes.head.setColorAt(i, c.set(alienSkin(planet, s.tint)));
+      meshes.torso.setColorAt(i, c.set(ALIEN_SUITS[Math.floor(s.suit * ALIEN_SUITS.length) % ALIEN_SUITS.length]!));
+    });
+    for (const m of [meshes.head, meshes.torso]) if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [meshes, specs, planet]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    const shown = busyness <= 0 ? 0 : Math.min(specs.length, Math.ceil(specs.length * Math.min(1, busyness)));
+    const shown = specs.length;
     for (let i = 0; i < shown; i++) {
       const s = specs[i]!;
-      const p = alienPose(layout.loops, s, t);
-      setInstance(mesh, i, { x: p.x, y: p.bob, z: p.z, rotY: p.heading, scale: s.scale });
+      const p = alienPose(layout.gatherLoops, s, t);
+      const rig = alienRig(p, t, s.voice);
+      pos.set(p.x, p.bob, p.z);
+      quat.setFromAxisAngle(UP, p.heading);
+      scl.set(s.scale, s.scale, s.scale);
+      rootM.compose(pos, quat, scl);
+      PARTS.forEach((def, j) => {
+        const pose = rig[def.name];
+        const parent = PARENT[j]!;
+        const from = parent >= 0 ? PARTS[parent]!.pivot : ZERO;
+        pos.set(def.pivot[0] - from[0], def.pivot[1] - from[1], def.pivot[2] - from[2]);
+        quat.setFromEuler(euler.set(pose.rx, pose.ry, pose.rz));
+        scl.set(1, pose.sy, 1);
+        localM.compose(pos, quat, scl);
+        worldM[j]!.multiplyMatrices(parent >= 0 ? worldM[parent]! : rootM, localM);
+        meshes[def.name].setMatrixAt(i, worldM[j]!);
+      });
     }
-    mesh.count = shown;
-    mesh.instanceMatrix.needsUpdate = true;
+    for (const m of Object.values(meshes)) {
+      m.count = shown;
+      m.instanceMatrix.needsUpdate = true;
+    }
   });
 
-  return <primitive object={mesh} />;
+  return (
+    <group>
+      {PARTS.map((def) => (
+        <primitive key={def.name} object={meshes[def.name]} />
+      ))}
+    </group>
+  );
 }

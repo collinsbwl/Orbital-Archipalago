@@ -55,7 +55,7 @@ export function SkyRig({ planet, look, snapshot, frame, atmo, onMood }: {
 
   useFrame((_, delta) => {
     mood.current = stepMood(mood.current, scoresRef.current, Math.min(delta, 0.25));
-    const view = skyView({ planetId: planet, sunElevation: look.sunElevation, cycle: frame.current.cycle, planets: frame.current.planets, fixedTime: ALWAYS_NOON });
+    const view = skyView({ planetId: planet, sunElevation: look.sunElevation, cycle: frame.current.cycle, planets: frame.current.planets, fixedTime: 0.5 });
     const a = computeAtmosphere({ look, mood: mood.current, timeOfDay: view.timeOfDay, sunDir: view.sun });
     // Update the shared state in place (readers keep the same object), instead of making a new one every frame.
     const shared = atmo.current;
