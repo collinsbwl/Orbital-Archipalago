@@ -18,9 +18,15 @@ export const GROWTH_CONFIG = {
   smoothCycles: 10,
   cyclesPerYear: RESERVE_BANK_CONFIG.cyclesPerYear,
   /** Installed capital every planet starts with, in units of the capital good; the scale against which stock K is read. */
-  baseCapital: 50,
-  /** Share of the planet's capital stock that wears out each cycle, in ppm (5_000 = 0.5%). */
-  depreciationPpm: 5_000,
+  baseCapital: 100,
+  /** Share of the planet's capital stock that wears out each cycle, in ppm (15_000 = 1.5%, applied to both held tools and installed capital). */
+  depreciationPpm: 15_000,
+  /**
+   * Share of real GDP saved and invested each cycle, in bp (Solow). Steady state K* = s * Y / (delta * p), p being the base price
+   * of the capital good. Simplification: investment is not yet funded from consumption or the treasury; it is created from
+   * nothing, so it does not move any balance.
+   */
+  savingsRateBp: 500,
   /** When false, capital neither raises production nor wears out (Phase 1 behaviour: measurement only). */
   capitalAffectsProduction: true,
 };
@@ -62,6 +68,18 @@ export function accrueWear(capital: number, accPpm: number, cfg: GrowthConfig = 
   const total = accPpm + Math.max(0, capital) * cfg.depreciationPpm;
   const units = Math.min(Math.floor(total / PPM), Math.max(0, capital));
   return { units, accPpm: total - units * PPM };
+}
+
+/** Investment in ppm tool-equivalents: savingsRateBp/10_000 * realGdp / basePrice(capitalGood), rounded; 0 for a non-positive input. */
+export function investmentPpm(realGdpValue: number, capitalBasePrice: number, cfg: GrowthConfig = GROWTH_CONFIG): number {
+  if (!cfg.capitalAffectsProduction || !(realGdpValue > 0) || !(capitalBasePrice > 0)) return 0;
+  return Math.round((cfg.savingsRateBp * realGdpValue * PPM) / (10_000 * capitalBasePrice));
+}
+
+/** One cycle of Solow accumulation on the installed stock (ppm): add investment, then depreciate by `depreciationPpm`. */
+export function accumulateInstalledPpm(installedPpm: number, investment: number, cfg: GrowthConfig = GROWTH_CONFIG): number {
+  const grown = Math.max(0, installedPpm) + Math.max(0, investment);
+  return grown - Math.round((grown * cfg.depreciationPpm) / PPM);
 }
 
 /** Real GDP: one cycle's value added at the world's base prices, so price movements do not count as growth. */

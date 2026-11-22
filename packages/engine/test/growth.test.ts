@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_WORLD } from '@orbital/contracts';
-import { GROWTH_CONFIG, ZERO_GROWTH, accrueWear, capacityMultiplierPpm, decompose, growthBp, realGdp, scaleBatches } from '../src/growth.js';
+import { GROWTH_CONFIG, ZERO_GROWTH, accrueWear, accumulateInstalledPpm, investmentPpm, capacityMultiplierPpm, decompose, growthBp, realGdp, scaleBatches } from '../src/growth.js';
 import { batchKey, runProduction } from '../src/phases/production.js';
 import type { AgentDecision, AgentTask } from '@orbital/contracts';
 import { InMemoryLedger } from '@orbital/ledger-memory';
@@ -163,18 +163,19 @@ describe('capacity multiplier', () => {
 
 describe('capital depreciation', () => {
   it('accrues K x rate in ppm, releases whole units only, and keeps the remainder', () => {
-    const rate = GROWTH_CONFIG.depreciationPpm;
-    expect(accrueWear(0, 0)).toEqual({ units: 0, accPpm: 0 });
-    expect(accrueWear(100, 0)).toEqual({ units: 0, accPpm: 100 * rate });
+    const cfg = { ...GROWTH_CONFIG, depreciationPpm: 5_000 };
+    const rate = cfg.depreciationPpm;
+    expect(accrueWear(0, 0, cfg)).toEqual({ units: 0, accPpm: 0 });
+    expect(accrueWear(100, 0, cfg)).toEqual({ units: 0, accPpm: 100 * rate });
     let acc = 0, units = 0;
     for (let c = 0; c < 10; c++) {
-      const w = accrueWear(100, acc);
+      const w = accrueWear(100, acc, cfg);
       acc = w.accPpm;
       units += w.units;
     }
     expect(units).toBe(Math.floor((10 * 100 * rate) / PPM));
     expect(acc).toBe(10 * 100 * rate - units * PPM);
-    expect(accrueWear(3, 999_000).units).toBeLessThanOrEqual(3);
+    expect(accrueWear(3, 999_000, cfg).units).toBeLessThanOrEqual(3);
   });
 
   it('destroys whole units from the largest holder first, ties in roster order', async () => {
@@ -185,11 +186,11 @@ describe('capital depreciation', () => {
     await giveTools(ledger, 'tethys:colonist:2', 2);
     const wear = (capital: number) => (universe as unknown as { wearCapital(m: Map<string, number>): Promise<void> }).wearCapital(new Map([['tethys', capital]]));
     const held = async () => Promise.all([0, 1, 2].map((i) => ledger.getInventory(`tethys:colonist:${i}`, 'tethys', 'tools')));
-    await wear(1_200); // 6 units: colonist 0 loses all 5, then the 2-way tie goes to colonist 1
+    await wear(400); // 400 x 1.5% = 6 units: colonist 0 loses all 5, then the 2-way tie goes to colonist 1
     expect(await held()).toEqual([0, 1, 2]);
-    await wear(100); // accumulator 0 -> 500k: nothing yet
+    await wear(34); // accumulator 0 -> 510k: nothing yet
     expect(await held()).toEqual([0, 1, 2]);
-    await wear(100); // 1M: one more unit, from the (now) largest holder colonist 2
+    await wear(34); // 1.02M: one more unit, from the (now) largest holder colonist 2
     expect(await held()).toEqual([0, 1, 1]);
   });
 
@@ -200,7 +201,7 @@ describe('capital depreciation', () => {
     const before = (await universe.step()).metrics['tethys']!.capitalStock;
     let last = before;
     for (let c = 0; c < 30; c++) last = (await universe.step()).metrics['tethys']!.capitalStock;
-    expect(last).toBeLessThan(before + 30 * 5); // forging adds at most 5 per cycle; wear takes ~2 per cycle
+    expect(last).toBeLessThan(before + 30 * 5); // forging adds at most 5 per cycle; wear takes ~6 per cycle
   });
 });
 
@@ -224,6 +225,73 @@ describe('fork copies capital state', () => {
     f.batchCarry.set(k, 123);
     expect(a.batchCarry.get(k)).toBe(orig);
     f.batchCarry.set(k, orig!);
+    const ra = [], rb = [];
+    for (let c = 0; c < 10; c++) { ra.push(await universe.step()); rb.push(await fork.step()); }
+    expect(rb).toEqual(ra);
+  });
+});
+
+describe('saving and investment', () => {
+  const price = DEFAULT_WORLD.goods.find((g) => g.id === GROWTH_CONFIG.capitalGood)!.basePrice;
+  type Inner = { installedCapitalPpm: Map<string, number> };
+
+  it('investment is savingsRate x real GDP / capital base price in ppm tool-equivalents, deterministically', () => {
+    expect(investmentPpm(0, price)).toBe(0);
+    expect(investmentPpm(-5, price)).toBe(0);
+    expect(investmentPpm(6_000, 300, { ...GROWTH_CONFIG, savingsRateBp: 1_000 })).toBe(2 * PPM); // 10% of 6000 = 600 = 2 tools
+    expect(investmentPpm(1_000, 300, { ...GROWTH_CONFIG, savingsRateBp: 500 })).toBe(Math.round((500 * 1_000 * PPM) / (10_000 * 300)));
+    expect(investmentPpm(1_000, price)).toBe(investmentPpm(1_000, price));
+    expect(investmentPpm(1_000, price, { ...GROWTH_CONFIG, capitalAffectsProduction: false })).toBe(0);
+  });
+
+  it('accumulation adds investment then depreciates the sum by delta (ppm), converging to s*Y/(delta*p)', () => {
+    const cfg = { ...GROWTH_CONFIG, depreciationPpm: 10_000 };
+    expect(accumulateInstalledPpm(0, 0, cfg)).toBe(0);
+    expect(accumulateInstalledPpm(0, 1_000_000, cfg)).toBe(990_000);
+    expect(accumulateInstalledPpm(990_000, 1_000_000, cfg)).toBe(1_990_000 - 19_900);
+    let k = 0;
+    const inv = investmentPpm(6_000, 300, { ...cfg, savingsRateBp: 1_000 });
+    for (let c = 0; c < 5_000; c++) k = accumulateInstalledPpm(k, inv, cfg);
+    const steady = (inv * (1 - 0.01)) / 0.01; // fixed point of k = (k + inv)(1 - delta)
+    expect(Math.abs(k - steady)).toBeLessThan(steady * 0.001);
+  });
+
+  it('K for metrics and capacity is floor(installed) + tools held', async () => {
+    const { universe, ledger } = makeUniverse({ agents: pass, checkInvariants: false });
+    await universe.init();
+    await giveTools(ledger, 'tethys:colonist:0', 10);
+    const inner = universe as unknown as Inner;
+    inner.installedCapitalPpm.set('tethys', 7_900_000);
+    const r = await universe.step();
+    // 10 held, minus wear of at most 1 unit this cycle (10 x 1.5% accrues < 1), plus 7 whole installed units; metrics read after wear.
+    expect(r.metrics['tethys']!.capitalStock).toBe(10 + 7);
+    expect(r.metrics['helion']!.capitalStock).toBe(0);
+  });
+
+  it('accrues from each planet\'s real GDP after metrics, and depreciates it, in a run', async () => {
+    const { universe } = makeUniverse({ agents: pass, checkInvariants: false });
+    await universe.init();
+    const inner = universe as unknown as Inner;
+    expect(inner.installedCapitalPpm.size).toBe(0);
+    const r = await universe.step();
+    const expected = accumulateInstalledPpm(0, investmentPpm(r.metrics['verdan']!.realGdp, price));
+    expect(expected).toBeGreaterThan(0);
+    expect(inner.installedCapitalPpm.get('verdan')).toBe(expected);
+  });
+
+  it('fork deep-copies installed capital and then runs identically', async () => {
+    const { universe } = makeUniverse({ agents: pass, checkInvariants: false });
+    await universe.init();
+    for (let c = 0; c < 5; c++) await universe.step();
+    const fork = await universe.fork('u0-f2');
+    const a = (universe as unknown as Inner).installedCapitalPpm, f = (fork as unknown as Inner).installedCapitalPpm;
+    expect([...a.values()].some((v) => v > 0)).toBe(true);
+    expect(f).toEqual(a);
+    expect(f).not.toBe(a);
+    const orig = a.get('verdan');
+    f.set('verdan', 1);
+    expect(a.get('verdan')).toBe(orig);
+    f.set('verdan', orig!);
     const ra = [], rb = [];
     for (let c = 0; c < 10; c++) { ra.push(await universe.step()); rb.push(await fork.step()); }
     expect(rb).toEqual(ra);

@@ -11,7 +11,7 @@ import { Detectors } from './detectors/index.js';
 import type { DetectedEvent } from './detectors/index.js';
 import { isForkable } from './fork.js';
 import { MarketBook } from './market-book.js';
-import { GROWTH_CONFIG, GROWTH_TRAIL, accrueWear, capacityMultiplierPpm, scaleBatches } from './growth.js';
+import { GROWTH_CONFIG, GROWTH_TRAIL, accrueWear, accumulateInstalledPpm, capacityMultiplierPpm, investmentPpm, scaleBatches } from './growth.js';
 import { INITIAL_CONFIDENCE, CPI_BASE, computeMetrics } from './metrics.js';
 import type { PlanetMetrics } from './metrics.js';
 import { buildTasks } from './observation.js';
@@ -126,6 +126,8 @@ export class Universe {
   private readonly batchCarry = new Map<string, number>();
   /** Capital wear accrued but not yet a whole unit (ppm), per planet. */
   private readonly wearPpm = new Map<PlanetId, number>();
+  /** Saved-and-invested capital per planet in ppm tool-equivalents (exists outside any inventory); K = floor(this / 1e6) + tools held. */
+  private readonly installedCapitalPpm = new Map<PlanetId, number>();
 
   constructor(opts: UniverseOptions) {
     this.world = opts.world;
@@ -187,7 +189,7 @@ export class Universe {
     };
     u.book = this.book.clone();
     fill(u.memos, this.memos); fill(u.location, this.location); fill(u.flights, this.flights); fill(u.fxRates, this.fxRates);
-    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride); fill(u.batchCarry, this.batchCarry); fill(u.wearPpm, this.wearPpm);
+    fill(u.loans, this.loans); fill(u.rateOverride, this.rateOverride); fill(u.batchCarry, this.batchCarry); fill(u.wearPpm, this.wearPpm); fill(u.installedCapitalPpm, this.installedCapitalPpm);
     for (const id of this.defaulted) u.defaulted.add(id);
     u.history.push(...structuredClone(this.history));
     u.events.push(...structuredClone(this.events));
@@ -424,11 +426,12 @@ export class Universe {
       metrics[p.id] = computeMetrics(world, p, {
         produced: produced[p.id] ?? {}, used: used[p.id] ?? {}, price: (g) => this.priceOf(p.id, g), flow: flows[p.id]!,
         surveys: surveys.get(p.id) ?? [], ...(prev ? { prev: prev[p.id]! } : {}),
-        capitalStock: await this.capitalStockOf(p.id),
+        capitalStock: await this.capitalStockOf(p.id) + this.installedUnits(p.id),
         trail: this.history.slice(-GROWTH_TRAIL).map((h) => h.metrics[p.id]!),
       });
     }
     this.history.push({ cycle, metrics });
+    this.invest(metrics);
     if (this.history.length > HISTORY_CYCLES) this.history.shift();
     await this.runReserveBanks(cycle);
 
@@ -461,7 +464,24 @@ export class Universe {
     return total;
   }
 
-  /** Capital stock per planet at the start of production (empty when capital does not affect production). */
+  /** Whole tool-equivalents of installed (saved and invested) capital on a planet. */
+  private installedUnits(planet: PlanetId): number {
+    return Math.floor((this.installedCapitalPpm.get(planet) ?? 0) / 1_000_000);
+  }
+
+  /**
+   * Solow saving: adds savingsRate * realGdp / basePrice(capital good) to each planet's installed stock, then depreciates it.
+   * Not yet funded from consumption or the treasury (a simplification); nothing is logged per cycle.
+   */
+  private invest(metrics: Record<PlanetId, PlanetMetrics>): void {
+    if (!GROWTH_CONFIG.capitalAffectsProduction) return;
+    const price = this.world.goods.find((g) => g.id === GROWTH_CONFIG.capitalGood)?.basePrice ?? 0;
+    for (const p of this.world.planets) {
+      this.installedCapitalPpm.set(p.id, accumulateInstalledPpm(this.installedCapitalPpm.get(p.id) ?? 0, investmentPpm(metrics[p.id]!.realGdp, price)));
+    }
+  }
+
+  /** Capital goods held per planet at the start of production (empty when capital does not affect production); these wear out. */
   private async capitalStocks(): Promise<Map<PlanetId, number>> {
     const out = new Map<PlanetId, number>();
     if (!GROWTH_CONFIG.capitalAffectsProduction) return out;
@@ -469,11 +489,11 @@ export class Universe {
     return out;
   }
 
-  /** Effective batches per `planet|recipe`: floor(batchesPerCycle * m + carry), the remainder kept in `batchCarry`. */
+  /** Effective batches per `planet|recipe` (K = held tools + installed capital): floor(batchesPerCycle * m + carry), the remainder kept in `batchCarry`. */
   private capacityBatches(capital: ReadonlyMap<PlanetId, number>): Map<string, number> {
     const out = new Map<string, number>();
     for (const p of this.world.planets) {
-      const m = capacityMultiplierPpm(capital.get(p.id) ?? 0);
+      const m = capacityMultiplierPpm((capital.get(p.id) ?? 0) + this.installedUnits(p.id));
       for (const pr of p.recipes) {
         const k = batchKey(p.id, pr.recipe);
         const r = scaleBatches(pr.batchesPerCycle, m, this.batchCarry.get(k) ?? 0);

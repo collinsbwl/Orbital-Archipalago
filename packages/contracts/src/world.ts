@@ -104,6 +104,7 @@ export const DEFAULT_WORLD: WorldConfig = WorldConfigSchema.parse({
       orbit: { radius: 240, periodCycles: 48, phaseCycles: 16 },
       recipes: [
         { recipe: 'pump_water', batchesPerCycle: 10 },
+        { recipe: 'refine_fuel', batchesPerCycle: 2 },
         { recipe: 'forge_tools', batchesPerCycle: 5 },
         { recipe: 'mine_iron', batchesPerCycle: 3 },
       ],
