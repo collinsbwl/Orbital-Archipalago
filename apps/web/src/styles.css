@@ -75,6 +75,75 @@ th, td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid #234
 .chart .muted { font-size: 12px; }
 .events { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow: auto; }
 .events li { padding: 2px 4px; }
+.station-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; padding: 4px 8px; border-radius: 4px; background: linear-gradient(90deg, #7a0d12, #1b2240 70%); font-size: 12px; letter-spacing: 0.06em; }
+.station-bar .station { white-space: nowrap; color: #dbe2ff; font-weight: 600; text-transform: uppercase; font-size: 11px; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 6px #ff3b3b; animation: live-pulse 1.4s ease-in-out infinite; }
+@keyframes live-pulse { 50% { opacity: 0.3; } }
+.events.news { max-height: 340px; }
+.events.news li { padding: 6px 8px; margin-bottom: 6px; border-left: 4px solid #3a4a80; border-radius: 3px; background: linear-gradient(90deg, #ffffff10, #ffffff04); }
+.events.news li.tone-bad { border-left-color: #c44; }
+.events.news li.tone-good { border-left-color: #4a4; }
+.events.news li.breaking { border: 1px solid #ff3b3b; border-left-width: 6px; background: linear-gradient(90deg, #5a0d12, #2a0a10 60%, #ffffff06); animation: breaking-glow 2s ease-in-out infinite; }
+.events.news li.breaking .headline { font-size: 15px; color: #fff; }
+@keyframes breaking-glow { 50% { box-shadow: 0 0 12px #ff3b3b88; } }
+.news-top { display: flex; align-items: center; gap: 8px; }
+.news-top .cycle { margin-left: auto; font-size: 11px; }
+.news-tag { padding: 1px 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: #3a4a80; border-radius: 2px; }
+.news-tag.breaking { background: #e01b24; animation: tag-flash 1.2s ease-in-out infinite; }
+@keyframes tag-flash { 50% { background: #ff5a5a; box-shadow: 0 0 8px #ff3b3b; } }
+.news-tag.cat-economy { background: #8a5a12; }
+.news-tag.cat-markets { background: #6a2a8a; }
+.news-tag.cat-trade { background: #1d6a7a; }
+.news-tag.cat-famine { background: #a01010; }
+.news-tag.cat-disaster { background: #a0461a; }
+.news-tag.cat-business { background: #2a7a3a; }
+.news-tag.cat-central-bank { background: #2a4a9a; }
+.headline { margin: 4px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.25; color: #eef1ff; }
+.glance { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
+.glance-planets { display: inline-flex; align-items: center; gap: 6px; }
+.planet-chip { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; border-radius: 9px; background: #ffffff14; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
+.planet-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.move { font-variant-numeric: tabular-nums; }
+.move.bad b { color: #f77; }
+.move.good b { color: #7d7; }
+.move.neutral b { color: #9cf; }
+
+.events.news li.leaving { animation: story-out 350ms ease-in forwards; pointer-events: none; }
+@keyframes story-out { to { opacity: 0; transform: translateX(16px); } }
+.sparkline { overflow: hidden; animation: fade-in 0.5s ease-out; }
+@keyframes fade-in { from { opacity: 0; } }
+
+/* A number that just changed: a quick coloured flash that fades back to normal. */
+.tick { border-radius: 3px; padding: 0 2px; margin: 0 -2px; }
+.tick-good { animation: tick-good 1s ease-out; }
+.tick-bad { animation: tick-bad 1s ease-out; }
+.tick-neutral { animation: tick-neutral 1s ease-out; }
+@keyframes tick-good { 15% { color: #9d9; background: #2a8a3a1f; } }
+@keyframes tick-bad { 15% { color: #e99; background: #a020201f; } }
+@keyframes tick-neutral { 15% { color: #adf; background: #2a4a9a1a; } }
+
+/* Breaking-news lower third: slides up over the scene, centred above the bottom bar. */
+.breaking-banner {
+  position: absolute; left: 50%; bottom: 76px; transform: translateX(-50%); width: min(760px, calc(100vw - 24px)); z-index: 6;
+  box-shadow: 0 8px 40px #000a, 0 0 30px #ff3b3b55; animation: banner-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes banner-in { from { transform: translate(-50%, 40px); opacity: 0; } }
+.breaking-banner.leaving { animation: banner-out 0.35s ease-in forwards; pointer-events: none; }
+@keyframes banner-out { to { transform: translate(-50%, 40px); opacity: 0; } }
+.bb-main { display: flex; align-items: stretch; background: linear-gradient(90deg, #0d1230, #1b2350); border-top: 3px solid #ff3b3b; }
+.bb-flag { display: flex; flex-direction: column; justify-content: center; padding: 8px 14px; background: #e01b24; color: #fff; font-weight: 900; font-size: 18px; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-body { flex: 1; padding: 8px 12px; min-width: 0; }
+.bb-desk { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #ffb3b3; }
+.bb-headline { font-size: 20px; font-weight: 900; text-transform: uppercase; color: #fff; line-height: 1.15; margin: 2px 0 6px; }
+.bb-close { align-self: flex-start; background: transparent; border: 0; color: #aab; font-size: 20px; cursor: pointer; padding: 4px 10px; }
+.bb-close:hover { color: #fff; }
+.bb-ticker { display: flex; align-items: center; background: #f2f2f2; color: #111; font-size: 12px; font-weight: 700; text-transform: uppercase; overflow: hidden; height: 22px; }
+.bb-ticker-label { flex: none; padding: 0 10px; height: 100%; display: flex; align-items: center; background: #111; color: #fff; font-weight: 900; }
+.bb-crawl { flex: 1; overflow: hidden; white-space: nowrap; }
+.bb-crawl span { display: inline-block; padding-left: 100%; animation: crawl 40s linear infinite; }
+@keyframes crawl { to { transform: translateX(-100%); } }
+@media (max-width: 900px) { .breaking-banner { bottom: auto; top: 64px; } .bb-headline { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { .tick-good, .tick-bad, .tick-neutral, .events.news li.leaving, .sparkline, .breaking-banner.leaving, .breaking-banner, .bb-crawl span, .live-dot, .news-tag.breaking, .events.news li.breaking { animation: none; } }
 .events li.god { background: #3a2a10; border-left: 3px solid #fb3; }
 .god-panel .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
 .god-panel input[type='number'] { width: 80px; }

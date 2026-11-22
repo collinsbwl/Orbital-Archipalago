@@ -23,7 +23,7 @@ describe('App god-mode panel', () => {
     view.role = 'spectator';
     render(<App />);
     expect(screen.queryByText('God mode')).toBeNull();
-    expect(screen.getByText(/drought on Verdan/)).toBeTruthy();
+    expect(screen.getByText(/Verdan.*grain|grain.*Verdan/)).toBeTruthy(); // the drought, as a headline
   });
 
   it('is shown for operators', () => {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AuthControls } from './auth';
+import { BreakingBanner } from './components/BreakingBanner';
 import { EventFeed } from './components/EventFeed';
 import { GodModePanel } from './components/GodModePanel';
 import { MetricsPanel } from './components/MetricsPanel';
@@ -64,7 +65,7 @@ export function App() {
             </div>
             <div className="hud-right">
               <Panel title="Events" defaultOpen={wide}>
-                <EventFeed events={snapshot.events} />
+                <EventFeed events={snapshot.events} planets={snapshot.planets} />
               </Panel>
               {role === 'operator' ? (
                 <Panel title="Operator controls" defaultOpen={false}>
@@ -74,6 +75,7 @@ export function App() {
                 mode === 'fixture' && <p className="muted glass hud-note">God mode is disabled: fixtures are read-only.</p>
               )}
             </div>
+            <BreakingBanner key={snapshot.universeId} events={snapshot.events} planets={snapshot.planets} cycle={snapshot.cycle} focused={focused} />
             <div className="hud-bottom">
               <PlanetLegend snapshot={snapshot} />
               <ViewHint />

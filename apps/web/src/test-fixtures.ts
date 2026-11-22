@@ -14,7 +14,7 @@ export function makeSnapshot(cycle: number, universeId = 'u0'): Snapshot {
     planets: [planet('helion', 'HLX', 1), planet('verdan', 'VRD', 2)],
     fx: [{ base: 'HLX', quote: 'VRD', ratePpm: 1_000_000 }],
     shipments: [], series: [],
-    events: [{ id: `e${cycle}`, cycle, kind: 'system', text: '[god mode] drought on Verdan' }],
+    events: [{ id: `e${cycle}`, cycle, kind: 'shock', text: '[god mode] drought on Verdan: grain output -50% for 15 cycles' }],
     gatewayCostUsd: 0,
   };
 }
