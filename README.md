@@ -1,7 +1,7 @@
 # Orbital Archipelago - Watch an Economy Think
 
 ## Description
-Orbital Archipelago is a small economy in space that runs itself. Three planets orbit a sun, and about 100 AI characters live on them: colonists, traders and governments. Each planet has its own currency. The characters buy and sell, ship goods between planets, take out loans, and argue over tariffs. Every trade is recorded on the Solana blockchain.
+Orbital Archipelago is a small economy in space that runs itself. Three planets orbit a sun, and about 105 AI agent aliens live on them: colonists, traders and governments. Each planet has its own currency. The aliens buy, sell, ship goods between planets. Every trade is recorded on the Solana blockchain.
 
 You watch it all happen in 3D in your browser. You can also play god: cause a drought, start an embargo, or split the universe in two to see how things would have turned out differently.
 
@@ -9,9 +9,7 @@ You watch it all happen in 3D in your browser. You can also play god: cause a dr
 No API keys? You can still try it. The web app can replay a recorded run (see [Quick Start, step 2](#2-watch-a-recorded-run-no-keys-needed)).
 
 ## Motivation
-Economics is usually taught with static charts and tidy assumptions. Real trade wars, currency crashes and recessions don't work like that. They happen when lots of people react to each other. We wanted to build a small economy you can actually *watch*. Give AI characters needs, money and markets, then stand back and see whether a trade war starts on its own.
-
-Every run can be replayed exactly, which makes an experiment possible that the real world never allows: split the universe halfway through, add a tariff in one copy only, and compare the two timelines side by side.
+Our inspiration was Hui Gong's paper ["AI Agents in Financial Markets"](https://arxiv.org/abs/2603.13942), which argues that market stability depends less on how smart AI agents are than on how they're coupled to one another and governed. We wanted to make that idea something you can watch instead of read, since textbooks explain tariffs and interest rates with static charts. So our agents only propose decisions, the engine checks and settles every one, and you can raise a tariff and watch the freighters reroute
 
 ---
 
@@ -123,11 +121,11 @@ Three planets and five goods. One rule drives everything: **every colonist must 
 
 | Planet | Currency | Makes |
 |---|---|---|
-| 🔥 **Helion** | HLX | Iron and fuel |
-| 🌿 **Verdan** | VRD | Grain and water |
-| 🧊 **Tethys** | TTH | Water, tools and some iron |
+| **Helion** | HLX | Iron and fuel |
+| **Verdan** | VRD | Grain and water |
+| **Tethys** | TTH | Water, tools and some iron |
 
-Helion can't feed itself, and Verdan can't make tools, so the planets have to trade. They also keep orbiting, so the same trip can be quick at one point in a run and several times longer later.
+Helion can't feed itself and Verdan can't make tools, so the planets have to trade. They also keep orbiting, so the same trip can be quick at one point in a run and several times longer later.
 
 ### What happens each cycle
 
@@ -144,7 +142,7 @@ The simulation moves forward in steps called **cycles**. Each cycle goes like th
 
 ### How the AI characters decide
 
-**The AI never does the maths.** For each character, regular code first works out a short menu of sensible options, such as *"buy 20 grain on Verdan and ship it to Helion"*. A fast Gemini model then picks one.
+**The AI never does the math.** For each character, regular code first works out a short menu of sensible options, such as *"buy 20 grain on Verdan and ship it to Helion"*. A fast Gemini model then picks one.
 
 - If a trader or government isn't sure, **Gemini Flash** takes a closer look. It can check prices on other planets before it chooses.
 - If anything goes wrong (the AI is slow, its answer doesn't make sense, or the budget runs out), the character simply repeats its last orders.
@@ -162,13 +160,13 @@ Every balance, trade, shipment and loan is recorded by our own Solana program ([
 - The engine **streams** each new cycle to your browser as it happens. Operators send god-mode commands back over the same connection.
 - **Auth0** handles login. The engine checks your role itself, so nobody can unlock god mode from the browser.
 
-📖 Want the deep dive? See [architecture.md](architecture.md).
+Want the deep dive? See [architecture.md](architecture.md).
 
 ---
 
 ## Extra Features
 
-### ⚡ God mode
+### God mode
 Operators can change the economy while it runs. Every action is logged along with who took it.
 
 | Action | What it does |
@@ -180,7 +178,7 @@ Operators can change the economy while it runs. Every action is logged along wit
 | **Fork** | Split the universe into two copies that run side by side |
 | **Pause / Resume** | Freeze time and start it again |
 
-### 📰 Breaking news
+### Breaking news
 The simulation watches for big moments: **trade wars, currency crises, recessions, shifting trade routes and collapses in confidence**. When one happens, it shows up as a headline, such as *"Currency crisis! HLX tumbles 23% in 5 cycles"*.
 
 ### Visit a planet
